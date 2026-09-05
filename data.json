@@ -1,0 +1,217 @@
+{
+  "fetched": "2026-09-05",
+  "prs": [
+    {
+      "additions": 1,
+      "changedFiles": 1,
+      "closedAt": "2026-08-20T17:06:49Z",
+      "createdAt": "2026-08-18T20:24:54Z",
+      "deletions": 1,
+      "isDraft": false,
+      "mergedAt": "2026-08-20T17:06:48Z",
+      "number": 5086,
+      "reviewDecision": "APPROVED",
+      "state": "MERGED",
+      "title": "boards: declare all 520 kB of SRAM on Pico 2",
+      "url": "https://github.com/tock/tock/pull/5086",
+      "commits": [
+        {
+          "messageHeadline": "boards: declare all 520 kB of SRAM on Pico 2"
+        }
+      ]
+    },
+    {
+      "additions": 0,
+      "changedFiles": 5,
+      "closedAt": "2026-08-24T14:12:32Z",
+      "createdAt": "2026-08-22T04:01:01Z",
+      "deletions": 30,
+      "isDraft": false,
+      "mergedAt": null,
+      "number": 5104,
+      "reviewDecision": "REVIEW_REQUIRED",
+      "state": "CLOSED",
+      "title": "boards: remove dead boot-from-RAM layout",
+      "url": "https://github.com/tock/tock/pull/5104",
+      "commits": [
+        {
+          "messageHeadline": "boards: remove dead boot-from-RAM layout"
+        }
+      ]
+    },
+    {
+      "additions": 43,
+      "changedFiles": 6,
+      "closedAt": "2026-09-03T18:53:05Z",
+      "createdAt": "2026-08-25T14:12:24Z",
+      "deletions": 27,
+      "isDraft": false,
+      "mergedAt": "2026-09-03T18:53:05Z",
+      "number": 5109,
+      "reviewDecision": "APPROVED",
+      "state": "MERGED",
+      "title": "boards: give the boot-from-RAM layout addresses that link",
+      "url": "https://github.com/tock/tock/pull/5109",
+      "commits": [
+        {
+          "messageHeadline": "boards: give the boot-from-RAM layout addresses that link"
+        }
+      ]
+    },
+    {
+      "additions": 778,
+      "changedFiles": 15,
+      "closedAt": "2026-09-01T16:24:41Z",
+      "createdAt": "2026-08-26T10:50:46Z",
+      "deletions": 637,
+      "isDraft": false,
+      "mergedAt": "2026-09-01T16:24:41Z",
+      "number": 5112,
+      "reviewDecision": "APPROVED",
+      "state": "MERGED",
+      "title": "chips: rp2350: add SPI driver",
+      "url": "https://github.com/tock/tock/pull/5112",
+      "commits": [
+        {
+          "messageHeadline": "chips: rp2040: move the PL022 SPI driver into a shared rp2xxx crate"
+        },
+        {
+          "messageHeadline": "chips: rp2350: add SPI driver"
+        },
+        {
+          "messageHeadline": "Update chips/rp2xxx/README.md"
+        }
+      ]
+    },
+    {
+      "additions": 136,
+      "changedFiles": 4,
+      "closedAt": null,
+      "createdAt": "2026-08-29T16:03:34Z",
+      "deletions": 280,
+      "isDraft": false,
+      "mergedAt": null,
+      "number": 5126,
+      "reviewDecision": "APPROVED",
+      "state": "OPEN",
+      "title": "chips: rp2040: PIO cleanups",
+      "url": "https://github.com/tock/tock/pull/5126",
+      "commits": [
+        {
+          "messageHeadline": "chips: rp2040: pio: retire the examples module"
+        }
+      ]
+    },
+    {
+      "additions": 51,
+      "changedFiles": 4,
+      "closedAt": null,
+      "createdAt": "2026-09-03T15:38:59Z",
+      "deletions": 19,
+      "isDraft": false,
+      "mergedAt": null,
+      "number": 5140,
+      "reviewDecision": "APPROVED",
+      "state": "OPEN",
+      "title": "chips: rp2xxx, rp2350: share the pad control enums, add the RP2350 pad controls",
+      "url": "https://github.com/tock/tock/pull/5140",
+      "commits": [
+        {
+          "messageHeadline": "chips: rp2xxx: share the GPIO pad control enums"
+        },
+        {
+          "messageHeadline": "chips: rp2350: gpio: add the pad controls the RP2040 has"
+        }
+      ]
+    },
+    {
+      "additions": 4423,
+      "changedFiles": 38,
+      "closedAt": null,
+      "createdAt": "2026-09-03T16:54:50Z",
+      "deletions": 2550,
+      "isDraft": false,
+      "mergedAt": null,
+      "number": 5141,
+      "reviewDecision": "REVIEW_REQUIRED",
+      "state": "OPEN",
+      "title": "boards: add Raspberry Pi Pico 2 W, with the CYW43439 radio working",
+      "url": "https://github.com/tock/tock/pull/5141",
+      "commits": [
+        {
+          "messageHeadline": "chips: rp2040: pio: retire the examples module"
+        },
+        {
+          "messageHeadline": "chips: rp2350: gpio: add the pad controls the RP2040 has"
+        },
+        {
+          "messageHeadline": "chips: rp2040: move the PIO driver into the shared rp2xxx crate"
+        },
+        {
+          "messageHeadline": "chips: rp2350: add PIO"
+        },
+        {
+          "messageHeadline": "chips: rp2350: add DMA"
+        },
+        {
+          "messageHeadline": "chips: rp2040: move the PIO gSPI driver into the shared rp2xxx crate"
+        },
+        {
+          "messageHeadline": "boards: pico 2: resolve openocd config path"
+        },
+        {
+          "messageHeadline": "boards: pico 2: split into library and binary"
+        },
+        {
+          "messageHeadline": "boards: add Raspberry Pi Pico 2 W"
+        },
+        {
+          "messageHeadline": "chips: rp2350: hold the DMA and PIO0 in the default peripherals"
+        },
+        {
+          "messageHeadline": "boards: raspberry_pi_pico_2_w: bring up the CYW43439"
+        }
+      ]
+    },
+    {
+      "additions": 502,
+      "changedFiles": 4,
+      "closedAt": null,
+      "createdAt": "2026-09-04T22:04:57Z",
+      "deletions": 263,
+      "isDraft": true,
+      "mergedAt": null,
+      "number": 5150,
+      "reviewDecision": "REVIEW_REQUIRED",
+      "state": "OPEN",
+      "title": "chips: rp2040: five PIO fixes, and the driver's first host tests",
+      "url": "https://github.com/tock/tock/pull/5150",
+      "commits": [
+        {
+          "messageHeadline": "chips: rp2040: fix the PIO RX FIFO join, which never happened"
+        },
+        {
+          "messageHeadline": "chips: rp2040: stop add_program panicking on half of its own range"
+        },
+        {
+          "messageHeadline": "chips: rp2040: test the PIO arithmetic that has no other check"
+        },
+        {
+          "messageHeadline": "chips: rp2040: service every PIO interrupt line, not one of four"
+        },
+        {
+          "messageHeadline": "chips: rp2040: an irq flag belongs to the block, not a state machine"
+        }
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "createdAt": "2026-09-04T23:33:48Z",
+      "number": 5152,
+      "state": "OPEN",
+      "title": "rp2x PIO: a test plan",
+      "url": "https://github.com/tock/tock/issues/5152"
+    }
+  ]
+}

@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tock on the RP2350</title>
+<meta name="description" content="Bringing the Raspberry Pi Pico 2 and Pico 2 W up on the Tock embedded kernel — what has landed, what is open, what is broken.">
+<style>
+:root {
+  --bg: #fbfaf8;
+  --panel: #ffffff;
+  --ink: #16171a;
+  --ink-soft: #56585e;
+  --ink-faint: #6f7278;  /* 4.82:1 on the card, 4.62:1 on the page ground */
+  --line: #e4e2dd;
+  --accent: #7a4b1e;
+  --merged-bg: #e3f0e4; --merged-ink: #1f5b2b;
+  --open-bg: #e2ecf7; --open-ink: #1d4b7a;
+  --draft-bg: #eceaea; --draft-ink: #55565b;
+  --closed-bg: #f6e3e3; --closed-ink: #86282a;
+  --unfiled-bg: #f8ecd8; --unfiled-ink: #7c5310;
+  --approved-bg: #e7ecda; --approved-ink: #4a5c23;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #131316;
+    --panel: #1b1c20;
+    --ink: #edecea;
+    --ink-soft: #b0b0b4;
+    --ink-faint: #85868b;
+    --line: #2c2d33;
+    --accent: #d9a273;
+    --merged-bg: #1d3324; --merged-ink: #8fd3a0;
+    --open-bg: #1b2c3f; --open-ink: #8fbde8;
+    --draft-bg: #26272c; --draft-ink: #a9aab0;
+    --closed-bg: #3a2222; --closed-ink: #e29a9a;
+    --unfiled-bg: #3a2f1a; --unfiled-ink: #e3bd7c;
+    --approved-bg: #2a3119; --approved-ink: #b9cd88;
+  }
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px 96px; }
+header { padding: 72px 0 40px; border-bottom: 1px solid var(--line); }
+h1 { font-size: 2.6rem; line-height: 1.1; margin: 0 0 12px; letter-spacing: -0.02em; }
+.tagline { font-size: 1.15rem; color: var(--ink-soft); margin: 0 0 28px; max-width: 62ch; }
+header p { max-width: 68ch; color: var(--ink-soft); }
+header p:first-of-type { color: var(--ink); }
+.stats { display: flex; flex-wrap: wrap; gap: 28px; margin: 32px 0 0; padding: 0; list-style: none; }
+.stats li { min-width: 84px; }
+.stats .n { display: block; font-size: 1.9rem; font-weight: 600; letter-spacing: -0.02em; }
+.stats .k { display: block; font-size: 0.78rem; text-transform: uppercase;
+  letter-spacing: 0.07em; color: var(--ink-faint); }
+section { padding: 56px 0 0; }
+h2 { font-size: 1.5rem; margin: 0 0 6px; letter-spacing: -0.01em; }
+.lede { color: var(--ink-soft); max-width: 68ch; margin: 0 0 24px; }
+.grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+.card {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+  padding: 18px 18px 16px;
+}
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.card h3 { font-size: 1rem; margin: 0 0 8px; line-height: 1.4; }
+.card p { margin: 0 0 8px; font-size: 0.92rem; color: var(--ink-soft); }
+.card p.why { color: var(--ink-faint); }
+.ref { font: 600 0.85rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--accent); text-decoration: none; }
+.ref:hover { text-decoration: underline; }
+.ref.muted { color: var(--ink-faint); }
+.pill {
+  font-size: 0.72rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.05em; padding: 3px 9px; border-radius: 999px; white-space: nowrap;
+}
+.pill.merged { background: var(--merged-bg); color: var(--merged-ink); }
+.pill.open { background: var(--open-bg); color: var(--open-ink); }
+.pill.approved { background: var(--approved-bg); color: var(--approved-ink); }
+.pill.draft { background: var(--draft-bg); color: var(--draft-ink); }
+.pill.closed { background: var(--closed-bg); color: var(--closed-ink); }
+.pill.unfiled { background: var(--unfiled-bg); color: var(--unfiled-ink); }
+.pill.fixed { background: var(--merged-bg); color: var(--merged-ink); }
+.meta { display: flex; flex-wrap: wrap; gap: 14px; font-size: 0.78rem; color: var(--ink-faint); margin-top: 10px; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.74rem; }
+details { margin-top: 10px; }
+summary { cursor: pointer; font-size: 0.8rem; color: var(--ink-faint); }
+ul.commits { margin: 8px 0 0; padding-left: 18px; font-size: 0.82rem; color: var(--ink-soft); }
+ul.commits li { margin: 3px 0; }
+ul.plain { list-style: none; padding: 0; margin: 0; }
+ul.plain li {
+  padding: 14px 0; border-top: 1px solid var(--line); color: var(--ink-soft);
+  font-size: 0.94rem; max-width: 76ch;
+}
+ul.plain li strong { color: var(--ink); display: block; margin-bottom: 2px; font-weight: 600; }
+h3.sub { margin: 32px 0 4px; font-size: 1.05rem; }
+footer { margin-top: 72px; padding-top: 24px; border-top: 1px solid var(--line);
+  color: var(--ink-faint); font-size: 0.85rem; }
+footer a { color: var(--accent); }
+@media (max-width: 640px) {
+  h1 { font-size: 2rem; }
+  header { padding-top: 48px; }
+  .grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>Tock on the RP2350</h1>
+  <p class="tagline">Bringing the Raspberry Pi Pico 2 and Pico 2 W up on the Tock embedded kernel — what has landed, what is open, what is broken.</p>
+  <p>The RP2350 is the chip in the Raspberry Pi Pico 2. Tock has booted on it since April 2025, but booting was most of what it did: the chip had no SPI, no PIO and no DMA driver, the Pico 2 W&#x27;s radio had no support at all, and several things that looked finished turned out not to work when a board was put in front of them.</p>
+<p>This page maps the work closing that gap. It is one contributor&#x27;s queue, not a roadmap for the project, and it is deliberately honest about the parts that are unfinished, unfiled or wrong — a map that only showed the wins would not be worth reading.</p>
+  <p>Two rules produce most of what is here. Every claim about hardware is made against hardware, on a bench where a Raspberry Pi flashes the board and holds its serial line so the development machine never touches it. And every defect is demonstrated before it is reported — by a failing test where a test can reach it, and by an instrumented kernel on silicon where it cannot.</p>
+  <ul class="stats">
+    <li><span class="n">3</span><span class="k">merged</span></li>
+    <li><span class="n">4</span><span class="k">open</span></li>
+    <li><span class="n">1</span><span class="k">closed</span></li>
+    <li><span class="n">5,934</span><span class="k">lines added</span></li>
+    <li><span class="n">3,807</span><span class="k">lines removed</span></li>
+    <li><span class="n">9</span><span class="k">defects found</span></li>
+  </ul>
+</header>
+
+<section id="kernel">
+  <h2>Kernel: chip and board support</h2>
+  <p class="lede">Pull requests against tock/tock, newest first.</p>
+  <div class="grid">
+    <article class="card">
+      <div class="card-head">
+        <a class="ref" href="https://github.com/tock/tock/pull/5150">#5150</a>
+        <span class="pill draft">draft</span>
+      </div>
+      <h3>chips: rp2040: five PIO fixes, and the driver&#x27;s first host tests</h3>
+      <p>Five defects in the RP2040 PIO driver, and the first host tests that driver has ever had.</p>
+      <p class='why'>Each fix ships with a test that fails without it. The driver had no tests at all, so the bugs below had nothing to catch them.</p>
+      <div class="meta">
+        <span>+502 / &minus;263</span>
+        <span>4 files</span>
+        <span>2026-09-04</span>
+      </div>
+      <details><summary>5 commits</summary><ul class='commits'><li>chips: rp2040: fix the PIO RX FIFO join, which never happened</li><li>chips: rp2040: stop add_program panicking on half of its own range</li><li>chips: rp2040: test the PIO arithmetic that has no other check</li><li>chips: rp2040: service every PIO interrupt line, not one of four</li><li>chips: rp2040: an irq flag belongs to the block, not a state machine</li></ul></details>
+    </article>
+    <article class="card">
+      <div class="card-head">
+        <a class="ref" href="https://github.com/tock/tock/pull/5141">#5141</a>
+        <span class="pill open">in review</span>
+      </div>
+      <h3>boards: add Raspberry Pi Pico 2 W, with the CYW43439 radio working</h3>
+      <p>The Pico 2 W: PIO and DMA for the RP2350, the gSPI driver moved into the shared crate, the board split into a library and a binary, and the CYW43439 radio brought up on top.</p>
+      <p class='why'>The largest piece of the work and the one everything else was for. On silicon the board reads its MAC out of the radio&#x27;s OTP and completes a scan — which means the firmware uploaded over a PIO state machine and a DMA channel, on a chip that had neither before this series.</p>
+      <div class="meta">
+        <span>+4423 / &minus;2550</span>
+        <span>38 files</span>
+        <span>2026-09-03</span>
+      </div>
+      <details><summary>11 commits</summary><ul class='commits'><li>chips: rp2040: pio: retire the examples module</li><li>chips: rp2350: gpio: add the pad controls the RP2040 has</li><li>chips: rp2040: move the PIO driver into the shared rp2xxx crate</li><li>chips: rp2350: add PIO</li><li>chips: rp2350: add DMA</li><li>chips: rp2040: move the PIO gSPI driver into the shared rp2xxx crate</li><li>boards: pico 2: resolve openocd config path</li><li>boards: pico 2: split into library and binary</li><li>boards: add Raspberry Pi Pico 2 W</li><li>chips: rp2350: hold the DMA and PIO0 in the default peripherals</li><li>boards: raspberry_pi_pico_2_w: bring up the CYW43439</li></ul></details>
+    </article>
+    <article class="card">
+      <div class="card-head">
+        <a class="ref" href="https://github.com/tock/tock/pull/5140">#5140</a>
+        <span class="pill approved">approved</span>
+      </div>
+      <h3>chips: rp2xxx, rp2350: share the pad control enums, add the RP2350 pad controls</h3>
+      <p>Shared the GPIO pad-control enums between the chips and gave the RP2350 the pad controls the RP2040 already had.</p>
+      <p class='why'>Drive strength, slew rate and Schmitt trigger. The radio&#x27;s SPI bus needs them, and the RP2350 side simply did not exist.</p>
+      <div class="meta">
+        <span>+51 / &minus;19</span>
+        <span>4 files</span>
+        <span>2026-09-03</span>
+      </div>
+      <details><summary>2 commits</summary><ul class='commits'><li>chips: rp2xxx: share the GPIO pad control enums</li><li>chips: rp2350: gpio: add the pad controls the RP2040 has</li></ul></details>
+    </article>
+    <article class="card">
+      <div class="card-head">
+        <a class="ref" href="https://github.com/tock/tock/pull/5126">#5126</a>
+        <span class="pill approved">approved</span>
+      </div>
+      <h3>chips: rp2040: PIO cleanups</h3>
+      <p>Removed a module of PIO example programs that nothing called.</p>
+      <p class='why'>Dead API in a driver is a liability: it constrains every later change while proving nothing. Clearing it first made the PIO work that follows much smaller.</p>
+      <div class="meta">
+        <span>+136 / &minus;280</span>
+        <span>4 files</span>
+        <span>2026-08-29</span>
+      </div>
+      
+    </article>
+    <article class="card">
+      <div class="card-head">
+        <a class="ref" href="https://github.com/tock/tock/pull/5112">#5112</a>
+        <span class="pill merged">merged</span>
+      </div>
+      <h3>chips: rp2350: add SPI driver</h3>
+      <p>Moved the RP2040&#x27;s PL022 SPI driver into a crate both chips share, then added SPI to the RP2350.</p>
+      <p class='why'>The two chips carry the same SPI block. Sharing the driver rather than copying it is the pattern the rest of this work follows — and the shared crate it created, rp2xxx, is where PIO and DMA later went.</p>
+      <div class="meta">
+        <span>+778 / &minus;637</span>
+        <span>15 files</span>
+        <span>2026-09-01</span>
+      </div>
+      <details><summary>3 commits</summary><ul class='commits'><li>chips: rp2040: move the PL022 SPI driver into a shared rp2xxx crate</li><li>chips: rp2350: add SPI driver</li><li>Update chips/rp2xxx/README.md</li></ul></details>
+    </article>
+    <article class="card">
+      <div class="card-head">
+        <a class="ref" href="https://github.com/tock/tock/pull/5109">#5109</a>
+        <span class="pill merged">merged</span>
+      </div>
+      <h3>boards: give the boot-from-RAM layout addresses that link</h3>
+      <p>Gave the board&#x27;s boot-from-RAM memory layout addresses that actually link.</p>
+      <p class='why'>Booting a kernel into RAM instead of flash saves the flash write on every iteration. The layout had been in the tree for a while and could not have worked.</p>
+      <div class="meta">
+        <span>+43 / &minus;27</span>
+        <span>6 files</span>
+        <span>2026-09-03</span>
+      </div>
+      
+    </article>
+    <article class="card">
+      <div class="card-head">
+        <a class="ref" href="https://github.com/tock/tock/pull/5104">#5104</a>
+        <span class="pill closed">closed</span>
+      </div>
+      <h3>boards: remove dead boot-from-RAM layout</h3>
+      <p>Proposed deleting the boot-from-RAM layout as dead code.</p>
+      <p class='why'>Closed, and correctly. A maintainer pointed out that the Pico can boot from RAM and the addresses should be fixed rather than the feature removed. That became #5109, which merged. Worth leaving on the map: the first instinct was wrong and the review caught it.</p>
+      <div class="meta">
+        <span>+0 / &minus;30</span>
+        <span>5 files</span>
+        <span>2026-08-24</span>
+      </div>
+      
+    </article>
+    <article class="card">
+      <div class="card-head">
+        <a class="ref" href="https://github.com/tock/tock/pull/5086">#5086</a>
+        <span class="pill merged">merged</span>
+      </div>
+      <h3>boards: declare all 520 kB of SRAM on Pico 2</h3>
+      <p>The Pico 2 board declared a fraction of the RAM the chip has.</p>
+      <p class='why'>One constant, and the smallest possible first contribution — which is the point. It established that the patches were real before anything large was proposed.</p>
+      <div class="meta">
+        <span>+1 / &minus;1</span>
+        <span>1 files</span>
+        <span>2026-08-20</span>
+      </div>
+      
+    </article></div>
+</section>
+
+<section id="defects">
+  <h2>Defects found</h2>
+  <p class="lede">Every one of these was demonstrated before it was written down —
+  by a test that fails without the fix, or by an instrumented kernel on real
+  silicon. 4 are not yet filed upstream.</p>
+  <div class="grid">
+    <article class="card">
+      <div class="card-head"><a class='ref' href='https://github.com/tock/tock/pull/5150'>#5150</a><span class="pill fixed">fix proposed</span></div>
+      <h3>PIO: the RX FIFO join never happened</h3>
+      <p>Joining the two four-word FIFOs into one eight-word RX FIFO silently did nothing, so a program that relied on the depth would drop words.</p>
+      <div class="meta">
+        <span class="mono">chips/rp2040/src/pio.rs</span>
+        <span>Host test that fails without the fix.</span>
+      </div>
+    </article>
+    <article class="card">
+      <div class="card-head"><a class='ref' href='https://github.com/tock/tock/pull/5150'>#5150</a><span class="pill fixed">fix proposed</span></div>
+      <h3>PIO: add_program panicked on half its own range</h3>
+      <p>Loading a program into the upper half of instruction memory panicked the kernel rather than returning an error.</p>
+      <div class="meta">
+        <span class="mono">chips/rp2040/src/pio.rs</span>
+        <span>Host test that fails without the fix.</span>
+      </div>
+    </article>
+    <article class="card">
+      <div class="card-head"><a class='ref' href='https://github.com/tock/tock/pull/5150'>#5150</a><span class="pill fixed">fix proposed</span></div>
+      <h3>PIO: only one interrupt line of four was serviced</h3>
+      <p>Three of the four state machines could raise an interrupt that nothing handled.</p>
+      <div class="meta">
+        <span class="mono">chips/rp2040/src/pio.rs</span>
+        <span>Host test that fails without the fix.</span>
+      </div>
+    </article>
+    <article class="card">
+      <div class="card-head"><a class='ref' href='https://github.com/tock/tock/pull/5150'>#5150</a><span class="pill fixed">fix proposed</span></div>
+      <h3>PIO: an interrupt flag was scoped to a state machine, not the block</h3>
+      <p>The hardware flag belongs to the PIO block; treating it as per-state-machine mis-attributes interrupts.</p>
+      <div class="meta">
+        <span class="mono">chips/rp2040/src/pio.rs</span>
+        <span>Host test that fails without the fix.</span>
+      </div>
+    </article>
+    <article class="card">
+      <div class="card-head"><a class='ref' href='https://github.com/tock/tock/pull/5150'>#5150</a><span class="pill fixed">fix proposed</span></div>
+      <h3>PIO: arithmetic with no other check</h3>
+      <p>Clock divider and FIFO address arithmetic that nothing in the tree exercised.</p>
+      <div class="meta">
+        <span class="mono">chips/rp2040/src/pio.rs</span>
+        <span>Tests added; no behaviour change.</span>
+      </div>
+    </article>
+    <article class="card">
+      <div class="card-head"><span class='ref muted'>—</span><span class="pill unfiled">not filed</span></div>
+      <h3>UART: an aborted receive tears down every other receive on the mux</h3>
+      <p>The abort completion calls the client back and only then marks the receiver idle. The UART multiplexer always restarts its read from inside that callback, so the restart is refused as BUSY and the mux responds by ending every device&#x27;s receive. The three chip drivers carry the block character for character.</p>
+      <div class="meta">
+        <span class="mono">chips/rp2040, chips/rp2350, chips/sifive — uart.rs</span>
+        <span>Demonstrated on silicon with an instrumented kernel, September 2026.</span>
+      </div>
+    </article>
+    <article class="card">
+      <div class="card-head"><span class='ref muted'>—</span><span class="pill unfiled">not filed</span></div>
+      <h3>UART: a failed receive hands back the wrong static buffer</h3>
+      <p>A virtual device propagates the multiplexer&#x27;s error with `?`, and that error carries a buffer — the multiplexer&#x27;s, not the caller&#x27;s. The device keeps the caller&#x27;s buffer and the caller is handed the multiplexer&#x27;s. Two static buffers change owners silently, and the multiplexer&#x27;s slot is left empty for the life of the board. No process memory is involved, but the console is wedged from then on.</p>
+      <div class="meta">
+        <span class="mono">capsules/core/src/virtualizers/virtual_uart.rs</span>
+        <span>Demonstrated on silicon; the swapped buffer is visible in the trace.</span>
+      </div>
+    </article>
+    <article class="card">
+      <div class="card-head"><span class='ref muted'>—</span><span class="pill unfiled">not filed</span></div>
+      <h3>A stopped process never gets its GPIO reclaimed</h3>
+      <p>When a process dies, the capsule does not release the pin it was driving, so the pin stays driven for the life of the board. A sibling capsule, adc.rs, already has the fix, which makes this a consistency bug rather than a design question. Five of forty-five capsules are affected.</p>
+      <div class="meta">
+        <span class="mono">capsules/extra/src/pwm.rs and four others</span>
+        <span>Demonstrated on silicon.</span>
+      </div>
+    </article>
+    <article class="card">
+      <div class="card-head"><span class='ref muted'>—</span><span class="pill unfiled">not filed</span></div>
+      <h3>`make program` cannot flash an app on the Pico 2 boards</h3>
+      <p>The objcopy step marks the app section loadable, which rewrites the program headers and gives the stack segment a file size it should not have. picotool then refuses the image, exits non-zero and leaves a zero-byte UF2 behind.</p>
+      <div class="meta">
+        <span class="mono">boards/raspberry_pi_pico_2/Makefile</span>
+        <span>Reproducible on a laptop with no board attached.</span>
+      </div>
+    </article></div>
+</section>
+
+<section id="testing">
+  <h2>Testing</h2>
+  <p class="lede">The RP2 drivers had no tests. Adding them is most of why the
+  defects above were findable.</p>
+  <div class="grid">
+    <article class="card">
+      <div class="card-head">
+        <a class="ref" href="https://github.com/tock/tock/issues/5152">#5152</a>
+        <span class="pill open">open</span>
+      </div>
+      <h3>rp2x PIO: a test plan</h3>
+      <p>A test plan for the RP2 PIO driver, in three tiers.</p>
+      <p class='why'>Answering a maintainer&#x27;s question about how this code gets tested. Tier one is host tests and is done; tier two is six hardware tests, each of which stands alone; tier three is the project&#x27;s hardware CI, named as a dependency rather than promised.</p>
+      <div class="meta"><span>2026-09-04</span></div>
+    </article></div>
+  <h3 class="sub">What has run on hardware</h3>
+  <ul class="plain"><li><strong>Pico 2 W scans WiFi</strong> The radio&#x27;s firmware uploads over a PIO state machine and a DMA channel, the MAC reads out of the radio&#x27;s OTP, and a scan completes. End-to-end validation of the whole #5141 stack.</li><li><strong>SPI loopback</strong> The RP2350 SPI driver added in #5112, driven from a test app and read back over the bench.</li><li><strong>Two co-resident apps</strong> Applications load, run and print on a Pico 2 W, which is what makes any userspace claim below checkable.</li><li><strong>Async sleep and cancellation</strong> A 500 ms await measures within a few hundred microseconds of its deadline across every run, including immediately after a cancelled five-second sleep — which distinguishes a working cancellation from both a leaked callback and a timer left armed.</li><li><strong>PIO and DMA register readback</strong> The one chip-specific constant in the series that no unit test can reach — the PIO interrupt block&#x27;s offset — checked by reading the registers over the debug port.</li></ul>
+</section>
+
+<section id="userspace">
+  <h2>Userspace: async applications</h2>
+  <p class="lede">A Future and executor layer over Tock&#x27;s syscalls, built in libtock-rs so an application can await a sleep or a console read instead of hand-rolling a callback. Validated on a Pico 2 W running the Pico 2 W kernel. Not yet proposed upstream.</p>
+  <div class="grid">
+    <article class="card">
+      <div class="card-head"><span class="pill merged">working</span></div>
+      <h3>Async stack</h3>
+      <p>Futures over the alarm and console drivers, a single-task executor with block_on, and select. Alarm side validated on silicon.</p>
+    </article>
+    <article class="card">
+      <div class="card-head"><span class="pill merged">working</span></div>
+      <h3>Platform rows for Pico 2 and Pico 2 W</h3>
+      <p>libtock-rs hardcodes each board&#x27;s app load addresses; neither board had an entry. The Pico 2 W&#x27;s differ because the radio&#x27;s firmware blobs push the app region up.</p>
+    </article>
+    <article class="card">
+      <div class="card-head"><span class="pill merged">working</span></div>
+      <h3>A build error that named nothing</h3>
+      <p>Registering a platform requires three files that do not know about each other, and missing the third failed with a message that named neither the platform nor the file. It names both now.</p>
+    </article>
+    <article class="card">
+      <div class="card-head"><span class="pill closed">blocked</span></div>
+      <h3>Console concurrency</h3>
+      <p>Cannot be tested until the UART receive defect above is fixed. The failure is in the kernel, not in the futures.</p>
+    </article>
+    <article class="card">
+      <div class="card-head"><span class="pill draft">planned</span></div>
+      <h3>embedded-hal-async implementations</h3>
+      <p>The reason to do any of this: drivers written against those traits — hundreds of sensor, display and radio crates — would run unmodified inside a Tock process.</p>
+    </article></div>
+</section>
+
+<section id="docs">
+  <h2>Documentation</h2>
+  <p class="lede">Tock&#x27;s book has no Pico coverage at all, which is a strange gap for one of the cheapest boards it supports.</p>
+  <div class="grid">
+    <article class="card">
+      <div class="card-head"><span class="pill approved">ready</span></div>
+      <h3>A Pico 2 getting-started page for the Tock book</h3>
+      <p>Written and pushed; the pull request is not open yet.</p>
+    </article>
+    <article class="card">
+      <div class="card-head"><span class="pill draft">drafted</span></div>
+      <h3>A nine-chapter series on how the kernel works</h3>
+      <p>From what a register is through grants and the memory protection unit, each chapter interactive rather than prose. Written while learning the codebase, on the theory that the questions a newcomer has are only legible while they still have them.</p>
+    </article></div>
+</section>
+
+<section id="next">
+  <h2>Not done</h2>
+  <p class="lede">The honest half of the map.</p>
+  <ul class="plain"><li><strong>Report the four unfiled defects</strong> Each is demonstrated and none is filed. The constraint is review throughput, not the work — an open pull request that nobody has time to read helps no one.</li><li><strong>Fix the reclaim leak in pwm.rs</strong> The sibling capsule already shows what the fix looks like.</li><li><strong>A userspace driver for PIO</strong> PIO is the RP2&#x27;s most distinctive peripheral and no process can reach it.</li><li><strong>Hardware CI for the RP2 boards</strong> The project&#x27;s testbed runs one board and never on pull requests. Named as a dependency in the test plan rather than promised.</li><li><strong>Get the Pico 2 W board reviewed</strong> 38 files and 4,400 added lines is a large thing to ask anyone to read, which is the price of shipping a board and its radio together.</li></ul>
+</section>
+
+<footer>
+  <p>Status, sizes and dates on this page are read from the GitHub API when it is
+  built, so they are current as of 2026-09-05. Everything else is
+  written by hand.</p>
+  <p>Work by <a href="https://github.com/bigmark222">bigmark222</a> ·
+  <a href="https://github.com/tock/tock">tock/tock</a> ·
+  <a href="https://github.com/tock/libtock-rs">tock/libtock-rs</a></p>
+</footer>
+
+</div>
+</body>
+</html>
