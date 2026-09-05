@@ -612,6 +612,17 @@
         "base_sha": "2a7a40450",
         "pushed": true
       },
+      "rp2-adc": {
+        "ahead": 2,
+        "commits": [
+          "chips: rp2350: add the SAR ADC",
+          "chips: rp2040: move the SAR ADC driver into the shared rp2xxx crate"
+        ],
+        "stat": "7 files changed, 357 insertions(+), 225 deletions(-)",
+        "base": "upstream/master",
+        "base_sha": "2a7a40450",
+        "pushed": false
+      },
       "rp2-pad-controls": {
         "ahead": 2,
         "commits": [
@@ -655,6 +666,16 @@
           "chips: rp2040, rp2350, sifive: finish an abort before calling the client"
         ],
         "stat": "4 files changed, 57 insertions(+), 13 deletions(-)",
+        "base": "upstream/master",
+        "base_sha": "2a7a40450",
+        "pushed": false
+      },
+      "rp2350-gpio-irq": {
+        "ahead": 1,
+        "commits": [
+          "chips: rp2350: route the GPIO bank interrupt, which panics the kernel"
+        ],
+        "stat": "1 file changed, 4 insertions(+)",
         "base": "upstream/master",
         "base_sha": "2a7a40450",
         "pushed": false
