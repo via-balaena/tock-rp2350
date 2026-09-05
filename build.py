@@ -103,7 +103,7 @@ INTENT = {
     "tock:master": ("never", "Tracking branch.", None),
     "libtock-rs:pico2-platform": ("upstream", "Load addresses for the Pico 2 and Pico 2 W, and a build error that named neither the platform nor the file to edit.", "Ready now, and independent of the async work."),
     "libtock-rs:async/alarm": ("upstream", "Futures over the alarm and console drivers, a single-task executor, select, and fakes that model cancellation. Meant to become two pull requests, but it is not two branches yet: the two unittest commits sit inside this one and have to be lifted out first.", "Hard order, not a preference. The async tests call fake::Alarm::new_deferred and fake::Console::new_deferred in three places, and those constructors are exactly what the unittest commits add — so either the unittest fixes land first and the async work builds on them, or the async pull request carries both commits itself. It cannot go first and cannot go alone."),
-    "libtock-rs:hw/pico2w-async": ("never", "The two branches above merged together, as a vehicle for running on hardware.", None),
+    "libtock-rs:hw/pico2w-async": ("never", "The two branches above merged together, as a vehicle for running on hardware — and, for now, the only home of `examples/console_read_busy.rs`, the QEMU reproduction of the UART defect.", "The branch itself is not for upstream, but the reproduction on it is meant to be run by other people, so it needs a home that is. Where it goes depends on whether it travels with a defect report or stands alone as a libtock-rs example."),
     "libtock-rs:bench/reclaim-leak": ("never", "The two apps that demonstrate the reclaim leak.", None),
     "libtock-rs:kit-examples": ("never", "Loopback and pin-walk apps written to exercise the bench.", None),
     "libtock-rs:master": ("never", "Tracking branch.", None),
@@ -282,6 +282,8 @@ DOWNSTREAM = [
 ]
 
 NOT_DONE = [
+    ("Give the QEMU reproduction a home someone can reach",
+     "`examples/console_read_busy.rs` currently exists only on a branch marked never-for-upstream, which is the wrong address for the one artefact here that a maintainer is meant to run themselves. It travels with the defect report, or goes up on its own as a libtock-rs example, but it cannot stay where it is."),
     ("Extract the unittest fixes onto their own branch",
      "Two commits currently inside the async branch, and the smaller of the two asks. Roughly half an hour of cherry-picking and a gate run."),
     ("File the four unfiled defects", "Each is demonstrated and none is filed. The constraint is review throughput, not the work."),
