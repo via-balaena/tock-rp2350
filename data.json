@@ -644,6 +644,17 @@
         "base": "upstream/master",
         "base_sha": "2a7a40450",
         "pushed": true
+      },
+      "stepper-capsule": {
+        "ahead": 2,
+        "commits": [
+          "capsules: stepper: report a stop, and refuse one from a non-owner",
+          "capsules: add a stepper motor driver"
+        ],
+        "stat": "5 files changed, 464 insertions(+)",
+        "base": "upstream/master",
+        "base_sha": "2a7a40450",
+        "pushed": false
       }
     },
     "libtock-rs": {
@@ -759,6 +770,18 @@
           "Add the Raspberry Pi Pico 2 as a build platform"
         ],
         "stat": "3 files changed, 9 insertions(+), 3 deletions(-)",
+        "base": "upstream/master",
+        "base_sha": "469d9a0",
+        "pushed": false
+      },
+      "stepper": {
+        "ahead": 3,
+        "commits": [
+          "stepper: document Reserve for a non-owner stop",
+          "stepper: document half-steps, BUSY, and what a stop reports",
+          "stepper: add a userspace driver for the stepper capsule"
+        ],
+        "stat": "6 files changed, 364 insertions(+)",
         "base": "upstream/master",
         "base_sha": "469d9a0",
         "pushed": false
