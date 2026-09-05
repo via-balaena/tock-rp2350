@@ -317,7 +317,9 @@
         "stat": "3 files changed, 190 insertions(+), 1 deletion(-)",
         "base": "upstream/master",
         "base_sha": "2a7a40450",
-        "pushed": true
+        "pushed": true,
+        "on_remote": true,
+        "unpushed": 0
       },
       "bench/stepper-pico2w": {
         "ahead": 23,
@@ -349,7 +351,9 @@
         "stat": "46 files changed, 5446 insertions(+), 2771 deletions(-)",
         "base": "upstream/master",
         "base_sha": "2a7a40450",
-        "pushed": true
+        "pushed": true,
+        "on_remote": true,
+        "unpushed": 0
       },
       "bench/uart-fix-at-pinned-rev": {
         "ahead": 1,
@@ -359,7 +363,9 @@
         "stat": "2 files changed, 35 insertions(+), 9 deletions(-)",
         "base": "upstream/master",
         "base_sha": "2a7a40450",
-        "pushed": true
+        "pushed": true,
+        "on_remote": true,
+        "unpushed": 0
       },
       "boards-fix-ram-layout": {
         "ahead": 0,
@@ -367,7 +373,9 @@
         "stat": "",
         "base": "upstream/master",
         "base_sha": "2a7a40450",
-        "pushed": true
+        "pushed": true,
+        "on_remote": true,
+        "unpushed": 0
       },
       "boards-remove-dead-ram-layout": {
         "ahead": 1,
@@ -377,7 +385,9 @@
         "stat": "5 files changed, 30 deletions(-)",
         "base": "upstream/master",
         "base_sha": "2a7a40450",
-        "pushed": true
+        "pushed": true,
+        "on_remote": true,
+        "unpushed": 0
       },
       "learning/series": {
         "ahead": 187,
@@ -573,7 +583,9 @@
         "stat": "94 files changed, 42079 insertions(+), 3812 deletions(-)",
         "base": "upstream/master",
         "base_sha": "2a7a40450",
-        "pushed": true
+        "pushed": true,
+        "on_remote": true,
+        "unpushed": 0
       },
       "master": {
         "ahead": 0,
@@ -581,7 +593,9 @@
         "stat": "",
         "base": "upstream/master",
         "base_sha": "2a7a40450",
-        "pushed": true
+        "pushed": true,
+        "on_remote": true,
+        "unpushed": 0
       },
       "pico2w-radio-bench": {
         "ahead": 18,
@@ -608,7 +622,9 @@
         "stat": "48 files changed, 5032 insertions(+), 3812 deletions(-)",
         "base": "upstream/master",
         "base_sha": "2a7a40450",
-        "pushed": true
+        "pushed": true,
+        "on_remote": true,
+        "unpushed": 0
       },
       "pico2w-typed": {
         "ahead": 11,
@@ -628,7 +644,9 @@
         "stat": "38 files changed, 4423 insertions(+), 2550 deletions(-)",
         "base": "upstream/master",
         "base_sha": "2a7a40450",
-        "pushed": true
+        "pushed": true,
+        "on_remote": true,
+        "unpushed": 0
       },
       "rp2-adc": {
         "ahead": 3,
@@ -640,7 +658,9 @@
         "stat": "8 files changed, 431 insertions(+), 238 deletions(-)",
         "base": "upstream/master",
         "base_sha": "2a7a40450",
-        "pushed": true
+        "pushed": true,
+        "on_remote": true,
+        "unpushed": 0
       },
       "rp2-pad-controls": {
         "ahead": 2,
@@ -651,7 +671,9 @@
         "stat": "4 files changed, 51 insertions(+), 19 deletions(-)",
         "base": "upstream/master",
         "base_sha": "2a7a40450",
-        "pushed": true
+        "pushed": true,
+        "on_remote": true,
+        "unpushed": 0
       },
       "rp2-pio-prep": {
         "ahead": 1,
@@ -661,7 +683,9 @@
         "stat": "4 files changed, 136 insertions(+), 280 deletions(-)",
         "base": "upstream/master",
         "base_sha": "2a7a40450",
-        "pushed": true
+        "pushed": true,
+        "on_remote": true,
+        "unpushed": 0
       },
       "rp2-pio-tests": {
         "ahead": 5,
@@ -675,7 +699,9 @@
         "stat": "4 files changed, 502 insertions(+), 263 deletions(-)",
         "base": "upstream/master",
         "base_sha": "2a7a40450",
-        "pushed": true
+        "pushed": true,
+        "on_remote": true,
+        "unpushed": 0
       },
       "rp2-uart-abort-fix": {
         "ahead": 3,
@@ -687,7 +713,9 @@
         "stat": "4 files changed, 57 insertions(+), 13 deletions(-)",
         "base": "upstream/master",
         "base_sha": "2a7a40450",
-        "pushed": true
+        "pushed": true,
+        "on_remote": true,
+        "unpushed": 0
       },
       "rp2350-gpio-irq": {
         "ahead": 1,
@@ -697,7 +725,9 @@
         "stat": "1 file changed, 4 insertions(+)",
         "base": "upstream/master",
         "base_sha": "2a7a40450",
-        "pushed": true
+        "pushed": true,
+        "on_remote": true,
+        "unpushed": 0
       },
       "rp2350-spi-bench": {
         "ahead": 2,
@@ -708,7 +738,9 @@
         "stat": "4 files changed, 698 insertions(+), 4 deletions(-)",
         "base": "upstream/master",
         "base_sha": "2a7a40450",
-        "pushed": true
+        "pushed": true,
+        "on_remote": true,
+        "unpushed": 0
       },
       "stepper-capsule": {
         "ahead": 3,
@@ -720,7 +752,9 @@
         "stat": "5 files changed, 487 insertions(+)",
         "base": "upstream/master",
         "base_sha": "2a7a40450",
-        "pushed": true
+        "pushed": true,
+        "on_remote": true,
+        "unpushed": 0
       }
     },
     "libtock-rs": {
@@ -746,7 +780,9 @@
         "stat": "22 files changed, 2080 insertions(+), 22 deletions(-)",
         "base": "upstream/master",
         "base_sha": "469d9a0",
-        "pushed": true
+        "pushed": true,
+        "on_remote": true,
+        "unpushed": 0
       },
       "bench/reclaim-leak": {
         "ahead": 5,
@@ -760,7 +796,9 @@
         "stat": "9 files changed, 367 insertions(+), 1 deletion(-)",
         "base": "upstream/master",
         "base_sha": "469d9a0",
-        "pushed": true
+        "pushed": true,
+        "on_remote": true,
+        "unpushed": 0
       },
       "hw/pico2w-async": {
         "ahead": 50,
@@ -819,7 +857,9 @@
         "stat": "53 files changed, 5815 insertions(+), 58 deletions(-)",
         "base": "upstream/master",
         "base_sha": "469d9a0",
-        "pushed": true
+        "pushed": false,
+        "on_remote": true,
+        "unpushed": 4
       },
       "kit-examples": {
         "ahead": 2,
@@ -830,7 +870,9 @@
         "stat": "4 files changed, 259 insertions(+)",
         "base": "upstream/master",
         "base_sha": "469d9a0",
-        "pushed": true
+        "pushed": true,
+        "on_remote": true,
+        "unpushed": 0
       },
       "master": {
         "ahead": 0,
@@ -838,7 +880,9 @@
         "stat": "",
         "base": "upstream/master",
         "base_sha": "469d9a0",
-        "pushed": true
+        "pushed": true,
+        "on_remote": true,
+        "unpushed": 0
       },
       "pico2-platform": {
         "ahead": 3,
@@ -850,7 +894,9 @@
         "stat": "3 files changed, 11 insertions(+), 3 deletions(-)",
         "base": "upstream/master",
         "base_sha": "469d9a0",
-        "pushed": true
+        "pushed": true,
+        "on_remote": true,
+        "unpushed": 0
       },
       "platform-pico2": {
         "ahead": 2,
@@ -861,7 +907,9 @@
         "stat": "3 files changed, 9 insertions(+), 3 deletions(-)",
         "base": "upstream/master",
         "base_sha": "469d9a0",
-        "pushed": true
+        "pushed": true,
+        "on_remote": true,
+        "unpushed": 0
       },
       "stepper": {
         "ahead": 3,
@@ -873,7 +921,9 @@
         "stat": "6 files changed, 364 insertions(+)",
         "base": "upstream/master",
         "base_sha": "469d9a0",
-        "pushed": true
+        "pushed": true,
+        "on_remote": true,
+        "unpushed": 0
       },
       "unittest-fakes": {
         "ahead": 2,
@@ -884,7 +934,9 @@
         "stat": "4 files changed, 254 insertions(+), 20 deletions(-)",
         "base": "upstream/master",
         "base_sha": "469d9a0",
-        "pushed": true
+        "pushed": true,
+        "on_remote": true,
+        "unpushed": 0
       }
     },
     "book": {
@@ -894,7 +946,9 @@
         "stat": "",
         "base": "origin/master",
         "base_sha": "760025b",
-        "pushed": true
+        "pushed": true,
+        "on_remote": true,
+        "unpushed": 0
       },
       "pico2-getting-started": {
         "ahead": 10,
@@ -913,7 +967,9 @@
         "stat": "3 files changed, 240 insertions(+)",
         "base": "origin/master",
         "base_sha": "760025b",
-        "pushed": false
+        "pushed": true,
+        "on_remote": true,
+        "unpushed": 0
       }
     }
   }

@@ -415,6 +415,40 @@ def git(repo, *args):
         return None
 
 
+def remote_heads(path):
+    """Every branch tip the repo's remotes actually hold, asked of the remotes.
+
+    Deliberately not `origin/<branch>`, which this function replaced because that
+    ref is wrong in both directions here:
+
+      it names the WRONG REMOTE.  In ~/forge/book, `origin` is the upstream
+      tock/book and the fork is the remote named `fork`. A branch pushed to the
+      fork had no `origin/` ref and read as local-only — a false alarm, visible.
+
+      it is a LOCAL CACHE.  `origin/<branch>` keeps existing after the branch
+      moves on locally, so a branch pushed once and committed to since read as
+      backed. That is a false green, and it is the one that matters: the page
+      said work was safe while it existed on one disk.
+
+    Existence is not the question either; the tip is. A branch three commits
+    ahead of what the remote holds is not "pushed", however true it is that a
+    ref by that name is up there.
+
+    Fails toward the alarm: if a remote cannot be reached, it contributes no
+    tips and its branches read as unpushed rather than as backed.
+    """
+    tips = {}
+    for remote in (git(path, "remote") or "").splitlines():
+        ls = git(path, "ls-remote", "--heads", remote)
+        if ls is None:
+            continue
+        for line in ls.splitlines():
+            sha, _, ref = line.partition("\t")
+            if ref.startswith("refs/heads/"):
+                tips.setdefault(ref[len("refs/heads/"):], set()).add(sha)
+    return tips
+
+
 def survey_local():
     """Branches in each local clone, how far ahead they are, and their commits."""
     out = {}
@@ -424,6 +458,7 @@ def survey_local():
         refs = git(path, "for-each-ref", "--format=%(refname:short)", "refs/heads/")
         if refs is None:
             continue
+        tips = remote_heads(path)
         branches = {}
         for branch in refs.splitlines():
             log = git(path, "log", "--format=%s", f"{base}..{branch}")
@@ -431,14 +466,31 @@ def survey_local():
                 continue
             commits = [l for l in log.splitlines() if l]
             stat = git(path, "diff", "--shortstat", f"{base}...{branch}") or ""
+            head = git(path, "rev-parse", branch) or ""
+            held = tips.get(branch, set())
+            # A remote tip is only usable as a --not argument if this clone has
+            # the object; a remote that is AHEAD of us names commits we lack.
+            known = [sha for sha in held
+                     if git(path, "cat-file", "-e", sha + "^{commit}") is not None]
+            if head and head in held:
+                pushed, unpushed = True, 0
+            elif known:
+                pushed = False
+                unpushed = int(git(path, "rev-list", "--count", branch,
+                                   "--not", *known) or 0)
+            else:
+                # On no remote at all, or on a remote this clone cannot follow:
+                # everything since the base is unbacked as far as we can tell.
+                pushed, unpushed = False, len(commits)
             branches[branch] = {
                 "ahead": len(commits),
                 "commits": commits,
                 "stat": stat.strip(),
                 "base": base,
                 "base_sha": (git(path, "rev-parse", "--short", base) or ""),
-                "pushed": git(path, "rev-parse", "--verify", "-q",
-                              f"origin/{branch}") is not None,
+                "pushed": pushed,
+                "on_remote": bool(held),
+                "unpushed": unpushed,
             }
         out[name] = branches
     return out
@@ -571,6 +623,10 @@ def queue_rows(data):
                 "commits": info["commits"], "stat": info.get("stat", ""),
                 "base": info.get("base", ""), "base_sha": info.get("base_sha", ""),
                 "pushed": info["pushed"], "intent": intent, "note": note,
+                # .get for both: a data.json cached before these existed still
+                # renders under --offline rather than raising.
+                "on_remote": info.get("on_remote", info["pushed"]),
+                "unpushed": info.get("unpushed", 0),
                 "blocked": blocked, "pr": match, "drifted": drifted,
                 "state": pr_state(prs[match])[0] if match else None,
                 "label": pr_state(prs[match])[1] if match else None,
@@ -952,7 +1008,16 @@ def queue_html(rows, with_facts=False):
               ) if r["pr"] else ""
         drift = ('<span class="pill closed">branch has moved on</span>'
                  if r["drifted"] else "")
-        where = "" if r["pushed"] else '<span class="pill draft">local only</span>'
+        # Three states, not two. "local only" was being printed over a branch
+        # the fork held in full, and nothing at all over one whose last three
+        # commits existed on this disk and nowhere else.
+        if r["pushed"]:
+            where = ""
+        elif not r["on_remote"]:
+            where = '<span class="pill draft">local only</span>'
+        else:
+            where = ('<span class="pill draft">%d commit%s not pushed</span>'
+                     % (r["unpushed"], "" if r["unpushed"] == 1 else "s"))
         blocked = ('<span class="dd blocked">%s</span>' % e(r["blocked"])) if r["blocked"] else ""
         note = ('<span class="dd">%s</span>' % e(r["note"])) if r["note"] else (
             '<span class="dd blocked">No intent recorded for this branch.</span>')
