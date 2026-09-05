@@ -101,8 +101,8 @@ INTENT = {
     "tock:bench/reclaim-leak-demo": ("never", "Reproduces the GPIO reclaim leak on a board.", None),
     "tock:learning/series": ("never", "Nine chapters on how the kernel works, plus the tooling that builds them.", None),
     "tock:master": ("never", "Tracking branch.", None),
-    "libtock-rs:pico2-platform": ("upstream", "Load addresses for the Pico 2 and Pico 2 W, and a build error that named neither the platform nor the file to edit.", "Independent of the async work; can go any time."),
-    "libtock-rs:async/alarm": ("upstream", "Futures over the alarm and console drivers, a single-task executor, select, and fakes that model cancellation.", "The unittest fixes go first, as a smaller ask that establishes the reviewer relationship."),
+    "libtock-rs:pico2-platform": ("upstream", "Load addresses for the Pico 2 and Pico 2 W, and a build error that named neither the platform nor the file to edit.", "Ready now, and independent of the async work."),
+    "libtock-rs:async/alarm": ("upstream", "Futures over the alarm and console drivers, a single-task executor, select, and fakes that model cancellation. Meant to become two pull requests, but it is not two branches yet: the two unittest commits sit inside this one and have to be lifted out first.", "Hard order, not a preference. The async tests call fake::Alarm::new_deferred and fake::Console::new_deferred in three places, and those constructors are exactly what the unittest commits add — so either the unittest fixes land first and the async work builds on them, or the async pull request carries both commits itself. It cannot go first and cannot go alone."),
     "libtock-rs:hw/pico2w-async": ("never", "The two branches above merged together, as a vehicle for running on hardware.", None),
     "libtock-rs:bench/reclaim-leak": ("never", "The two apps that demonstrate the reclaim leak.", None),
     "libtock-rs:kit-examples": ("never", "Loopback and pin-walk apps written to exercise the bench.", None),
@@ -274,7 +274,7 @@ SILICON = [
 
 DOWNSTREAM = [
     ("Async userspace", "blocked",
-     "A Future and executor layer over Tock's syscalls in libtock-rs, validated on a Pico 2 W running the Pico 2 W kernel. The console half cannot be tested until the UART defect above is fixed: the failure is in the kernel, not the futures."),
+     "A Future and executor layer over Tock's syscalls in libtock-rs, validated on a Pico 2 W running the Pico 2 W kernel. The alarm half is done and measured. The console half is blocked on there being any environment at all where a userspace console read stays outstanding, and none is currently known — the failure is in the kernel, not in the futures."),
     ("A Pico page for the Tock book", "ready",
      "The book has no Pico coverage at all. Written and pushed; the pull request is not open yet."),
     ("Nine chapters on how the kernel works", "drafted",
@@ -282,6 +282,10 @@ DOWNSTREAM = [
 ]
 
 NOT_DONE = [
+    ("Run the UART defect under QEMU",
+     "This decides which of two waits the console work is in, and it needs no new infrastructure: libtock-rs already has `make qemu-example`, and it runs on hifive1 — one of the eleven affected boards. If hifive1 under QEMU reproduces the defect, then no known environment can hold a console read open and the wait is for the fix to land. If it does not reproduce, the console work unblocks the same day, on a laptop, with no fix and no board. It would also give the defect a reproduction a maintainer can run rather than take on trust."),
+    ("Extract the unittest fixes onto their own branch",
+     "Two commits currently inside the async branch, and the smaller of the two asks. Roughly half an hour of cherry-picking and a gate run."),
     ("File the four unfiled defects", "Each is demonstrated and none is filed. The constraint is review throughput, not the work."),
     ("Fix the reclaim leak", "The sibling capsule already shows what the fix looks like."),
     ("A userspace driver for PIO", "The RP2's most distinctive peripheral, and no process can reach it."),
