@@ -283,7 +283,7 @@ DOWNSTREAM = [
 
 NOT_DONE = [
     ("Run the UART defect under QEMU",
-     "This decides which of two waits the console work is in, and it needs no new infrastructure: libtock-rs already has `make qemu-example`, and it runs on hifive1 — one of the eleven affected boards. If hifive1 under QEMU reproduces the defect, then no known environment can hold a console read open and the wait is for the fix to land. If it does not reproduce, the console work unblocks the same day, on a laptop, with no fix and no board. It would also give the defect a reproduction a maintainer can run rather than take on trust."),
+     "The route is confirmed free. libtock-rs already has `make qemu-example` and it runs hifive1, which pairs a process console and the userspace console capsule on one multiplexer and drives them through the sifive UART — the same abort ordering as the RP2 chips. So the trigger is present, the cost is `make setup-qemu` plus an example, and no input is needed: the process console arms its receive at boot, so one read from an application is enough to fire the teardown. Either result is worth having. Reproducing means no known environment can hold a console read open and the userspace work waits for the fix; not reproducing means the console work unblocks the same day, on a laptop, with no fix and no board. It also turns the defect into something a maintainer can run rather than take on trust."),
     ("Extract the unittest fixes onto their own branch",
      "Two commits currently inside the async branch, and the smaller of the two asks. Roughly half an hour of cherry-picking and a gate run."),
     ("File the four unfiled defects", "Each is demonstrated and none is filed. The constraint is review throughput, not the work."),
