@@ -743,8 +743,9 @@
         "pushed": true
       },
       "hw/pico2w-async": {
-        "ahead": 31,
+        "ahead": 32,
         "commits": [
+          "examples: read the kit's buttons via GPIO edge interrupts",
           "Merge branch 'stepper' into hw/pico2w-async",
           "stepper: document Reserve for a non-owner stop",
           "stepper: document half-steps, BUSY, and what a stop reports",
@@ -777,7 +778,7 @@
           "alarm: add a Future-returning sleep and a block_on executor",
           "Add the Raspberry Pi Pico 2 as a build platform"
         ],
-        "stat": "30 files changed, 2664 insertions(+), 25 deletions(-)",
+        "stat": "31 files changed, 2759 insertions(+), 25 deletions(-)",
         "base": "upstream/master",
         "base_sha": "469d9a0",
         "pushed": false
