@@ -751,6 +751,17 @@
         "base": "upstream/master",
         "base_sha": "469d9a0",
         "pushed": true
+      },
+      "unittest-fakes": {
+        "ahead": 2,
+        "commits": [
+          "unittest: model an outstanding receive in fake::Console and implement abort",
+          "unittest: model alarm expiration and implement stop"
+        ],
+        "stat": "4 files changed, 254 insertions(+), 20 deletions(-)",
+        "base": "upstream/master",
+        "base_sha": "469d9a0",
+        "pushed": false
       }
     },
     "book": {
