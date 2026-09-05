@@ -857,9 +857,9 @@
         "stat": "53 files changed, 5815 insertions(+), 58 deletions(-)",
         "base": "upstream/master",
         "base_sha": "469d9a0",
-        "pushed": false,
+        "pushed": true,
         "on_remote": true,
-        "unpushed": 4
+        "unpushed": 0
       },
       "kit-examples": {
         "ahead": 2,
