@@ -320,8 +320,9 @@
         "pushed": true
       },
       "bench/stepper-pico2w": {
-        "ahead": 21,
+        "ahead": 22,
         "commits": [
+          "boards: raspberry_pi_pico_2_w: expose SPI0 for display probing",
           "boards: raspberry_pi_pico_2_w: expose the ADC to userspace",
           "chips: rp2350: add the SAR ADC",
           "chips: rp2040: move the SAR ADC driver into the shared rp2xxx crate",
@@ -344,7 +345,7 @@
           "chips: rp2350: gpio: add the pad controls the RP2040 has",
           "chips: rp2040: pio: retire the examples module"
         ],
-        "stat": "46 files changed, 5373 insertions(+), 2771 deletions(-)",
+        "stat": "46 files changed, 5432 insertions(+), 2771 deletions(-)",
         "base": "upstream/master",
         "base_sha": "2a7a40450",
         "pushed": false
@@ -624,7 +625,7 @@
           "chips: rp2350: add the SAR ADC",
           "chips: rp2040: move the SAR ADC driver into the shared rp2xxx crate"
         ],
-        "stat": "8 files changed, 427 insertions(+), 229 deletions(-)",
+        "stat": "8 files changed, 431 insertions(+), 238 deletions(-)",
         "base": "upstream/master",
         "base_sha": "2a7a40450",
         "pushed": false
@@ -750,8 +751,12 @@
         "pushed": true
       },
       "hw/pico2w-async": {
-        "ahead": 40,
+        "ahead": 44,
         "commits": [
+          "examples: ask the kit's display what controller it is",
+          "spi_controller: expose the bus configuration the capsule already has",
+          "examples: find the display's backlight pin",
+          "examples: find out which kind of beeper the kit has, and sound it",
           "examples: read the kit's joystick",
           "adc: let a caller name the channel",
           "stepper: a stop returns the step count",
@@ -793,7 +798,7 @@
           "alarm: add a Future-returning sleep and a block_on executor",
           "Add the Raspberry Pi Pico 2 as a build platform"
         ],
-        "stat": "40 files changed, 3822 insertions(+), 53 deletions(-)",
+        "stat": "48 files changed, 4739 insertions(+), 53 deletions(-)",
         "base": "upstream/master",
         "base_sha": "469d9a0",
         "pushed": false
