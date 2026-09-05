@@ -686,8 +686,9 @@
         "pushed": true
       },
       "hw/pico2w-async": {
-        "ahead": 26,
+        "ahead": 27,
         "commits": [
+          "examples: drive a 28BYJ-48 stepper through a ULN2003",
           "examples: warn that cargo build alone leaves a stale tbf",
           "examples: record that the control run is not reachable from userspace",
           "examples: reproduce the UART mux receive teardown under QEMU",
@@ -715,7 +716,7 @@
           "alarm: add a Future-returning sleep and a block_on executor",
           "Add the Raspberry Pi Pico 2 as a build platform"
         ],
-        "stat": "25 files changed, 2170 insertions(+), 25 deletions(-)",
+        "stat": "26 files changed, 2300 insertions(+), 25 deletions(-)",
         "base": "upstream/master",
         "base_sha": "469d9a0",
         "pushed": false

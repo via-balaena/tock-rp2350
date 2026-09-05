@@ -102,7 +102,7 @@ INTENT = {
     "tock:bench/reclaim-leak-demo": ("never", "Reproduces the GPIO reclaim leak on a board.", None),
     "tock:learning/series": ("never", "Nine chapters on how the kernel works, plus the tooling that builds them.", None),
     "tock:master": ("never", "Tracking branch.", None),
-    "libtock-rs:pico2-platform": ("upstream", "Load addresses for the Pico 2 and Pico 2 W, and a build error that named neither the platform nor the file to edit.", "Ready now, and independent of the async work."),
+    "libtock-rs:pico2-platform": ("upstream", "Load addresses for the Pico 2 and Pico 2 W, and a build error that named neither the platform nor the file to edit.", "Independent of the async work, but wants splitting first: the Pico 2 W row names a board that is not upstream yet."),
     "libtock-rs:async/alarm": ("upstream", "Futures over the alarm and console drivers, a single-task executor, select, and fakes that model cancellation. Meant to become two pull requests, but it is not two branches yet: the two unittest commits sit inside this one and have to be lifted out first.", "Hard order, not a preference. The async tests call fake::Alarm::new_deferred and fake::Console::new_deferred in three places, and those constructors are exactly what the unittest commits add — so either the unittest fixes land first and the async work builds on them, or the async pull request carries both commits itself. It cannot go first and cannot go alone."),
     "libtock-rs:hw/pico2w-async": ("never", "The two branches above merged together, as a vehicle for running on hardware — and, for now, the only home of `examples/console_read_busy.rs`, the QEMU reproduction of the UART defect.", "The branch itself is not for upstream, but the reproduction on it is meant to be run by other people, so it needs a home that is. Where it goes depends on whether it travels with a defect report or stands alone as a libtock-rs example."),
     "libtock-rs:bench/reclaim-leak": ("never", "The two apps that demonstrate the reclaim leak.", None),
@@ -259,7 +259,7 @@ FACTS = {
         ("What it adds", "Build platform entries for the Raspberry Pi Pico 2 and Pico 2 W, and a build error that named neither the platform nor the file to edit."),
         ("Where the addresses came from", "Read off a linked kernel with nm rather than off the linker script, because the application region is what the kernel leaves rather than what the board reserves. For the Pico 2 W: _sapps 0x10090000, _eapps 0x100d0000, _sappmem 0x20005c04, _eappmem 0x20082000. The RAM row starts at 0x20020000 and +392K lands exactly on _eappmem."),
         ("Verified", "Applications built through these rows load, run and print on a Pico 2 W. Both boards' numbers were reproduced independently in two sessions against separately built kernels that came out to identical text and bss."),
-        ("Ready", "Independent of the async work. Nothing blocks it."),
+        ("It should be split before it goes", "Two of its three commits are ready: the Pico 2 row and the error-message fix. The third adds a `raspberry_pi_pico_2_w` row, and that board is not upstream yet — it is an open pull request in the kernel repository. A reviewer meeting a platform entry for a board they cannot find would be right to ask, and the answer is another repository's unmerged work. Send the Pico 2 row now; the W row follows the board."),
     ],
     "book:pico2-getting-started": [
         ("What it adds", "A getting-started page for the Raspberry Pi Pico 2. The book currently has no Pico coverage at all."),
