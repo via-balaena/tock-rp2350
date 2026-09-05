@@ -46,6 +46,7 @@ PAIRS = [
     ("draft-ink", ["draft-bg"]),
     ("closed-ink", ["closed-bg"]),
     ("unfiled-ink", ["unfiled-bg"]),
+    ("ink", ["draft-bg"]),          # the branch chip on defect rows
     # Verification badges sit on whichever node fill the commit's state gives it.
     ("host", ["merged-bg", "review-bg", "approved-bg", "draft-bg", "closed-bg", "panel"]),
     ("silicon", ["merged-bg", "review-bg", "approved-bg", "draft-bg", "closed-bg", "panel"]),

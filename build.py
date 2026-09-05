@@ -261,11 +261,11 @@ DEFECTS = [
      "Only one state machine's interrupt was ever handled."),
     ("PIO: an interrupt flag scoped to the wrong thing", "fixed", 5150,
      "The flag belongs to the block; treating it as per-state-machine mis-attributes interrupts."),
-    ("UART: an aborted receive tears down every other receive", "fixed-local", None,
+    ("UART: an aborted receive tears down every other receive", "fixed-local", "rp2-uart-abort-fix",
      "The abort completion calls the client back before marking the receiver idle, so the multiplexer's restart is refused and it ends every device's receive instead. The same code is in three chip drivers, and eleven boards pair a process console with the userspace console on one multiplexer. Reproducible under QEMU with no hardware, on hifive1, at the eighteen-month-old revision libtock-rs already pins — and no application can avoid it. Removing the delay before the read, and then issuing the read before any other system call, both still fail: the process console's prompt prints before the application's first line, so the receive is already armed before the application's first instruction. \u201cThe app read too early\u201d is not an available explanation. What the reproduction still lacks is the opposite control, a kernel with no process console on that multiplexer, which is a board change rather than an application one."),
-    ("UART: a failed receive hands back the wrong static buffer", "fixed-local", None,
+    ("UART: a failed receive hands back the wrong static buffer", "fixed-local", "rp2-uart-abort-fix",
      "A virtual device propagates the multiplexer's error with `?`, and that error carries the multiplexer's buffer rather than the caller's. Two static buffers change owners and the multiplexer's slot is left empty for the life of the board."),
-    ("UART: the teardown drops a buffer it cannot deliver", "fixed-local", None,
+    ("UART: the teardown drops a buffer it cannot deliver", "fixed-local", "rp2-uart-abort-fix",
      "When a restart fails the mux takes every device's buffer, but only returns it to devices still in the Receiving state — so a device that had aborted a read loses its buffer permanently. Found while fixing the two above."),
     ("A stopped process never gets its GPIO reclaimed", "unfiled", None,
      "The pin stays driven forever. A sibling capsule already has the fix, which makes this a consistency bug. Five of forty-five capsules are affected."),
@@ -674,6 +674,14 @@ header p{max-width:76ch;color:var(--ink-soft)}
 h2{font-size:1.4rem;margin:0 0 6px;letter-spacing:-.01em}
 .lede{color:var(--ink-soft);max-width:78ch;margin:0 0 18px}
 section{padding:50px 0 0}
+ul.counts{display:flex;gap:34px;list-style:none;padding:0;margin:30px 0 0}
+ul.counts a{text-decoration:none;color:inherit;display:block}
+ul.counts a:hover .k{color:var(--accent)}
+ul.counts .n{display:block;font-size:1.9rem;font-weight:600;letter-spacing:-.02em}
+ul.counts .k{display:block;font-size:.78rem;text-transform:uppercase;
+letter-spacing:.07em;color:var(--ink-faint)}
+code.branch{background:var(--draft-bg);padding:2px 7px;border-radius:5px;
+font-size:.8rem;color:var(--ink)}
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 8px}
 .chip{display:flex;align-items:center;gap:9px;padding:7px 12px 7px 13px;border-radius:999px;
 border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer;font:inherit;font-size:.84rem}
@@ -804,6 +812,21 @@ svg.querySelectorAll('.node').forEach(g => {
 """
 
 
+def ref_html(ref):
+    """A defect points at the pull request carrying its fix, or at the branch.
+
+    An unpushed branch has no URL, so it renders as a name. That is the point:
+    a reader can see the fix exists and see that it is not somewhere they can
+    fetch it from.
+    """
+    if ref is None:
+        return ""
+    if isinstance(ref, int):
+        return (' <a class="ref" href="https://github.com/%s/pull/%d">#%d</a>'
+                % (REPO, ref, ref))
+    return ' <code class="branch">%s</code>' % e(ref)
+
+
 def queue_html(rows):
     out = []
     for r in rows:
@@ -886,9 +909,7 @@ def render(data):
         '<li><span class="pill %s">%s</span><strong>%s</strong>%s'
         '<span class="dd">%s</span></li>'
         % (DEFECT_PILL[st][0], DEFECT_PILL[st][1], e(name),
-           (' <a class="ref" href="https://github.com/%s/pull/%d">#%d</a>'
-            % (REPO, ref, ref)) if ref else "",
-           e(detail))
+           ref_html(ref), e(detail))
         for name, st, ref, detail in DEFECTS
     )
     silicon_rows = "".join("<li><strong>%s</strong><span class='dd'>%s</span></li>"
@@ -935,6 +956,14 @@ def render(data):
     <cite>— %(who)s, reviewing <a href="%(qurl)s">%(where)s</a></cite>
   </blockquote>
   %(answer)s
+  <ul class="counts">
+    <li><a href="#queue"><span class="n">%(nreview)d</span>
+      <span class="k">in review</span></a></li>
+    <li><a href="#queue"><span class="n">%(nready)d</span>
+      <span class="k">finished, not sent &mdash; %(readyc)d commits</span></a></li>
+    <li><a href="#defects"><span class="n">%(nfixed)d</span>
+      <span class="k">defects with a fix written</span></a></li>
+  </ul>
 </header>
 
 <section>
@@ -962,7 +991,7 @@ def render(data):
   </div>
 </section>
 
-<section>
+<section id="queue">
   <h2>The queue</h2>
   %(policy)s
   <p class="lede">Read from the working clones, so it is what exists rather than what
@@ -991,7 +1020,7 @@ def render(data):
   <div class="prgrid">%(cards)s</div>
 </section>
 
-<section>
+<section id="defects">
   <h2>Defects found</h2>
   <p class="lede">Each demonstrated before it was written down — by a test that fails
   without the fix, or by an instrumented kernel on a board. The UART pair needs no board
@@ -1049,6 +1078,7 @@ def render(data):
         "nmerged": len(merged), "nopen": len(open_prs),
         "defects": defect_rows, "silicon": silicon_rows, "issues": issue_rows,
         "policy": para(POLICY), "nreview": len(in_review), "nready": len(ready),
+        "nfixed": len([d for d in DEFECTS if d[1] == "fixed-local"]),
         "nnever": len(never), "readyc": ready_commits,
         "qreview": queue_html(in_review), "qready": queue_html(ready),
         "qnever": queue_html(never),
