@@ -306,5 +306,408 @@
       "title": "rp2x PIO: a test plan",
       "url": "https://github.com/tock/tock/issues/5152"
     }
-  ]
+  ],
+  "local": {
+    "tock": {
+      "bench/reclaim-leak-demo": {
+        "ahead": 1,
+        "commits": [
+          "bench: reproduce the pwm.rs reclaim leak on a Pico 2"
+        ],
+        "pushed": true
+      },
+      "boards-fix-ram-layout": {
+        "ahead": 0,
+        "commits": [],
+        "pushed": true
+      },
+      "boards-remove-dead-ram-layout": {
+        "ahead": 1,
+        "commits": [
+          "boards: remove dead boot-from-RAM layout"
+        ],
+        "pushed": true
+      },
+      "learning/series": {
+        "ahead": 186,
+        "commits": [
+          "learning: keep the two silicon demonstrations that are not for merging",
+          "learning: bring the three review tools into learning/tools",
+          "learning: both kernels print on a panic, so say what actually differs",
+          "learning: which OpenOCD you install is the board-specific part",
+          "learning: quote the list header the console actually prints",
+          "learning: a way to flash an app to a Pico 2, since make program cannot",
+          "learning: every chapter names the book page it sits beside",
+          "learning: the series stands beside the Tock Book rather than next to it",
+          "fix docs main index.html pt 2",
+          "fix docs",
+          "learning: each correction said once, in the place it is needed",
+          "learning: the layout gets drawn, and the life gets a total",
+          "learning: fix the assertion order my last commit broke",
+          "learning: chapter 8's four designs get priced instead of described",
+          "learning: chapter 5's comparison becomes a table, and its states become a machine",
+          "learning: the book's closing figure had lost a chapter",
+          "learning: a contact sheet, so the visual pass stops being sampled",
+          "learning: chapter 1 gets the two bets the split took away from it",
+          "learning: the bar says \"Chapter 3\" and lets the pips do the rest",
+          "learning: a read of the cover, and five things it was getting wrong",
+          "learning: the map's circles show their own numbers again",
+          "learning: chapter 2 gets an opening, and stops starting with its longest section",
+          "learning: chapter 2 gets a plainer title",
+          "learning: chapter 1 becomes two, and the series renumbers to nine",
+          "learning: the bets announce themselves, and say what they belong to",
+          "learning: reachable with a thumb, and pips that remember",
+          "learning: the book says where you are in it",
+          "learning: twelve imperatives stop giving away their own figure",
+          "learning: predict before the reveal, in every chapter",
+          "learning: chapter 1's last four figures leave JavaScript too",
+          "learning: four of chapter 1's figures leave JavaScript for the markup",
+          "learning: chapter 3's last three figures, and a third stale count",
+          "learning: chapter 3's address list was wrong, and is now a decoder",
+          "learning: chapter 7's two arithmetic figures become benches",
+          "learning: chapter 6 gets three instruments instead of three panels",
+          "learning: chapter 4's walk and its allocation, and a gate for borrowed classes",
+          "learning: chapter 3's three machines, and six citations that were wrong",
+          "learning: chapter 2 becomes a sequence you can walk",
+          "learning: chapter 1's one figure that did nothing",
+          "learning: the cover gets a map, and comes under the gate",
+          "learning: chapter 0's remaining five figures, and the prose",
+          "learning: chapter 0's two benches, wired and broken on purpose",
+          "learning: serve the whole book locally, rebuilt on every request",
+          "learning: chapter 5 becomes a machine you can drive",
+          "learning: the cover can say the radio works",
+          "learning: the series stops apologising for the Pico 2 W",
+          "Merge branch 'pico2w-full' into series-repin-test",
+          "boards: raspberry_pi_pico_2_w: bring up the CYW43439 radio",
+          "boards: add Raspberry Pi Pico 2 W",
+          "boards: pico 2: split into library and binary",
+          "boards: pico 2: resolve openocd config path",
+          "chips: rp2040: move the PIO gSPI driver into the shared rp2xxx crate",
+          "chips: rp2350: add PIO and DMA",
+          "chips: rp2040: move the DMA driver into the shared rp2xxx crate",
+          "chips: rp2040: move the PIO driver into the shared rp2xxx crate",
+          "chips: rp2350: add SPI driver",
+          "chips: rp2040: move the PL022 SPI driver into a shared rp2xxx crate",
+          "chips: rp2350: gpio: add the pad controls the RP2040 has",
+          "chips: rp2040: pio: move gpio_init out of the driver",
+          "chips: rp2040: pio: take pin numbers, derive FIFO addresses",
+          "chips: rp2040: dma: compute the PIO transfer request number",
+          "chips: rp2040: pio: retire the examples module",
+          "learning: a Pico 2 W is not the wrong board, and the page saying so was stale",
+          "learning: neither of the probe's connectors carries power, not just one",
+          "learning: chapter 0 stops quoting a device name nobody has seen",
+          "learning: chapter 0 verified on hardware, and five things it had wrong",
+          "learning: the book kept its own copy of the font list, and it went stale",
+          "learning: restyle onto Tock's own palette and typography",
+          "learning: bind the series into one book, and make the build prove it",
+          "learning: fifth review pass on chapter 0 -- converged",
+          "learning: third and fourth review passes on chapter 0",
+          "learning: second review pass on chapter 0 -- a chapter you could not follow",
+          "learning: first review pass on chapter 0 -- what the banner does not prove",
+          "learning: chapter 0 joins the majority pin instead of adding a third",
+          "learning: chapter 0 accommodates a split bench, and a sheet arrived missing a rule",
+          "learning: chapter 0's first bench finding needed no bench",
+          "learning: chapter 0, the hands-on chapter the other seven assumed",
+          "learning: the cover is a page in the order, not a table of it",
+          "learning: seven islands become a book, and a gate for the order",
+          "learning: make preflight's licence check pass again",
+          "learning: chapter 3, what the guard at the bottom can see",
+          "learning: retire \"given back\", and make the README's count of checks true again",
+          "learning: third pass -- str is an instruction, and the README was a third cover",
+          "learning: second pass on the cover -- the same false claim, in the sentence written to replace it",
+          "learning: first review pass on the cover -- two false claims in the panel about not asking to be believed",
+          "learning: a front door, and a gate for the one file that repeats itself",
+          "learning: third pass on chapter 7 -- the series checked its claims, not its instructions",
+          "learning: second review pass on chapter 7 -- the lesson I recorded and ignored",
+          "learning: first review pass on chapter 7 -- what a closing chapter gets wrong",
+          "learning: chapter 7, Grants -- the series closes with no debts open",
+          "learning: third pass on chapter 6 -- converged, and one gate later",
+          "learning: second review pass on chapter 6 -- three mature lenses went quiet",
+          "learning: first review pass on chapter 6 -- what a mechanism is claimed to be for",
+          "learning: chapter 6, and the flex row every chapter has shipped since the first",
+          "learning: fourth pass on chapter 5, and two gates the series was missing",
+          "learning: third review pass on chapter 5 -- every absolute claim on the page",
+          "learning: second review pass on chapter 5 -- the glossary nobody had aimed at",
+          "learning: review pass on chapter 5 -- arithmetic the chapter said you could do",
+          "learning: chapter 5 -- the exception the datasheet names does not run",
+          "learning: say which board the series is about -- the reader's may not be it",
+          "learning: third review pass on chapter 4 -- a metaphor with no referent for 7,300 characters",
+          "learning: second review pass on chapter 4 -- no facts wrong, a stylesheet full of lies",
+          "learning: review pass on chapter 4 -- a checksum that skips itself",
+          "learning: chapter 4 -- what a process is",
+          "learning: fifth review pass on chapter 3 -- a quarter of it needed JavaScript",
+          "learning: fourth review pass on chapter 3 -- nine words the series never defined",
+          "learning: third review pass on chapter 3 -- no facts wrong, five framings off",
+          "learning: second review pass on chapter 3 -- two facts wrong, one section unread",
+          "learning: review pass on chapter 3 -- a guarantee stated without its edge",
+          "learning: chapter 3 -- what a driver may touch",
+          "learning: refuse a CSS rule the page never uses, and take out 23 of them",
+          "learning: a ledger for what one chapter promises another",
+          "learning: third review pass on chapter 2 -- three promises the text did not keep",
+          "learning: second review pass on chapter 2 -- core 1 was missing entirely",
+          "learning: review pass on chapter 2 -- two facts wrong, and no sources at all",
+          "learning: chapter 2 is complete -- 2,595 words, seven figures, 43 assertions",
+          "learning: chapter 2 -- the vector table, and what \"set up memory\" means",
+          "learning: chapter 2 begins -- the frame, and the block decoded",
+          "learning: the poppl sentence was restating the listing's own comments",
+          "learning: cut the wordy parts, since any of them is a stall point",
+          "learning: apply the table rule to chapter 1, not just to chapter 2",
+          "learning: the sixteen hex digits were a sentence; they are a table",
+          "learning: scope the series at seven chapters, and say why seven",
+          "learning: an assertion that could not fail, and two widgets that needed JS",
+          "learning: two figures never said what to do with them",
+          "learning: reading it end to end again, which is what found these",
+          "learning: a review pass over everything today's work added",
+          "learning: Check yourself asks for an answer before it gives one",
+          "learning: two packages, one silicon, as something you switch",
+          "learning: the street table is runnable, row by row",
+          "learning: Figure 17, so the closing argument is something you do",
+          "learning: the render sweep, and the two things it found",
+          "learning: let the ladder show its shape, and ship the fixture renderer",
+          "learning: the digit buttons were saying 0X0, and nothing could see it",
+          "learning: six defects on the page, and the check that could not see them",
+          "learning: make the review passes a routine instead of a memory",
+          "learning: with scripting off, stop telling the reader to click things",
+          "learning: three fixes from reviewing the figure I just built",
+          "learning: the disassembly's three lines are things you click now",
+          "learning: the README carried the marker it said the series does not use",
+          "learning: compile Figure 14 rather than trusting it",
+          "learning: the glossary promised every word and was missing one",
+          "learning: the shim's className and classList were unrelated stores",
+          "learning: AGND was a ground in two places and not one in a third",
+          "learning: one quoted word had the wrong capital",
+          "learning: a pin can also listen, which the chapter said it could not",
+          "learning: the chapter said \"exactly\" three times and meant it twice",
+          "learning: a hint still pointed at the code block Figure 7 replaced",
+          "learning: bring the README's account of the gate back in step",
+          "learning: a static register listing is a legitimate thing to print",
+          "learning: the digit cells never said which digit they held",
+          "learning: keep Figure 7's three copies of each offset agreeing",
+          "learning: turn the 0x explainer and the register listing into figures",
+          "learning: relicense the figure's demo source Apache-2.0 OR MIT",
+          "learning: the LICENSE described a scope that was never true",
+          "learning: document the tooling as it now is, and fix a bug in the gate",
+          "learning: the reading estimate had gone stale",
+          "learning: stop the shim dropping innerHTML, and assert the race's verdict",
+          "learning: the prediction widget never worked in a browser",
+          "learning: ignore demo build output, and delete seven dead CSS rules",
+          "learning: fix the build line in optimizer-demo.rs",
+          "learning: make Figure 12 reproducible, and match the source it shows",
+          "learning: drop an unverifiable claim from the volatile figure",
+          "learning: review pass over the volatile figure",
+          "learning: rebuild the volatile section as a figure of real compiler output",
+          "learning: make the tinted same-kind rows legible",
+          "learning: stop the scale bar being drawn through the dimensions",
+          "learning: fix the focus ring, which never rendered",
+          "learning: fourth review round -- close the deferred defects, and one shipped bug",
+          "learning: third review round -- focus indicator and adversarial coverage",
+          "learning: second review round -- accessibility and the checks' blind spots",
+          "learning: review pass over chapter 1's new opening",
+          "learning: label pin 36 as the datasheet's pinout figure does",
+          "learning: rebuild chapter 1's opening as three interactives",
+          "learning: report the Pico 2 SRAM correction in chapter 1",
+          "learning: rebuild chapter 1 for a reader starting from zero",
+          "learning: wrap step text instead of clipping it on narrow screens",
+          "learning: fix what looking at the rendered page exposed",
+          "learning: proofread chapter 1's interactive figure text",
+          "learning: tighten chapter 1's prose, styles and citations",
+          "learning: fix contrast and accessibility defects, and gate them",
+          "learning: resolve chapter 1's three remaining inferences",
+          "learning: audit chapter 1 for unsupported claims",
+          "learning: add a quality gate for the chapters",
+          "learning: correct five factual errors in chapter 1",
+          "learning: add chapter 1, everything is memory"
+        ],
+        "pushed": true
+      },
+      "master": {
+        "ahead": 0,
+        "commits": [],
+        "pushed": true
+      },
+      "pico2w-radio-bench": {
+        "ahead": 18,
+        "commits": [
+          "NOT FOR UPSTREAM: defer each command by one kernel loop iteration",
+          "NOT FOR UPSTREAM: extend the bring-up to station mode and a scan",
+          "NOT FOR UPSTREAM: drive the CYW43439 at boot",
+          "boards: raspberry_pi_pico_2_w: bring up the CYW43439 radio",
+          "boards: add Raspberry Pi Pico 2 W",
+          "boards: pico 2: split into library and binary",
+          "boards: pico 2: resolve openocd config path",
+          "chips: rp2040: move the PIO gSPI driver into the shared rp2xxx crate",
+          "chips: rp2350: add PIO and DMA",
+          "chips: rp2040: move the DMA driver into the shared rp2xxx crate",
+          "chips: rp2040: move the PIO driver into the shared rp2xxx crate",
+          "chips: rp2350: add SPI driver",
+          "chips: rp2040: move the PL022 SPI driver into a shared rp2xxx crate",
+          "chips: rp2350: gpio: add the pad controls the RP2040 has",
+          "chips: rp2040: pio: move gpio_init out of the driver",
+          "chips: rp2040: pio: take pin numbers, derive FIFO addresses",
+          "chips: rp2040: dma: compute the PIO transfer request number",
+          "chips: rp2040: pio: retire the examples module"
+        ],
+        "pushed": true
+      },
+      "pico2w-typed": {
+        "ahead": 11,
+        "commits": [
+          "boards: raspberry_pi_pico_2_w: bring up the CYW43439",
+          "chips: rp2350: hold the DMA and PIO0 in the default peripherals",
+          "boards: add Raspberry Pi Pico 2 W",
+          "boards: pico 2: split into library and binary",
+          "boards: pico 2: resolve openocd config path",
+          "chips: rp2040: move the PIO gSPI driver into the shared rp2xxx crate",
+          "chips: rp2350: add DMA",
+          "chips: rp2350: add PIO",
+          "chips: rp2040: move the PIO driver into the shared rp2xxx crate",
+          "chips: rp2350: gpio: add the pad controls the RP2040 has",
+          "chips: rp2040: pio: retire the examples module"
+        ],
+        "pushed": true
+      },
+      "rp2-pad-controls": {
+        "ahead": 2,
+        "commits": [
+          "chips: rp2350: gpio: add the pad controls the RP2040 has",
+          "chips: rp2xxx: share the GPIO pad control enums"
+        ],
+        "pushed": true
+      },
+      "rp2-pio-prep": {
+        "ahead": 1,
+        "commits": [
+          "chips: rp2040: pio: retire the examples module"
+        ],
+        "pushed": true
+      },
+      "rp2-pio-tests": {
+        "ahead": 5,
+        "commits": [
+          "chips: rp2040: an irq flag belongs to the block, not a state machine",
+          "chips: rp2040: service every PIO interrupt line, not one of four",
+          "chips: rp2040: test the PIO arithmetic that has no other check",
+          "chips: rp2040: stop add_program panicking on half of its own range",
+          "chips: rp2040: fix the PIO RX FIFO join, which never happened"
+        ],
+        "pushed": true
+      },
+      "rp2350-spi-bench": {
+        "ahead": 2,
+        "commits": [
+          "boards: pico 2: bench harness for the SPI loopback test",
+          "chips: rp2350: add SPI driver"
+        ],
+        "pushed": true
+      }
+    },
+    "libtock-rs": {
+      "async/alarm": {
+        "ahead": 15,
+        "commits": [
+          "console: record why the abort's return value carries no information",
+          "examples: exercise select on hardware in async_probe",
+          "async: add join and select",
+          "unittest: model an outstanding receive in fake::Console",
+          "unittest: model alarm expiration so cancellation can be asserted",
+          "examples: add async_probe, an on-device self-test for the async stack",
+          "make: build and lint the async examples in the test gate",
+          "examples: add async_sleep, the first app built on the async stack",
+          "syscalls_tests: clean up the async_call test fixtures",
+          "syscalls_tests: test async_call directly",
+          "platform: extract the async soundness argument into one audited place",
+          "console: add a Future-returning read",
+          "alarm: document the invariant the waker swap leans on",
+          "alarm: stop the alarm when a Sleep is cancelled",
+          "alarm: add a Future-returning sleep and a block_on executor"
+        ],
+        "pushed": false
+      },
+      "bench/reclaim-leak": {
+        "ahead": 5,
+        "commits": [
+          "examples: two apps for the reclaim-leak bench",
+          "Merge branch 'kit-examples' into bench/reclaim-leak",
+          "Add the Raspberry Pi Pico 2 as a build platform",
+          "examples: add SPI loopback and an output-walk probe",
+          "examples: add Pico Breadboard Kit blink and pin probe"
+        ],
+        "pushed": true
+      },
+      "hw/pico2w-async": {
+        "ahead": 23,
+        "commits": [
+          "examples: report the read's error code, and stop overstating ArmOnce",
+          "Merge branch 'async/alarm' into hw/pico2w-async",
+          "examples: exercise select on hardware in async_probe",
+          "Merge branch 'pico2-platform' into hw/pico2w-async",
+          "runner: say which platform has no architecture mapping",
+          "Merge branches 'pico2-platform' and 'async/alarm' into hw/pico2w-async",
+          "Add the Raspberry Pi Pico 2 W as a build platform",
+          "async: add join and select",
+          "unittest: model an outstanding receive in fake::Console",
+          "unittest: model alarm expiration so cancellation can be asserted",
+          "Merge branch 'async/alarm' into hw/pico2w-async",
+          "examples: add async_probe, an on-device self-test for the async stack",
+          "Merge branch 'pico2-platform' into hw/pico2w-async",
+          "make: build and lint the async examples in the test gate",
+          "examples: add async_sleep, the first app built on the async stack",
+          "syscalls_tests: clean up the async_call test fixtures",
+          "syscalls_tests: test async_call directly",
+          "platform: extract the async soundness argument into one audited place",
+          "console: add a Future-returning read",
+          "alarm: document the invariant the waker swap leans on",
+          "alarm: stop the alarm when a Sleep is cancelled",
+          "alarm: add a Future-returning sleep and a block_on executor",
+          "Add the Raspberry Pi Pico 2 as a build platform"
+        ],
+        "pushed": false
+      },
+      "kit-examples": {
+        "ahead": 2,
+        "commits": [
+          "examples: add SPI loopback and an output-walk probe",
+          "examples: add Pico Breadboard Kit blink and pin probe"
+        ],
+        "pushed": true
+      },
+      "master": {
+        "ahead": 0,
+        "commits": [],
+        "pushed": true
+      },
+      "pico2-platform": {
+        "ahead": 3,
+        "commits": [
+          "runner: say which platform has no architecture mapping",
+          "Add the Raspberry Pi Pico 2 W as a build platform",
+          "Add the Raspberry Pi Pico 2 as a build platform"
+        ],
+        "pushed": true
+      }
+    },
+    "book": {
+      "master": {
+        "ahead": 0,
+        "commits": [],
+        "pushed": true
+      },
+      "pico2-getting-started": {
+        "ahead": 10,
+        "commits": [
+          "setup: the by-hand UF2 command ran in the wrong directory",
+          "setup: the headless mount commands failed if you actually ran them",
+          "setup: a headless Linux box mounts nothing, and the page assumed it did",
+          "setup: the console echoes, so say what actually proves the input wire",
+          "setup: cite the page that actually makes the no-reflash promise",
+          "setup: tighten the Pico 2 page for density and reading order",
+          "setup: cut the Pico 2 page's applications section",
+          "setup: refresh the Pico 2 page's size line",
+          "setup: link the Pico 2 page's first mention of TBF",
+          "setup: add a getting started page for the Raspberry Pi Pico 2"
+        ],
+        "pushed": false
+      }
+    }
+  }
 }

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Check that the published page is still true, still current and still legible.
 
-Six checks. Each one exists because it has already caught something, or because
+Seven checks. Each one exists because it has already caught something, or because
 it guards a mistake that was actually made here:
 
   drift       index.html is not what build.py would produce from data.json,
@@ -10,6 +10,8 @@ it guards a mistake that was actually made here:
               that matters: a merged pull request still shown as open is the
               page lying.
   annotated   a commit is on the page with no label or verification badge.
+  intent      a local branch is in the queue with no recorded intent, so a
+              reader cannot tell whether it is waiting to be proposed.
   refs        a "#1234" written by hand in the prose names a pull request or
               issue that does not exist. A typo here is invisible on the page.
   private     an address, MAC, serial path or home directory reached the HTML.
@@ -146,6 +148,17 @@ def check_annotated(build, data, problems):
             problems.append(f"annotated: no label or badge for {head!r}")
 
 
+def check_intent(build, data, problems):
+    for repo, branches in data.get("local", {}).items():
+        for branch, info in branches.items():
+            key = f"{repo}:{branch}"
+            if key not in build.INTENT:
+                problems.append(
+                    f"intent: {key} is {info['ahead']} commits ahead and has no "
+                    f"entry in INTENT, so the queue cannot say what it is for"
+                )
+
+
 def check_drift(build, data, html, problems):
     if build.render(data) != html:
         problems.append(
@@ -198,22 +211,23 @@ def main():
     problems = []
     check_drift(build, data, html, problems)
     check_annotated(build, data, problems)
+    check_intent(build, data, problems)
     check_refs(build, data, problems)
     check_private(html, problems)
     check_contrast(build, problems)
     if not args.offline:
         check_fresh(build, data, problems)
 
-    ran = 5 if args.offline else 6
+    ran = 6 if args.offline else 7
     if problems:
         print(f"{len(problems)} problem(s) across {ran} checks:\n")
         for p in problems:
             print(f"  {p}")
         print("\nMost of these are fixed by running ./build.py.")
         return 1
-    clean = ("the page matches its data, every commit is annotated, every "
-             "reference resolves, nothing private is in the HTML and nothing "
-             "is unreadable")
+    clean = ("the page matches its data, every commit and branch is accounted "
+             "for, every reference resolves, nothing private is in the HTML and "
+             "nothing is unreadable")
     if args.offline:
         print(f"{ran} checks clean — {clean}. GitHub was NOT contacted, so "
               f"whether the data is current is unknown.")

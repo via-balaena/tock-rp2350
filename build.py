@@ -31,6 +31,15 @@ ROOT = pathlib.Path(__file__).parent
 REPO = "tock/tock"
 AUTHOR = "bigmark222"
 
+# Local clones the queue is read from. Missing ones are skipped, so the build
+# still works on a machine that only has some of them — the survey is cached
+# into data.json and --offline renders from that.
+LOCAL = {
+    "tock": (pathlib.Path.home() / "forge/tock", "upstream/master"),
+    "libtock-rs": (pathlib.Path.home() / "forge/libtock-rs", "upstream/master"),
+    "book": (pathlib.Path.home() / "forge/book", "origin/master"),
+}
+
 # --------------------------------------------------------------------------
 # Prose and hand annotation. Everything else is derived.
 # --------------------------------------------------------------------------
@@ -64,6 +73,42 @@ the question: a pure code move is proved by the binary coming out with identical
 sections, logic is covered by a host test that fails without the change, and
 anything touching hardware is run on a board.
 """,
+}
+
+# The rule this whole pipeline runs on. Stated publicly because a maintainer
+# cannot tell a finite queue from a firehose by looking at it.
+POLICY = """
+The fork moves at whatever speed the work goes; upstream gets a trickle. Nothing
+is proposed until it is finished, demonstrated and small enough to review in one
+sitting, and only a few are in flight at a time — the constraint upstream is
+review throughput, not how fast patches can be written. Everything below exists
+as working code on the fork. The column it sits in is a decision about when to
+ask someone to read it, not about whether it is done.
+"""
+
+# What each local branch is for. Keyed "repo:branch".
+#   upstream — intended for tock, in the queue
+#   never    — a bench or teaching branch that will never be proposed
+INTENT = {
+    "tock:rp2-pio-prep": ("upstream", "PIO cleanups.", None),
+    "tock:rp2-pad-controls": ("upstream", "Shared pad enums and the RP2350 pad controls.", None),
+    "tock:pico2w-typed": ("upstream", "The Pico 2 W board and the radio.", None),
+    "tock:rp2-pio-tests": ("upstream", "Five PIO fixes and the driver's first host tests.", None),
+    "tock:boards-fix-ram-layout": ("upstream", "Merged.", None),
+    "tock:boards-remove-dead-ram-layout": ("upstream", "Closed in favour of fixing the addresses.", None),
+    "tock:rp2350-spi-bench": ("never", "A bench harness that drives the SPI loopback.", None),
+    "tock:pico2w-radio-bench": ("never", "Every commit titled NOT FOR UPSTREAM: it starts the radio from the board so a scan can be driven without an app.", None),
+    "tock:bench/reclaim-leak-demo": ("never", "Reproduces the GPIO reclaim leak on a board.", None),
+    "tock:learning/series": ("never", "Nine chapters on how the kernel works, plus the tooling that builds them.", None),
+    "tock:master": ("never", "Tracking branch.", None),
+    "libtock-rs:pico2-platform": ("upstream", "Load addresses for the Pico 2 and Pico 2 W, and a build error that named neither the platform nor the file to edit.", "Independent of the async work; can go any time."),
+    "libtock-rs:async/alarm": ("upstream", "Futures over the alarm and console drivers, a single-task executor, select, and fakes that model cancellation.", "The unittest fixes go first, as a smaller ask that establishes the reviewer relationship."),
+    "libtock-rs:hw/pico2w-async": ("never", "The two branches above merged together, as a vehicle for running on hardware.", None),
+    "libtock-rs:bench/reclaim-leak": ("never", "The two apps that demonstrate the reclaim leak.", None),
+    "libtock-rs:kit-examples": ("never", "Loopback and pin-walk apps written to exercise the bench.", None),
+    "libtock-rs:master": ("never", "Tracking branch.", None),
+    "book:pico2-getting-started": ("upstream", "A getting-started page for the Pico 2. The book has no Pico coverage at all.", "Written and green; waiting on its pull request description."),
+    "book:master": ("never", "Tracking branch.", None),
 }
 
 # How a unit of work is verified. This vocabulary is the testing strategy.
@@ -259,6 +304,39 @@ def gh_json(args):
     return json.loads(out)
 
 
+def git(repo, *args):
+    try:
+        return subprocess.run(["git", "-C", str(repo), *args], capture_output=True,
+                              text=True, check=True).stdout.strip()
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return None
+
+
+def survey_local():
+    """Branches in each local clone, how far ahead they are, and their commits."""
+    out = {}
+    for name, (path, base) in LOCAL.items():
+        if not path.exists():
+            continue
+        refs = git(path, "for-each-ref", "--format=%(refname:short)", "refs/heads/")
+        if refs is None:
+            continue
+        branches = {}
+        for branch in refs.splitlines():
+            log = git(path, "log", "--format=%s", f"{base}..{branch}")
+            if log is None:
+                continue
+            commits = [l for l in log.splitlines() if l]
+            branches[branch] = {
+                "ahead": len(commits),
+                "commits": commits,
+                "pushed": git(path, "rev-parse", "--verify", "-q",
+                              f"origin/{branch}") is not None,
+            }
+        out[name] = branches
+    return out
+
+
 def fetch():
     # Commits and files are fetched per pull request: asking for them across a
     # 100-item list exceeds GitHub's GraphQL node budget and the whole query is
@@ -283,6 +361,7 @@ def fetch():
         "fetched": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
         "prs": sorted(prs, key=lambda p: p["number"]),
         "issues": sorted(issues, key=lambda i: i["number"]),
+        "local": survey_local(),
     }
 
 
@@ -355,6 +434,66 @@ def build_graph(data):
             if shared:
                 overlaps.append({"a": a["number"], "b": b["number"], "files": shared})
     return nodes, order, overlaps
+
+
+def queue_rows(data):
+    """Every local branch, matched to its pull request where one exists.
+
+    The match is by commit headline overlap rather than by branch name, so a
+    renamed branch still finds its pull request and a branch that has drifted
+    from the one that was proposed shows up as drifted.
+    """
+    prs = {p["number"]: p for p in data["prs"]}
+    pr_commits = {n: {c["messageHeadline"] for c in p["commits"]}
+                  for n, p in prs.items()}
+    rows = []
+    for repo, branches in sorted(data.get("local", {}).items()):
+        for branch, info in sorted(branches.items()):
+            key = f"{repo}:{branch}"
+            intent, note, blocked = INTENT.get(key, (None, "", None))
+            mine = set(info["commits"])
+            match, overlap = None, 0
+            if repo == "tock" and mine:
+                for num, commits in pr_commits.items():
+                    shared = len(mine & commits)
+                    if shared > overlap:
+                        match, overlap = num, shared
+            drifted = bool(match) and overlap < len(pr_commits[match])
+            rows.append({
+                "repo": repo, "branch": branch, "ahead": info["ahead"],
+                "pushed": info["pushed"], "intent": intent, "note": note,
+                "blocked": blocked, "pr": match, "drifted": drifted,
+                "state": pr_state(prs[match])[0] if match else None,
+                "label": pr_state(prs[match])[1] if match else None,
+            })
+    return rows
+
+
+def queue_groups(rows):
+    """Three buckets, and a fourth that is deliberately not shown.
+
+    A branch already merged or closed is dropped: it is in the pull request
+    section, and repeating it here would double-count the queue. Tracking
+    branches that are level with upstream are dropped for the same reason.
+    """
+    in_review, ready, never = [], [], []
+    for r in rows:
+        if r["intent"] == "never":
+            r["pr"] = r["state"] = r["label"] = None   # a bench branch that
+            r["drifted"] = False                       # contains a proposed
+            if r["ahead"] > 0:                         # commit is not that PR
+                never.append(r)
+        elif r["ahead"] == 0:
+            continue                                   # landed, or tracking
+        elif r["pr"] and r["state"] in ("review", "approved", "draft"):
+            in_review.append(r)
+        elif r["pr"] and r["state"] in ("merged", "closed"):
+            continue                                   # shown as a pull request
+        else:
+            ready.append(r)
+    order = {"tock": 0, "libtock-rs": 1, "book": 2}
+    key = lambda r: (order.get(r["repo"], 9), -r["ahead"])
+    return sorted(in_review, key=key), sorted(ready, key=key), sorted(never, key=key)
 
 
 # --------------------------------------------------------------------------
@@ -577,6 +716,11 @@ min-width:132px;display:inline-block}
 ul.legend .n{min-width:24px;text-align:right;color:var(--ink);font-weight:600}
 .badge.v-host{color:var(--host)}.badge.v-silicon{color:var(--silicon)}
 .badge.v-sections{color:var(--sections)}.badge.v-build{color:var(--build)}.badge.v-none{color:var(--none)}
+h3.qh{font-size:1rem;margin:26px 0 2px;color:var(--ink)}
+ul.queue li .qhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+ul.queue li code{font-size:.84rem;color:var(--ink);font-weight:600}
+ul.queue .ahead{font-size:.78rem;color:var(--ink-faint)}
+ul.queue .dd.blocked{color:var(--ink-faint);font-style:italic}
 .prgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(350px,1fr));gap:14px}
 .prcard{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;scroll-margin:80px}
 .prcard.lit{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
@@ -644,6 +788,28 @@ svg.querySelectorAll('.node').forEach(g => {
   });
 });
 """
+
+
+def queue_html(rows):
+    out = []
+    for r in rows:
+        pr = ('<a class="ref" href="https://github.com/%s/pull/%d">#%d</a>'
+              '<span class="pill %s">%s</span>' % (REPO, r["pr"], r["pr"],
+                                                   r["state"], e(r["label"]))
+              ) if r["pr"] else ""
+        drift = ('<span class="pill closed">branch has moved on</span>'
+                 if r["drifted"] else "")
+        where = "" if r["pushed"] else '<span class="pill draft">local only</span>'
+        blocked = ('<span class="dd blocked">%s</span>' % e(r["blocked"])) if r["blocked"] else ""
+        note = ('<span class="dd">%s</span>' % e(r["note"])) if r["note"] else (
+            '<span class="dd blocked">No intent recorded for this branch.</span>')
+        out.append(
+            '<li><div class="qhead"><code>%s</code><span class="ahead">%d commit%s</span>'
+            '%s%s%s</div>%s%s</li>'
+            % (e(r["repo"] + " · " + r["branch"]), r["ahead"],
+               "" if r["ahead"] == 1 else "s", pr, drift, where, note, blocked)
+        )
+    return "".join(out)
 
 
 def render(data):
@@ -727,6 +893,8 @@ def render(data):
 
     merged = [p for p in data["prs"] if p["mergedAt"]]
     open_prs = [p for p in data["prs"] if p["state"] == "OPEN"]
+    in_review, ready, never = queue_groups(queue_rows(data))
+    ready_commits = sum(r["ahead"] for r in ready)
 
     node_json = json.dumps({
         n["id"]: {"head": n["head"], "short": n["short"], "note": n.get("note") or "",
@@ -779,6 +947,22 @@ def render(data):
       <p class="head" id="d-head"></p>
     </div>
   </div>
+</section>
+
+<section>
+  <h2>The queue</h2>
+  %(policy)s
+  <p class="lede">Read from the working clones, so it is what exists rather than what
+  was last written down. A branch is matched to its pull request by which commits they
+  share, not by name.</p>
+  <h3 class="qh">In review now — %(nreview)d</h3>
+  <ul class="plain queue">%(qreview)s</ul>
+  <h3 class="qh">Finished, not proposed yet — %(nready)d branches, %(readyc)d commits</h3>
+  <ul class="plain queue">%(qready)s</ul>
+  <h3 class="qh">Never going upstream — %(nnever)d</h3>
+  <p class="lede">Bench harnesses and teaching material. Listed so that nobody browsing
+  the fork has to guess which branches are waiting to be proposed.</p>
+  <ul class="plain queue">%(qnever)s</ul>
 </section>
 
 <section>
@@ -848,6 +1032,10 @@ def render(data):
         "overlaps": overlap_rows, "cards": "".join(cards),
         "nmerged": len(merged), "nopen": len(open_prs),
         "defects": defect_rows, "silicon": silicon_rows, "issues": issue_rows,
+        "policy": para(POLICY), "nreview": len(in_review), "nready": len(ready),
+        "nnever": len(never), "readyc": ready_commits,
+        "qreview": queue_html(in_review), "qready": queue_html(ready),
+        "qnever": queue_html(never),
         "downstream": downstream_rows, "notdone": not_done_rows,
         "fetched": e(data["fetched"]), "author": AUTHOR, "repo": REPO,
     }

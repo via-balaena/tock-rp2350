@@ -95,6 +95,11 @@ min-width:132px;display:inline-block}
 ul.legend .n{min-width:24px;text-align:right;color:var(--ink);font-weight:600}
 .badge.v-host{color:var(--host)}.badge.v-silicon{color:var(--silicon)}
 .badge.v-sections{color:var(--sections)}.badge.v-build{color:var(--build)}.badge.v-none{color:var(--none)}
+h3.qh{font-size:1rem;margin:26px 0 2px;color:var(--ink)}
+ul.queue li .qhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+ul.queue li code{font-size:.84rem;color:var(--ink);font-weight:600}
+ul.queue .ahead{font-size:.78rem;color:var(--ink-faint)}
+ul.queue .dd.blocked{color:var(--ink-faint);font-style:italic}
 .prgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(350px,1fr));gap:14px}
 .prcard{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;scroll-margin:80px}
 .prcard.lit{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
@@ -154,6 +159,22 @@ footer a{color:var(--accent)}
       <p class="head" id="d-head"></p>
     </div>
   </div>
+</section>
+
+<section>
+  <h2>The queue</h2>
+  <p>The fork moves at whatever speed the work goes; upstream gets a trickle. Nothing is proposed until it is finished, demonstrated and small enough to review in one sitting, and only a few are in flight at a time — the constraint upstream is review throughput, not how fast patches can be written. Everything below exists as working code on the fork. The column it sits in is a decision about when to ask someone to read it, not about whether it is done.</p>
+  <p class="lede">Read from the working clones, so it is what exists rather than what
+  was last written down. A branch is matched to its pull request by which commits they
+  share, not by name.</p>
+  <h3 class="qh">In review now — 4</h3>
+  <ul class="plain queue"><li><div class="qhead"><code>tock · pico2w-typed</code><span class="ahead">11 commits</span><a class="ref" href="https://github.com/tock/tock/pull/5141">#5141</a><span class="pill review">in review</span></div><span class="dd">The Pico 2 W board and the radio.</span></li><li><div class="qhead"><code>tock · rp2-pio-tests</code><span class="ahead">5 commits</span><a class="ref" href="https://github.com/tock/tock/pull/5150">#5150</a><span class="pill draft">draft</span></div><span class="dd">Five PIO fixes and the driver&#x27;s first host tests.</span></li><li><div class="qhead"><code>tock · rp2-pad-controls</code><span class="ahead">2 commits</span><a class="ref" href="https://github.com/tock/tock/pull/5140">#5140</a><span class="pill approved">approved</span></div><span class="dd">Shared pad enums and the RP2350 pad controls.</span></li><li><div class="qhead"><code>tock · rp2-pio-prep</code><span class="ahead">1 commit</span><a class="ref" href="https://github.com/tock/tock/pull/5126">#5126</a><span class="pill approved">approved</span></div><span class="dd">PIO cleanups.</span></li></ul>
+  <h3 class="qh">Finished, not proposed yet — 3 branches, 28 commits</h3>
+  <ul class="plain queue"><li><div class="qhead"><code>libtock-rs · async/alarm</code><span class="ahead">15 commits</span><span class="pill draft">local only</span></div><span class="dd">Futures over the alarm and console drivers, a single-task executor, select, and fakes that model cancellation.</span><span class="dd blocked">The unittest fixes go first, as a smaller ask that establishes the reviewer relationship.</span></li><li><div class="qhead"><code>libtock-rs · pico2-platform</code><span class="ahead">3 commits</span></div><span class="dd">Load addresses for the Pico 2 and Pico 2 W, and a build error that named neither the platform nor the file to edit.</span><span class="dd blocked">Independent of the async work; can go any time.</span></li><li><div class="qhead"><code>book · pico2-getting-started</code><span class="ahead">10 commits</span><span class="pill draft">local only</span></div><span class="dd">A getting-started page for the Pico 2. The book has no Pico coverage at all.</span><span class="dd blocked">Written and green; waiting on its pull request description.</span></li></ul>
+  <h3 class="qh">Never going upstream — 7</h3>
+  <p class="lede">Bench harnesses and teaching material. Listed so that nobody browsing
+  the fork has to guess which branches are waiting to be proposed.</p>
+  <ul class="plain queue"><li><div class="qhead"><code>tock · learning/series</code><span class="ahead">186 commits</span></div><span class="dd">Nine chapters on how the kernel works, plus the tooling that builds them.</span></li><li><div class="qhead"><code>tock · pico2w-radio-bench</code><span class="ahead">18 commits</span></div><span class="dd">Every commit titled NOT FOR UPSTREAM: it starts the radio from the board so a scan can be driven without an app.</span></li><li><div class="qhead"><code>tock · rp2350-spi-bench</code><span class="ahead">2 commits</span></div><span class="dd">A bench harness that drives the SPI loopback.</span></li><li><div class="qhead"><code>tock · bench/reclaim-leak-demo</code><span class="ahead">1 commit</span></div><span class="dd">Reproduces the GPIO reclaim leak on a board.</span></li><li><div class="qhead"><code>libtock-rs · hw/pico2w-async</code><span class="ahead">23 commits</span><span class="pill draft">local only</span></div><span class="dd">The two branches above merged together, as a vehicle for running on hardware.</span></li><li><div class="qhead"><code>libtock-rs · bench/reclaim-leak</code><span class="ahead">5 commits</span></div><span class="dd">The two apps that demonstrate the reclaim leak.</span></li><li><div class="qhead"><code>libtock-rs · kit-examples</code><span class="ahead">2 commits</span></div><span class="dd">Loopback and pin-walk apps written to exercise the bench.</span></li></ul>
 </section>
 
 <section>
