@@ -37,6 +37,29 @@ the build after anything merges.
 
 Requires the `gh` CLI, authenticated.
 
+## Checking
+
+    ./check.py            # everything, including a live fetch
+    ./check.py --offline  # skip the live fetch
+
+Six checks, each of which has been proven to fail when it should rather than
+only observed to pass:
+
+| check | catches |
+|---|---|
+| `drift` | `index.html` is not what `build.py` produces — hand-edited, or a rebuild is pending |
+| `fresh` | the cached data disagrees with GitHub now. A merged pull request still drawn as open is the page lying |
+| `annotated` | a commit is on the page with no label or verification badge |
+| `refs` | a hand-written `#1234` in the prose names something that does not exist |
+| `private` | an address, MAC, serial path or home directory reached the HTML |
+| `contrast` | a text-on-surface pair fell below 4.5:1 |
+
+Run it before every push. Most failures are fixed by running `./build.py`.
+
+**What no check covers: nobody has looked at the page.** There is no browser on
+the machine it was built on, so every visual claim about it is computed rather
+than seen. Layout, overlap and spacing are unverified.
+
 ## Publishing
 
 The repository is set up to serve from its root:
