@@ -26,6 +26,9 @@ derived rather than remembered, so:
 - **Which pull requests a commit belongs to** falls out of the same data, so a
   commit shared by two branches is drawn as shared without anyone saying so.
 - **"These two branches collide"** comes from intersecting their file lists.
+- **The evidence dropdown** on each unsent branch derives its commit list,
+  diffstat and base; only the numbered facts above them are hand-written, in
+  `FACTS`.
 - **The queue** is read from the working clones listed in `LOCAL`: every branch,
   how far ahead of upstream it is, whether it is pushed, and which pull request
   it matches by shared commits. A clone that is missing is skipped, and the
@@ -48,7 +51,7 @@ Requires the `gh` CLI, authenticated.
     ./check.py            # everything, including a live fetch
     ./check.py --offline  # skip the live fetch
 
-Seven checks, each proven to fail when it should rather than only observed to
+Eight checks, each proven to fail when it should rather than only observed to
 pass:
 
 | check | catches |
@@ -57,6 +60,7 @@ pass:
 | `fresh` | the cached data disagrees with GitHub now. A merged pull request still drawn as open is the page lying |
 | `annotated` | a commit is on the page with no label or verification badge |
 | `intent` | a local branch is in the queue with no recorded intent |
+| `facts` | a finished, unsent branch has no evidence recorded |
 | `refs` | a hand-written `#1234` in the prose names something that does not exist |
 | `private` | an address, MAC, serial path or home directory reached the HTML |
 | `contrast` | a text-on-surface pair fell below 4.5:1 |

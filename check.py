@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Check that the published page is still true, still current and still legible.
 
-Seven checks. Each one exists because it has already caught something, or because
+Eight checks. Each one exists because it has already caught something, or because
 it guards a mistake that was actually made here:
 
   drift       index.html is not what build.py would produce from data.json,
@@ -12,6 +12,8 @@ it guards a mistake that was actually made here:
   annotated   a commit is on the page with no label or verification badge.
   intent      a local branch is in the queue with no recorded intent, so a
               reader cannot tell whether it is waiting to be proposed.
+  facts       a branch is finished and unsent with no evidence recorded, so
+              the dropdown a reviewer opens would be empty.
   refs        a "#1234" written by hand in the prose names a pull request or
               issue that does not exist. A typo here is invisible on the page.
   private     an address, MAC, serial path or home directory reached the HTML.
@@ -133,6 +135,7 @@ def check_refs(build, data, problems):
     prose += [v.get("note", "") for v in build.WORK.values()]
     prose += [d[3] for d in build.DEFECTS] + [d[2] for d in build.DOWNSTREAM]
     prose += [n[1] for n in build.NOT_DONE] + [s[1] for s in build.SILICON]
+    prose += [body for bullets in build.FACTS.values() for _, body in bullets]
     for text in prose:
         for num in re.findall(r"#(\d{4,5})", str(text)):
             if int(num) not in known:
@@ -158,6 +161,17 @@ def check_intent(build, data, problems):
                     f"intent: {key} is {info['ahead']} commits ahead and has no "
                     f"entry in INTENT, so the queue cannot say what it is for"
                 )
+
+
+def check_facts(build, data, problems):
+    _, ready, _ = build.queue_groups(build.queue_rows(data))
+    for r in ready:
+        key = f"{r['repo']}:{r['branch']}"
+        if key not in build.FACTS:
+            problems.append(
+                f"facts: {key} is finished and unsent with no entry in FACTS, "
+                f"so its evidence dropdown would be empty"
+            )
 
 
 def check_drift(build, data, html, problems):
@@ -213,13 +227,14 @@ def main():
     check_drift(build, data, html, problems)
     check_annotated(build, data, problems)
     check_intent(build, data, problems)
+    check_facts(build, data, problems)
     check_refs(build, data, problems)
     check_private(html, problems)
     check_contrast(build, problems)
     if not args.offline:
         check_fresh(build, data, problems)
 
-    ran = 6 if args.offline else 7
+    ran = 7 if args.offline else 8
     if problems:
         print(f"{len(problems)} problem(s) across {ran} checks:\n")
         for p in problems:

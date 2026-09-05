@@ -235,6 +235,39 @@ WORK = {
     },
 }
 
+# The facts a pull request description would rest on, per unsent branch.
+# Written by hand and verified; the commit list, diffstat and base underneath
+# them are derived. Kept here so that the person writing the description and a
+# reviewer who goes looking are reading the same evidence.
+FACTS = {
+    "tock:rp2-uart-abort-fix": [
+        ("What it fixes", "Three defects in one path. An aborted UART receive completes by calling the client back before the driver returns to Idle, so the mux's restart from inside that callback is refused and the mux ends every client's receive. Separately, a failed `start_receive` handed the caller the mux's buffer instead of its own, and the teardown dropped the buffer of any device that was not in the Receiving state."),
+        ("Who is affected", "Eleven boards pair a process console with the userspace console capsule on one mux, over the three chip drivers that share the block character for character: rp2040, rp2350 and sifive. On those boards an application's first console read is accepted and then killed, and the process console stops receiving at the same moment."),
+        ("How it was demonstrated", "Twice. On a Pico 2 W with an instrumented kernel, and under QEMU on hifive1 with no hardware at all. The QEMU reproduction is `examples/console_read_busy.rs` in libtock-rs and runs against the tock revision libtock-rs already pins."),
+        ("How the fix was verified", "A/B on one kernel revision with one unmodified application. Without the patch: `read -> 0 bytes, Err(BUSY)` immediately. With it: the read stays outstanding. With it, and sixteen bytes typed: `read -> 16 bytes, Ok(())`. The third case is the one that matters, because it shows the behaviour restored rather than the error suppressed. The process console kept receiving throughout."),
+        ("Cost", "None measurable. text, data and bss byte-identical on hifive1, raspberry_pi_pico and nano_rp2040_connect. `cargo fmt --check` and clippy clean. Each of the three commits builds standalone."),
+        ("Caveat: the transmit path", "The same ordering bug exists on the transmit side of all three drivers and is fixed in the same commit, by symmetry and by the same mechanism — the mux restarts transmits from inside the callback too. It is argued, not demonstrated; there is no failing case for it."),
+        ("Caveat: where it was verified", "The A/B ran at the revision libtock-rs pins, not at current master, because the reproduction application does not load on a master kernel. The patch applies cleanly at both; only the sifive and mux halves exist at the older revision, since chips/rp2350 postdates it."),
+    ],
+    "libtock-rs:async/alarm": [
+        ("What it adds", "A Future and executor layer over Tock's syscalls: futures for the alarm and console drivers, a single-task executor with `block_on`, `join` and `select`, and unittest fakes that model alarm expiration and an outstanding console receive."),
+        ("How it was verified", "`make test` green. On a Pico 2 W running the Pico 2 W kernel, every 500 ms await lands within a few hundred microseconds of its deadline, including the two immediately after a cancelled five-second sleep — 500250 and 500249 ticks. That discriminates working cancellation from both a leaked upcall, which would return instantly, and a timer left armed, which would take five million."),
+        ("It is not one pull request", "Intended as two, and it is not two branches yet: the two unittest commits sit inside this one and have to be lifted out first. The order is forced rather than preferred — the async tests call `fake::Alarm::new_deferred` and `fake::Console::new_deferred` in three places and those constructors are what the unittest commits add."),
+        ("Known gap", "The console half of concurrency is untested, and cannot be tested until the UART defect above is fixed. The failure is in the kernel, not in the futures."),
+    ],
+    "libtock-rs:pico2-platform": [
+        ("What it adds", "Build platform entries for the Raspberry Pi Pico 2 and Pico 2 W, and a build error that named neither the platform nor the file to edit."),
+        ("Where the addresses came from", "Read off a linked kernel with nm rather than off the linker script, because the application region is what the kernel leaves rather than what the board reserves. For the Pico 2 W: _sapps 0x10090000, _eapps 0x100d0000, _sappmem 0x20005c04, _eappmem 0x20082000. The RAM row starts at 0x20020000 and +392K lands exactly on _eappmem."),
+        ("Verified", "Applications built through these rows load, run and print on a Pico 2 W. Both boards' numbers were reproduced independently in two sessions against separately built kernels that came out to identical text and bss."),
+        ("Ready", "Independent of the async work. Nothing blocks it."),
+    ],
+    "book:pico2-getting-started": [
+        ("What it adds", "A getting-started page for the Raspberry Pi Pico 2. The book currently has no Pico coverage at all."),
+        ("Verified", "The documented route was walked end to end on real hardware, and five things that were wrong got fixed in the process."),
+        ("Caveat to disclose", "The BOOTSEL flashing route is unverified on macOS, because the board is never connected to the development machine here. The page tells the reader to check where the volume mounted before naming it, so the literal path is illustrative rather than load-bearing, and the bootrom behaviour underneath is documented and host-independent."),
+    ],
+}
+
 # Real dependencies the API cannot see, because they cross pull requests.
 EXTRA_DEPS = {
     "chips: rp2040: move the PIO driver into the shared rp2xxx crate": [
@@ -341,9 +374,13 @@ def survey_local():
             if log is None:
                 continue
             commits = [l for l in log.splitlines() if l]
+            stat = git(path, "diff", "--shortstat", f"{base}...{branch}") or ""
             branches[branch] = {
                 "ahead": len(commits),
                 "commits": commits,
+                "stat": stat.strip(),
+                "base": base,
+                "base_sha": (git(path, "rev-parse", "--short", base) or ""),
                 "pushed": git(path, "rev-parse", "--verify", "-q",
                               f"origin/{branch}") is not None,
             }
@@ -475,6 +512,8 @@ def queue_rows(data):
             drifted = bool(match) and overlap < len(pr_commits[match])
             rows.append({
                 "repo": repo, "branch": branch, "ahead": info["ahead"],
+                "commits": info["commits"], "stat": info.get("stat", ""),
+                "base": info.get("base", ""), "base_sha": info.get("base_sha", ""),
                 "pushed": info["pushed"], "intent": intent, "note": note,
                 "blocked": blocked, "pr": match, "drifted": drifted,
                 "state": pr_state(prs[match])[0] if match else None,
@@ -682,6 +721,27 @@ ul.counts .k{display:block;font-size:.78rem;text-transform:uppercase;
 letter-spacing:.07em;color:var(--ink-faint)}
 code.branch{background:var(--draft-bg);padding:2px 7px;border-radius:5px;
 font-size:.8rem;color:var(--ink)}
+details.facts{margin:10px 0 0}
+details.facts>summary{cursor:pointer;font-size:.82rem;color:var(--accent);
+font-weight:600;list-style:none;display:inline-block;padding:3px 0}
+details.facts>summary::-webkit-details-marker{display:none}
+details.facts>summary::before{content:"\25B8 ";display:inline-block;
+transition:transform .12s;font-size:.8em}
+details.facts[open]>summary::before{content:"\25BE "}
+details.facts .basis{font-size:.78rem;color:var(--ink-faint);margin:8px 0 12px;
+font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+details.facts dl{margin:0;padding:14px 16px;background:var(--bg);
+border:1px solid var(--line);border-radius:8px}
+details.facts dt{font-size:.78rem;font-weight:700;text-transform:uppercase;
+letter-spacing:.05em;color:var(--ink);margin:12px 0 3px}
+details.facts dt:first-child{margin-top:0}
+details.facts dd{margin:0;font-size:.9rem;color:var(--ink-soft);max-width:80ch}
+details.facts h4{font-size:.78rem;text-transform:uppercase;letter-spacing:.05em;
+color:var(--ink-faint);margin:14px 0 4px}
+ol.commitlist{margin:0;padding-left:22px;font-size:.85rem;color:var(--ink-soft);
+font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+ol.commitlist li{margin:3px 0}
+ol.commitlist li.more{list-style:none;color:var(--ink-faint);font-style:italic}
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 8px}
 .chip{display:flex;align-items:center;gap:9px;padding:7px 12px 7px 13px;border-radius:999px;
 border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer;font:inherit;font-size:.84rem}
@@ -827,7 +887,7 @@ def ref_html(ref):
     return ' <code class="branch">%s</code>' % e(ref)
 
 
-def queue_html(rows):
+def queue_html(rows, with_facts=False):
     out = []
     for r in rows:
         pr = ('<a class="ref" href="https://github.com/%s/pull/%d">#%d</a>'
@@ -842,11 +902,44 @@ def queue_html(rows):
             '<span class="dd blocked">No intent recorded for this branch.</span>')
         out.append(
             '<li><div class="qhead"><code>%s</code><span class="ahead">%d commit%s</span>'
-            '%s%s%s</div>%s%s</li>'
+            '%s%s%s</div>%s%s%s</li>'
             % (e(r["repo"] + " · " + r["branch"]), r["ahead"],
-               "" if r["ahead"] == 1 else "s", pr, drift, where, note, blocked)
+               "" if r["ahead"] == 1 else "s", pr, drift, where, note, blocked,
+               facts_html(r) if with_facts else "")
         )
     return "".join(out)
+
+
+def facts_html(r):
+    """The evidence behind an unsent branch, folded away until asked for.
+
+    Everything a pull request description would rest on, in one place, so the
+    person writing it and a reviewer who goes looking are reading the same
+    thing. Commits, diffstat and base are derived; the numbered evidence is
+    written by hand and verified.
+    """
+    facts = FACTS.get(f"{r['repo']}:{r['branch']}")
+    if not facts and not r.get("commits"):
+        return ""
+    rows = "".join(
+        "<dt>%s</dt><dd>%s</dd>" % (e(head), e(body)) for head, body in (facts or [])
+    )
+    shown = r.get("commits", [])[:40]
+    commits = "".join("<li>%s</li>" % e(c) for c in shown)
+    if len(r.get("commits", [])) > len(shown):
+        commits += ("<li class=\"more\">and %d more</li>"
+                    % (len(r["commits"]) - len(shown)))
+    base = ""
+    if r.get("base"):
+        base = ("<p class=\"basis\">Cut from <code>%s</code> at <code>%s</code>%s</p>"
+                % (e(r["base"]), e(r["base_sha"]),
+                   " &middot; " + e(r["stat"]) if r.get("stat") else ""))
+    return (
+        '<details class="facts"><summary>Evidence for a pull request '
+        '&mdash; %d commit%s</summary>'
+        '%s<dl>%s</dl><h4>Commits</h4><ol class="commitlist">%s</ol></details>'
+        % (r["ahead"], "" if r["ahead"] == 1 else "s", base, rows, commits)
+    )
 
 
 def render(data):
@@ -1080,7 +1173,8 @@ def render(data):
         "policy": para(POLICY), "nreview": len(in_review), "nready": len(ready),
         "nfixed": len([d for d in DEFECTS if d[1] == "fixed-local"]),
         "nnever": len(never), "readyc": ready_commits,
-        "qreview": queue_html(in_review), "qready": queue_html(ready),
+        "qreview": queue_html(in_review),
+        "qready": queue_html(ready, with_facts=True),
         "qnever": queue_html(never),
         "downstream": downstream_rows, "notdone": not_done_rows,
         "fetched": e(data["fetched"]), "author": AUTHOR, "repo": REPO,

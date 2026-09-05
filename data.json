@@ -314,11 +314,17 @@
         "commits": [
           "bench: reproduce the pwm.rs reclaim leak on a Pico 2"
         ],
+        "stat": "3 files changed, 190 insertions(+), 1 deletion(-)",
+        "base": "upstream/master",
+        "base_sha": "2a7a40450",
         "pushed": true
       },
       "boards-fix-ram-layout": {
         "ahead": 0,
         "commits": [],
+        "stat": "",
+        "base": "upstream/master",
+        "base_sha": "2a7a40450",
         "pushed": true
       },
       "boards-remove-dead-ram-layout": {
@@ -326,6 +332,9 @@
         "commits": [
           "boards: remove dead boot-from-RAM layout"
         ],
+        "stat": "5 files changed, 30 deletions(-)",
+        "base": "upstream/master",
+        "base_sha": "2a7a40450",
         "pushed": true
       },
       "learning/series": {
@@ -518,11 +527,17 @@
           "learning: correct five factual errors in chapter 1",
           "learning: add chapter 1, everything is memory"
         ],
+        "stat": "93 files changed, 41939 insertions(+), 3812 deletions(-)",
+        "base": "upstream/master",
+        "base_sha": "2a7a40450",
         "pushed": true
       },
       "master": {
         "ahead": 0,
         "commits": [],
+        "stat": "",
+        "base": "upstream/master",
+        "base_sha": "2a7a40450",
         "pushed": true
       },
       "pico2w-radio-bench": {
@@ -547,6 +562,9 @@
           "chips: rp2040: dma: compute the PIO transfer request number",
           "chips: rp2040: pio: retire the examples module"
         ],
+        "stat": "48 files changed, 5032 insertions(+), 3812 deletions(-)",
+        "base": "upstream/master",
+        "base_sha": "2a7a40450",
         "pushed": true
       },
       "pico2w-typed": {
@@ -564,6 +582,9 @@
           "chips: rp2350: gpio: add the pad controls the RP2040 has",
           "chips: rp2040: pio: retire the examples module"
         ],
+        "stat": "38 files changed, 4423 insertions(+), 2550 deletions(-)",
+        "base": "upstream/master",
+        "base_sha": "2a7a40450",
         "pushed": true
       },
       "rp2-pad-controls": {
@@ -572,6 +593,9 @@
           "chips: rp2350: gpio: add the pad controls the RP2040 has",
           "chips: rp2xxx: share the GPIO pad control enums"
         ],
+        "stat": "4 files changed, 51 insertions(+), 19 deletions(-)",
+        "base": "upstream/master",
+        "base_sha": "2a7a40450",
         "pushed": true
       },
       "rp2-pio-prep": {
@@ -579,6 +603,9 @@
         "commits": [
           "chips: rp2040: pio: retire the examples module"
         ],
+        "stat": "4 files changed, 136 insertions(+), 280 deletions(-)",
+        "base": "upstream/master",
+        "base_sha": "2a7a40450",
         "pushed": true
       },
       "rp2-pio-tests": {
@@ -590,6 +617,9 @@
           "chips: rp2040: stop add_program panicking on half of its own range",
           "chips: rp2040: fix the PIO RX FIFO join, which never happened"
         ],
+        "stat": "4 files changed, 502 insertions(+), 263 deletions(-)",
+        "base": "upstream/master",
+        "base_sha": "2a7a40450",
         "pushed": true
       },
       "rp2-uart-abort-fix": {
@@ -599,6 +629,9 @@
           "capsules: virtual_uart: hand back the caller's buffer, not the mux's",
           "chips: rp2040, rp2350, sifive: finish an abort before calling the client"
         ],
+        "stat": "4 files changed, 57 insertions(+), 13 deletions(-)",
+        "base": "upstream/master",
+        "base_sha": "2a7a40450",
         "pushed": false
       },
       "rp2350-spi-bench": {
@@ -607,6 +640,9 @@
           "boards: pico 2: bench harness for the SPI loopback test",
           "chips: rp2350: add SPI driver"
         ],
+        "stat": "4 files changed, 698 insertions(+), 4 deletions(-)",
+        "base": "upstream/master",
+        "base_sha": "2a7a40450",
         "pushed": true
       }
     },
@@ -630,6 +666,9 @@
           "alarm: stop the alarm when a Sleep is cancelled",
           "alarm: add a Future-returning sleep and a block_on executor"
         ],
+        "stat": "22 files changed, 2080 insertions(+), 22 deletions(-)",
+        "base": "upstream/master",
+        "base_sha": "469d9a0",
         "pushed": false
       },
       "bench/reclaim-leak": {
@@ -641,6 +680,9 @@
           "examples: add SPI loopback and an output-walk probe",
           "examples: add Pico Breadboard Kit blink and pin probe"
         ],
+        "stat": "9 files changed, 367 insertions(+), 1 deletion(-)",
+        "base": "upstream/master",
+        "base_sha": "469d9a0",
         "pushed": true
       },
       "hw/pico2w-async": {
@@ -673,6 +715,9 @@
           "alarm: add a Future-returning sleep and a block_on executor",
           "Add the Raspberry Pi Pico 2 as a build platform"
         ],
+        "stat": "25 files changed, 2170 insertions(+), 25 deletions(-)",
+        "base": "upstream/master",
+        "base_sha": "469d9a0",
         "pushed": false
       },
       "kit-examples": {
@@ -681,11 +726,17 @@
           "examples: add SPI loopback and an output-walk probe",
           "examples: add Pico Breadboard Kit blink and pin probe"
         ],
+        "stat": "4 files changed, 259 insertions(+)",
+        "base": "upstream/master",
+        "base_sha": "469d9a0",
         "pushed": true
       },
       "master": {
         "ahead": 0,
         "commits": [],
+        "stat": "",
+        "base": "upstream/master",
+        "base_sha": "469d9a0",
         "pushed": true
       },
       "pico2-platform": {
@@ -695,6 +746,9 @@
           "Add the Raspberry Pi Pico 2 W as a build platform",
           "Add the Raspberry Pi Pico 2 as a build platform"
         ],
+        "stat": "3 files changed, 11 insertions(+), 3 deletions(-)",
+        "base": "upstream/master",
+        "base_sha": "469d9a0",
         "pushed": true
       }
     },
@@ -702,6 +756,9 @@
       "master": {
         "ahead": 0,
         "commits": [],
+        "stat": "",
+        "base": "origin/master",
+        "base_sha": "760025b",
         "pushed": true
       },
       "pico2-getting-started": {
@@ -718,6 +775,9 @@
           "setup: link the Pico 2 page's first mention of TBF",
           "setup: add a getting started page for the Raspberry Pi Pico 2"
         ],
+        "stat": "3 files changed, 240 insertions(+)",
+        "base": "origin/master",
+        "base_sha": "760025b",
         "pushed": false
       }
     }
