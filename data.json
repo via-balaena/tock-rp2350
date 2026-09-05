@@ -320,8 +320,10 @@
         "pushed": true
       },
       "bench/stepper-pico2w": {
-        "ahead": 14,
+        "ahead": 16,
         "commits": [
+          "NOT FOR UPSTREAM: back to GPIO 18-21, the board stays in the kit",
+          "NOT FOR UPSTREAM: move the stepper to GPIO 10-13, where it is wired",
           "NOT FOR UPSTREAM: wire the stepper into the Pico 2 W for the bench",
           "capsules: stepper: report a stop, and refuse one from a non-owner",
           "capsules: add a stepper motor driver",
@@ -337,7 +339,7 @@
           "chips: rp2350: gpio: add the pad controls the RP2040 has",
           "chips: rp2040: pio: retire the examples module"
         ],
-        "stat": "43 files changed, 4925 insertions(+), 2550 deletions(-)",
+        "stat": "43 files changed, 4931 insertions(+), 2550 deletions(-)",
         "base": "upstream/master",
         "base_sha": "2a7a40450",
         "pushed": false
