@@ -752,6 +752,17 @@
         "base_sha": "469d9a0",
         "pushed": true
       },
+      "platform-pico2": {
+        "ahead": 2,
+        "commits": [
+          "runner: say which platform has no architecture mapping",
+          "Add the Raspberry Pi Pico 2 as a build platform"
+        ],
+        "stat": "3 files changed, 9 insertions(+), 3 deletions(-)",
+        "base": "upstream/master",
+        "base_sha": "469d9a0",
+        "pushed": false
+      },
       "unittest-fakes": {
         "ahead": 2,
         "commits": [
