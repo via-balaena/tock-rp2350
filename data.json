@@ -613,12 +613,13 @@
         "pushed": true
       },
       "rp2-adc": {
-        "ahead": 2,
+        "ahead": 3,
         "commits": [
+          "boards: raspberry_pi_pico_2: expose the ADC to userspace",
           "chips: rp2350: add the SAR ADC",
           "chips: rp2040: move the SAR ADC driver into the shared rp2xxx crate"
         ],
-        "stat": "7 files changed, 357 insertions(+), 225 deletions(-)",
+        "stat": "8 files changed, 422 insertions(+), 229 deletions(-)",
         "base": "upstream/master",
         "base_sha": "2a7a40450",
         "pushed": false
