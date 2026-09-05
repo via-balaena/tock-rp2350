@@ -104,6 +104,7 @@ INTENT = {
     "tock:pico2w-radio-bench": ("never", "Every commit titled NOT FOR UPSTREAM: it starts the radio from the board so a scan can be driven without an app.", None),
     "tock:bench/stepper-pico2w": ("never", "The Pico 2 W branch, the stepper capsule and a board wiring for GPIO 18-21, merged so the motor can actually be driven. A vehicle, not a contribution: the capsule is cut from master and the board only exists on #5141, so there is nowhere upstream the two currently meet.", None),
     "tock:bench/reclaim-leak-demo": ("never", "Reproduces the GPIO reclaim leak on a board.", None),
+    "tock:bench/uart-fix-at-pinned-rev": ("never", "The UART abort fix applied at the revision libtock-rs pins, which is where the A/B behind rp2-uart-abort-fix was actually run \u2014 the reproduction application does not load on a master kernel. Kept so the measurement can be repeated rather than only cited.", None),
     "tock:learning/series": ("never", "Nine chapters on how the kernel works, plus the tooling that builds them.", None),
     "tock:master": ("never", "Tracking branch.", None),
     "libtock-rs:stepper": ("upstream", "The userspace half of the stepper: `libtock_stepper` and an example that turns a revolution each way.", "Paired with tock:stepper-capsule and gated on the same undecided question. Neither half is useful without the other."),

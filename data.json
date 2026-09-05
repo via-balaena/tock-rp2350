@@ -350,6 +350,16 @@
         "base_sha": "2a7a40450",
         "pushed": false
       },
+      "bench/uart-fix-at-pinned-rev": {
+        "ahead": 1,
+        "commits": [
+          "NOT FOR UPSTREAM: the UART abort fix at the revision libtock-rs pins"
+        ],
+        "stat": "2 files changed, 35 insertions(+), 9 deletions(-)",
+        "base": "upstream/master",
+        "base_sha": "2a7a40450",
+        "pushed": false
+      },
       "boards-fix-ram-layout": {
         "ahead": 0,
         "commits": [],
@@ -369,8 +379,9 @@
         "pushed": true
       },
       "learning/series": {
-        "ahead": 186,
+        "ahead": 187,
         "commits": [
+          "learning: add a tool that checks a platform row against its kernel",
           "learning: keep the two silicon demonstrations that are not for merging",
           "learning: bring the three review tools into learning/tools",
           "learning: both kernels print on a panic, so say what actually differs",
@@ -558,7 +569,7 @@
           "learning: correct five factual errors in chapter 1",
           "learning: add chapter 1, everything is memory"
         ],
-        "stat": "93 files changed, 41939 insertions(+), 3812 deletions(-)",
+        "stat": "94 files changed, 42079 insertions(+), 3812 deletions(-)",
         "base": "upstream/master",
         "base_sha": "2a7a40450",
         "pushed": true
@@ -751,8 +762,10 @@
         "pushed": true
       },
       "hw/pico2w-async": {
-        "ahead": 44,
+        "ahead": 46,
         "commits": [
+          "examples: check the rate floor before requesting, not after",
+          "examples: sweep the display probe's clock upward, and floor it",
           "examples: ask the kit's display what controller it is",
           "spi_controller: expose the bus configuration the capsule already has",
           "examples: find the display's backlight pin",
@@ -798,7 +811,7 @@
           "alarm: add a Future-returning sleep and a block_on executor",
           "Add the Raspberry Pi Pico 2 as a build platform"
         ],
-        "stat": "48 files changed, 4739 insertions(+), 53 deletions(-)",
+        "stat": "48 files changed, 4771 insertions(+), 53 deletions(-)",
         "base": "upstream/master",
         "base_sha": "469d9a0",
         "pushed": false
