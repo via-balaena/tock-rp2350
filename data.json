@@ -319,6 +319,29 @@
         "base_sha": "2a7a40450",
         "pushed": true
       },
+      "bench/stepper-pico2w": {
+        "ahead": 14,
+        "commits": [
+          "NOT FOR UPSTREAM: wire the stepper into the Pico 2 W for the bench",
+          "capsules: stepper: report a stop, and refuse one from a non-owner",
+          "capsules: add a stepper motor driver",
+          "boards: raspberry_pi_pico_2_w: bring up the CYW43439",
+          "chips: rp2350: hold the DMA and PIO0 in the default peripherals",
+          "boards: add Raspberry Pi Pico 2 W",
+          "boards: pico 2: split into library and binary",
+          "boards: pico 2: resolve openocd config path",
+          "chips: rp2040: move the PIO gSPI driver into the shared rp2xxx crate",
+          "chips: rp2350: add DMA",
+          "chips: rp2350: add PIO",
+          "chips: rp2040: move the PIO driver into the shared rp2xxx crate",
+          "chips: rp2350: gpio: add the pad controls the RP2040 has",
+          "chips: rp2040: pio: retire the examples module"
+        ],
+        "stat": "43 files changed, 4925 insertions(+), 2550 deletions(-)",
+        "base": "upstream/master",
+        "base_sha": "2a7a40450",
+        "pushed": false
+      },
       "boards-fix-ram-layout": {
         "ahead": 0,
         "commits": [],
