@@ -320,8 +320,9 @@
         "pushed": true
       },
       "bench/stepper-pico2w": {
-        "ahead": 22,
+        "ahead": 23,
         "commits": [
+          "NOT FOR UPSTREAM: put GPIO 4 back as a plain pin to probe MISO",
           "boards: raspberry_pi_pico_2_w: expose SPI0 for display probing",
           "boards: raspberry_pi_pico_2_w: expose the ADC to userspace",
           "chips: rp2350: add the SAR ADC",
@@ -345,10 +346,10 @@
           "chips: rp2350: gpio: add the pad controls the RP2040 has",
           "chips: rp2040: pio: retire the examples module"
         ],
-        "stat": "46 files changed, 5432 insertions(+), 2771 deletions(-)",
+        "stat": "46 files changed, 5446 insertions(+), 2771 deletions(-)",
         "base": "upstream/master",
         "base_sha": "2a7a40450",
-        "pushed": false
+        "pushed": true
       },
       "bench/uart-fix-at-pinned-rev": {
         "ahead": 1,
@@ -358,7 +359,7 @@
         "stat": "2 files changed, 35 insertions(+), 9 deletions(-)",
         "base": "upstream/master",
         "base_sha": "2a7a40450",
-        "pushed": false
+        "pushed": true
       },
       "boards-fix-ram-layout": {
         "ahead": 0,
@@ -639,7 +640,7 @@
         "stat": "8 files changed, 431 insertions(+), 238 deletions(-)",
         "base": "upstream/master",
         "base_sha": "2a7a40450",
-        "pushed": false
+        "pushed": true
       },
       "rp2-pad-controls": {
         "ahead": 2,
@@ -686,7 +687,7 @@
         "stat": "4 files changed, 57 insertions(+), 13 deletions(-)",
         "base": "upstream/master",
         "base_sha": "2a7a40450",
-        "pushed": false
+        "pushed": true
       },
       "rp2350-gpio-irq": {
         "ahead": 1,
@@ -696,7 +697,7 @@
         "stat": "1 file changed, 4 insertions(+)",
         "base": "upstream/master",
         "base_sha": "2a7a40450",
-        "pushed": false
+        "pushed": true
       },
       "rp2350-spi-bench": {
         "ahead": 2,
@@ -719,7 +720,7 @@
         "stat": "5 files changed, 487 insertions(+)",
         "base": "upstream/master",
         "base_sha": "2a7a40450",
-        "pushed": false
+        "pushed": true
       }
     },
     "libtock-rs": {
@@ -745,7 +746,7 @@
         "stat": "22 files changed, 2080 insertions(+), 22 deletions(-)",
         "base": "upstream/master",
         "base_sha": "469d9a0",
-        "pushed": false
+        "pushed": true
       },
       "bench/reclaim-leak": {
         "ahead": 5,
@@ -762,8 +763,10 @@
         "pushed": true
       },
       "hw/pico2w-async": {
-        "ahead": 46,
+        "ahead": 48,
         "commits": [
+          "examples: establish that the kit's panel cannot be identified over its bus",
+          "examples: drive the kit's display, and work out what it is on the way",
           "examples: check the rate floor before requesting, not after",
           "examples: sweep the display probe's clock upward, and floor it",
           "examples: ask the kit's display what controller it is",
@@ -811,10 +814,10 @@
           "alarm: add a Future-returning sleep and a block_on executor",
           "Add the Raspberry Pi Pico 2 as a build platform"
         ],
-        "stat": "48 files changed, 4771 insertions(+), 53 deletions(-)",
+        "stat": "52 files changed, 5627 insertions(+), 53 deletions(-)",
         "base": "upstream/master",
         "base_sha": "469d9a0",
-        "pushed": false
+        "pushed": true
       },
       "kit-examples": {
         "ahead": 2,
@@ -856,7 +859,7 @@
         "stat": "3 files changed, 9 insertions(+), 3 deletions(-)",
         "base": "upstream/master",
         "base_sha": "469d9a0",
-        "pushed": false
+        "pushed": true
       },
       "stepper": {
         "ahead": 3,
@@ -868,7 +871,7 @@
         "stat": "6 files changed, 364 insertions(+)",
         "base": "upstream/master",
         "base_sha": "469d9a0",
-        "pushed": false
+        "pushed": true
       },
       "unittest-fakes": {
         "ahead": 2,
@@ -879,7 +882,7 @@
         "stat": "4 files changed, 254 insertions(+), 20 deletions(-)",
         "base": "upstream/master",
         "base_sha": "469d9a0",
-        "pushed": false
+        "pushed": true
       }
     },
     "book": {
