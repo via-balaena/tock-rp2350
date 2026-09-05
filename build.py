@@ -475,9 +475,15 @@ def survey_local():
             if head and head in held:
                 pushed, unpushed = True, 0
             elif known:
-                pushed = False
+                # Count what no remote can reach, then decide. Asking instead
+                # whether a remote holds our exact tip answers a different
+                # question from the one the pill renders: a branch BEHIND its
+                # remote has all its work backed up and no tip match, and read
+                # as "0 commits not pushed" -- a false alarm whose text is also
+                # nonsense. The question is "is any of this only on this disk".
                 unpushed = int(git(path, "rev-list", "--count", branch,
                                    "--not", *known) or 0)
+                pushed = unpushed == 0
             else:
                 # On no remote at all, or on a remote this clone cannot follow:
                 # everything since the base is unbacked as far as we can tell.

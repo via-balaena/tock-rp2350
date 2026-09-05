@@ -801,8 +801,9 @@
         "unpushed": 0
       },
       "hw/pico2w-async": {
-        "ahead": 50,
+        "ahead": 51,
         "commits": [
+          "examples: the kit's beeper is passive, and userspace plays it flat",
           "adc: the sample is the third upcall argument, not the first",
           "examples: the motor stops on a press, and three arguments become measurements",
           "examples: establish that the kit's panel cannot be identified over its bus",
@@ -854,7 +855,7 @@
           "alarm: add a Future-returning sleep and a block_on executor",
           "Add the Raspberry Pi Pico 2 as a build platform"
         ],
-        "stat": "53 files changed, 5815 insertions(+), 58 deletions(-)",
+        "stat": "53 files changed, 5845 insertions(+), 58 deletions(-)",
         "base": "upstream/master",
         "base_sha": "469d9a0",
         "pushed": true,
