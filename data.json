@@ -320,8 +320,11 @@
         "pushed": true
       },
       "bench/stepper-pico2w": {
-        "ahead": 18,
+        "ahead": 21,
         "commits": [
+          "boards: raspberry_pi_pico_2_w: expose the ADC to userspace",
+          "chips: rp2350: add the SAR ADC",
+          "chips: rp2040: move the SAR ADC driver into the shared rp2xxx crate",
           "capsules: stepper: return the step count from a stop",
           "chips: rp2350: route the GPIO bank interrupt, which panics the kernel",
           "NOT FOR UPSTREAM: back to GPIO 18-21, the board stays in the kit",
@@ -341,7 +344,7 @@
           "chips: rp2350: gpio: add the pad controls the RP2040 has",
           "chips: rp2040: pio: retire the examples module"
         ],
-        "stat": "43 files changed, 4958 insertions(+), 2550 deletions(-)",
+        "stat": "46 files changed, 5373 insertions(+), 2771 deletions(-)",
         "base": "upstream/master",
         "base_sha": "2a7a40450",
         "pushed": false
@@ -621,7 +624,7 @@
           "chips: rp2350: add the SAR ADC",
           "chips: rp2040: move the SAR ADC driver into the shared rp2xxx crate"
         ],
-        "stat": "8 files changed, 422 insertions(+), 229 deletions(-)",
+        "stat": "8 files changed, 427 insertions(+), 229 deletions(-)",
         "base": "upstream/master",
         "base_sha": "2a7a40450",
         "pushed": false
@@ -747,8 +750,14 @@
         "pushed": true
       },
       "hw/pico2w-async": {
-        "ahead": 34,
+        "ahead": 40,
         "commits": [
+          "examples: read the kit's joystick",
+          "adc: let a caller name the channel",
+          "stepper: a stop returns the step count",
+          "make: run the driver crates' async tests, which the workspace pass skips",
+          "examples: turn the motor until a button stops it",
+          "async: prove that a future lent to select survives losing it",
           "stepper: a future over a movement, and the count a cancellation loses",
           "gpio: a future over an edge, and what it does not promise",
           "examples: read the kit's buttons via GPIO edge interrupts",
@@ -784,7 +793,7 @@
           "alarm: add a Future-returning sleep and a block_on executor",
           "Add the Raspberry Pi Pico 2 as a build platform"
         ],
-        "stat": "34 files changed, 3280 insertions(+), 29 deletions(-)",
+        "stat": "40 files changed, 3822 insertions(+), 53 deletions(-)",
         "base": "upstream/master",
         "base_sha": "469d9a0",
         "pushed": false
