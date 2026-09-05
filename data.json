@@ -320,8 +320,10 @@
         "pushed": true
       },
       "bench/stepper-pico2w": {
-        "ahead": 16,
+        "ahead": 18,
         "commits": [
+          "capsules: stepper: return the step count from a stop",
+          "chips: rp2350: route the GPIO bank interrupt, which panics the kernel",
           "NOT FOR UPSTREAM: back to GPIO 18-21, the board stays in the kit",
           "NOT FOR UPSTREAM: move the stepper to GPIO 10-13, where it is wired",
           "NOT FOR UPSTREAM: wire the stepper into the Pico 2 W for the bench",
@@ -339,7 +341,7 @@
           "chips: rp2350: gpio: add the pad controls the RP2040 has",
           "chips: rp2040: pio: retire the examples module"
         ],
-        "stat": "43 files changed, 4931 insertions(+), 2550 deletions(-)",
+        "stat": "43 files changed, 4958 insertions(+), 2550 deletions(-)",
         "base": "upstream/master",
         "base_sha": "2a7a40450",
         "pushed": false
@@ -693,12 +695,13 @@
         "pushed": true
       },
       "stepper-capsule": {
-        "ahead": 2,
+        "ahead": 3,
         "commits": [
+          "capsules: stepper: return the step count from a stop",
           "capsules: stepper: report a stop, and refuse one from a non-owner",
           "capsules: add a stepper motor driver"
         ],
-        "stat": "5 files changed, 464 insertions(+)",
+        "stat": "5 files changed, 487 insertions(+)",
         "base": "upstream/master",
         "base_sha": "2a7a40450",
         "pushed": false
@@ -744,8 +747,10 @@
         "pushed": true
       },
       "hw/pico2w-async": {
-        "ahead": 32,
+        "ahead": 34,
         "commits": [
+          "stepper: a future over a movement, and the count a cancellation loses",
+          "gpio: a future over an edge, and what it does not promise",
           "examples: read the kit's buttons via GPIO edge interrupts",
           "Merge branch 'stepper' into hw/pico2w-async",
           "stepper: document Reserve for a non-owner stop",
@@ -779,7 +784,7 @@
           "alarm: add a Future-returning sleep and a block_on executor",
           "Add the Raspberry Pi Pico 2 as a build platform"
         ],
-        "stat": "31 files changed, 2759 insertions(+), 25 deletions(-)",
+        "stat": "34 files changed, 3280 insertions(+), 29 deletions(-)",
         "base": "upstream/master",
         "base_sha": "469d9a0",
         "pushed": false
