@@ -720,8 +720,12 @@
         "pushed": true
       },
       "hw/pico2w-async": {
-        "ahead": 27,
+        "ahead": 31,
         "commits": [
+          "Merge branch 'stepper' into hw/pico2w-async",
+          "stepper: document Reserve for a non-owner stop",
+          "stepper: document half-steps, BUSY, and what a stop reports",
+          "stepper: add a userspace driver for the stepper capsule",
           "examples: drive a 28BYJ-48 stepper through a ULN2003",
           "examples: warn that cargo build alone leaves a stale tbf",
           "examples: record that the control run is not reachable from userspace",
@@ -750,7 +754,7 @@
           "alarm: add a Future-returning sleep and a block_on executor",
           "Add the Raspberry Pi Pico 2 as a build platform"
         ],
-        "stat": "26 files changed, 2300 insertions(+), 25 deletions(-)",
+        "stat": "30 files changed, 2664 insertions(+), 25 deletions(-)",
         "base": "upstream/master",
         "base_sha": "469d9a0",
         "pushed": false

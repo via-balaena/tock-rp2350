@@ -100,6 +100,7 @@ INTENT = {
     "tock:rp2-uart-abort-fix": ("upstream", "The fix for all three UART defects: the abort ordering in the three chip drivers, and the two buffer-ownership bugs in the mux. Three commits, each building standalone, no size change on any board.", "Verified by A/B under QEMU on the pinned hifive1 kernel — Err(BUSY) without it, the read left outstanding with it, and 16 bytes typed completing it Ok. Waiting only on a pull request description."),
     "tock:rp2350-spi-bench": ("never", "A bench harness that drives the SPI loopback.", None),
     "tock:pico2w-radio-bench": ("never", "Every commit titled NOT FOR UPSTREAM: it starts the radio from the board so a scan can be driven without an app.", None),
+    "tock:bench/stepper-pico2w": ("never", "The Pico 2 W branch, the stepper capsule and a board wiring for GPIO 18-21, merged so the motor can actually be driven. A vehicle, not a contribution: the capsule is cut from master and the board only exists on #5141, so there is nowhere upstream the two currently meet.", None),
     "tock:bench/reclaim-leak-demo": ("never", "Reproduces the GPIO reclaim leak on a board.", None),
     "tock:learning/series": ("never", "Nine chapters on how the kernel works, plus the tooling that builds them.", None),
     "tock:master": ("never", "Tracking branch.", None),
