@@ -254,7 +254,7 @@ DEFECTS = [
     ("PIO: an interrupt flag scoped to the wrong thing", "fixed", 5150,
      "The flag belongs to the block; treating it as per-state-machine mis-attributes interrupts."),
     ("UART: an aborted receive tears down every other receive", "unfiled", None,
-     "The abort completion calls the client back before marking the receiver idle, so the multiplexer's restart is refused and it ends every device's receive instead. The same code is in three chip drivers, and eleven boards pair a process console with the userspace console on one multiplexer."),
+     "The abort completion calls the client back before marking the receiver idle, so the multiplexer's restart is refused and it ends every device's receive instead. The same code is in three chip drivers, and eleven boards pair a process console with the userspace console on one multiplexer. Reproducible under QEMU with no hardware, on hifive1, at the eighteen-month-old revision libtock-rs already pins."),
     ("UART: a failed receive hands back the wrong static buffer", "unfiled", None,
      "A virtual device propagates the multiplexer's error with `?`, and that error carries the multiplexer's buffer rather than the caller's. Two static buffers change owners and the multiplexer's slot is left empty for the life of the board."),
     ("A stopped process never gets its GPIO reclaimed", "unfiled", None,
@@ -274,7 +274,7 @@ SILICON = [
 
 DOWNSTREAM = [
     ("Async userspace", "blocked",
-     "A Future and executor layer over Tock's syscalls in libtock-rs, validated on a Pico 2 W running the Pico 2 W kernel. The alarm half is done and measured. The console half is blocked on there being any environment at all where a userspace console read stays outstanding, and none is currently known — the failure is in the kernel, not in the futures."),
+     "A Future and executor layer over Tock's syscalls in libtock-rs, validated on a Pico 2 W running the Pico 2 W kernel. The alarm half is done and measured. The console half is blocked on the UART defect being fixed, and that question is now closed rather than open: QEMU was the last candidate for an environment where a userspace console read stays outstanding, and it reproduces the defect too."),
     ("A Pico page for the Tock book", "ready",
      "The book has no Pico coverage at all. Written and pushed; the pull request is not open yet."),
     ("Nine chapters on how the kernel works", "drafted",
@@ -282,8 +282,6 @@ DOWNSTREAM = [
 ]
 
 NOT_DONE = [
-    ("Run the UART defect under QEMU",
-     "The board is right and the setup is cheaper than it looks. libtock-rs already has `make qemu-example` and it runs hifive1, which pairs a process console and the userspace console capsule on one multiplexer and drives them through the sifive UART — the same abort ordering as the RP2 chips, so the trigger is present. The nominal setup builds QEMU from source, but that pin exists for OpenTitan support and this needs the `sifive_e` machine, which stock QEMU has had for years; the runner takes its binary from a fixed path, so pointing that at an installed QEMU should skip the build entirely. Untested, and worth ten minutes before committing to an hour. One precondition, and it decides whether a negative result means anything: the process console does not arm its receive at `start()` — it sets a 100 ms alarm and arms in the callback. Until that fires the multiplexer is idle, an application's read takes the ordinary path, and nothing goes wrong. So the example has to be past that point before it reads, or it measures the wrong thing. No input is needed, though: the process console arms its receive at boot, so one read from an application is enough to fire the teardown. Either result is worth having. Reproducing means no known environment can hold a console read open and the userspace work waits for the fix; not reproducing means the console work unblocks the same day, on a laptop, with no fix and no board. It also turns the defect into something a maintainer can run rather than take on trust."),
     ("Extract the unittest fixes onto their own branch",
      "Two commits currently inside the async branch, and the smaller of the two asks. Roughly half an hour of cherry-picking and a gate run."),
     ("File the four unfiled defects", "Each is demonstrated and none is filed. The constraint is review throughput, not the work."),
@@ -985,7 +983,10 @@ def render(data):
 <section>
   <h2>Defects found</h2>
   <p class="lede">Each demonstrated before it was written down — by a test that fails
-  without the fix, or by an instrumented kernel on a board.</p>
+  without the fix, or by an instrumented kernel on a board. The UART pair needs no board
+  at all: <code>make qemu-example EXAMPLE=console_read_busy</code> against libtock-rs's
+  own pinned kernel prints <code>read -&gt; 0 bytes, Err(BUSY)</code> on an affected build,
+  where a correct one would leave the read outstanding.</p>
   <ul class="plain">%(defects)s</ul>
 </section>
 

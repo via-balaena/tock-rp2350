@@ -635,8 +635,9 @@
         "pushed": true
       },
       "hw/pico2w-async": {
-        "ahead": 23,
+        "ahead": 24,
         "commits": [
+          "examples: reproduce the UART mux receive teardown under QEMU",
           "examples: report the read's error code, and stop overstating ArmOnce",
           "Merge branch 'async/alarm' into hw/pico2w-async",
           "examples: exercise select on hardware in async_probe",
