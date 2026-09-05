@@ -1,7 +1,13 @@
 # tock-rp2350
 
-Source for a single-page map of the Tock/RP2350 work: what has merged upstream,
-what is open, what is broken and known, and what is not done.
+Source for a single page that draws the Tock/RP2350 work as a graph: one column
+per pull request, every commit as a node, arrows for what depends on what.
+
+It exists to answer a specific review comment on #5126 — *"I'm thoroughly
+confused... it doesn't seem like there is a clear testing/bring up strategy"* —
+and its two halves answer the two halves of that. The columns show which commits
+belong to which pull request, which GitHub cannot show when a stack lives in a
+fork. The badge on each node shows how that change is verified.
 
 ## How it works
 
@@ -10,10 +16,20 @@ what is open, what is broken and known, and what is not done.
     ./build.py              # fetch from GitHub, write data.json and index.html
     ./build.py --offline    # rebuild from the cached data.json, no network
 
-Pull request state, sizes, dates, review decisions and commit lists are read
-from the GitHub API at build time. Everything else — the prose, the defect
-list, the userspace and documentation tracks — lives in the dictionaries at the
-top of `build.py`.
+Structure is derived, never asserted:
+
+- **Nodes** are the distinct commit headlines across every pull request.
+- **Edges** are commit order inside each branch, plus the handful of real
+  cross-branch dependencies listed in `EXTRA_DEPS`.
+- **Which pull requests a commit belongs to** falls out of the same data, so a
+  commit shared by two branches is drawn as shared without anyone saying so.
+- **"These two branches collide"** comes from intersecting their file lists.
+
+Only the short node labels, the verification badges and the prose are
+hand-written, in `WORK` and the dictionaries above it. A commit that is fetched
+but missing from `WORK` still renders, unlabelled, and the build prints its
+name — new work must show up on the page rather than vanish because the table
+was not updated.
 
 The split is the point. A hand-kept list of pull request numbers goes stale
 silently, and a page whose whole job is to be trusted cannot afford that. Run

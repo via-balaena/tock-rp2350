@@ -18,6 +18,9 @@
         {
           "messageHeadline": "boards: declare all 520 kB of SRAM on Pico 2"
         }
+      ],
+      "files": [
+        "boards/raspberry_pi_pico_2/layout.ld"
       ]
     },
     {
@@ -37,6 +40,13 @@
         {
           "messageHeadline": "boards: remove dead boot-from-RAM layout"
         }
+      ],
+      "files": [
+        "boards/nano_rp2040_connect/layout.ld",
+        "boards/pico_explorer_base/layout.ld",
+        "boards/raspberry_pi_pico/layout.ld",
+        "boards/raspberry_pi_pico_2/layout.ld",
+        "boards/raspberry_pi_pico_w/layout.ld"
       ]
     },
     {
@@ -56,6 +66,14 @@
         {
           "messageHeadline": "boards: give the boot-from-RAM layout addresses that link"
         }
+      ],
+      "files": [
+        "boards/nano_rp2040_connect/layout.ld",
+        "boards/pico_explorer_base/layout.ld",
+        "boards/raspberry_pi_pico/layout.ld",
+        "boards/raspberry_pi_pico_2/layout.ld",
+        "boards/raspberry_pi_pico_2/src/flash_bootloader.rs",
+        "boards/raspberry_pi_pico_w/layout.ld"
       ]
     },
     {
@@ -81,6 +99,23 @@
         {
           "messageHeadline": "Update chips/rp2xxx/README.md"
         }
+      ],
+      "files": [
+        "Cargo.lock",
+        "Cargo.toml",
+        "chips/rp2040/Cargo.toml",
+        "chips/rp2040/src/chip.rs",
+        "chips/rp2040/src/clocks.rs",
+        "chips/rp2040/src/spi.rs",
+        "chips/rp2350/Cargo.toml",
+        "chips/rp2350/src/chip.rs",
+        "chips/rp2350/src/clocks.rs",
+        "chips/rp2350/src/lib.rs",
+        "chips/rp2350/src/spi.rs",
+        "chips/rp2xxx/Cargo.toml",
+        "chips/rp2xxx/README.md",
+        "chips/rp2xxx/src/lib.rs",
+        "chips/rp2xxx/src/spi.rs"
       ]
     },
     {
@@ -100,6 +135,12 @@
         {
           "messageHeadline": "chips: rp2040: pio: retire the examples module"
         }
+      ],
+      "files": [
+        "chips/rp2040/src/pio.rs",
+        "chips/rp2040/src/pio_gspi.rs",
+        "chips/rp2040/src/pio_pwm.rs",
+        "chips/rp2040/src/pio_spi.rs"
       ]
     },
     {
@@ -122,6 +163,12 @@
         {
           "messageHeadline": "chips: rp2350: gpio: add the pad controls the RP2040 has"
         }
+      ],
+      "files": [
+        "chips/rp2040/src/gpio.rs",
+        "chips/rp2350/src/gpio.rs",
+        "chips/rp2xxx/src/lib.rs",
+        "chips/rp2xxx/src/pads.rs"
       ]
     },
     {
@@ -171,6 +218,46 @@
         {
           "messageHeadline": "boards: raspberry_pi_pico_2_w: bring up the CYW43439"
         }
+      ],
+      "files": [
+        "Cargo.lock",
+        "Cargo.toml",
+        "boards/README.md",
+        "boards/pico_explorer_base/src/main.rs",
+        "boards/raspberry_pi_pico_2/Makefile",
+        "boards/raspberry_pi_pico_2/src/io.rs",
+        "boards/raspberry_pi_pico_2/src/lib.rs",
+        "boards/raspberry_pi_pico_2/src/main.rs",
+        "boards/raspberry_pi_pico_2_w/.cargo/config.toml",
+        "boards/raspberry_pi_pico_2_w/Cargo.toml",
+        "boards/raspberry_pi_pico_2_w/Makefile",
+        "boards/raspberry_pi_pico_2_w/README.md",
+        "boards/raspberry_pi_pico_2_w/layout.ld",
+        "boards/raspberry_pi_pico_2_w/openocd-picoprobe.cfg",
+        "boards/raspberry_pi_pico_2_w/openocd-swd.cfg",
+        "boards/raspberry_pi_pico_2_w/src/io.rs",
+        "boards/raspberry_pi_pico_2_w/src/main.rs",
+        "boards/raspberry_pi_pico_2_w/src/pio_gspi_component.rs",
+        "boards/raspberry_pi_pico_w/src/main.rs",
+        "boards/raspberry_pi_pico_w/src/pio_gspi_component.rs",
+        "chips/rp2040/src/chip.rs",
+        "chips/rp2040/src/dma.rs",
+        "chips/rp2040/src/gpio.rs",
+        "chips/rp2040/src/pio.rs",
+        "chips/rp2040/src/pio_gspi.rs",
+        "chips/rp2040/src/pio_pwm.rs",
+        "chips/rp2040/src/pio_spi.rs",
+        "chips/rp2350/src/chip.rs",
+        "chips/rp2350/src/dma.rs",
+        "chips/rp2350/src/gpio.rs",
+        "chips/rp2350/src/lib.rs",
+        "chips/rp2350/src/pio.rs",
+        "chips/rp2350/src/pio_gspi.rs",
+        "chips/rp2xxx/src/dma.rs",
+        "chips/rp2xxx/src/lib.rs",
+        "chips/rp2xxx/src/pads.rs",
+        "chips/rp2xxx/src/pio.rs",
+        "chips/rp2xxx/src/pio_gspi.rs"
       ]
     },
     {
@@ -202,6 +289,12 @@
         {
           "messageHeadline": "chips: rp2040: an irq flag belongs to the block, not a state machine"
         }
+      ],
+      "files": [
+        "boards/raspberry_pi_pico_w/src/pio_gspi_component.rs",
+        "chips/rp2040/src/chip.rs",
+        "chips/rp2040/src/pio.rs",
+        "chips/rp2040/src/pio_gspi.rs"
       ]
     }
   ],

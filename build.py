@@ -1,12 +1,18 @@
 #!/usr/bin/env python3
-"""Build index.html for the Tock/RP2350 work map.
+"""Build index.html — a dependency graph of the Tock/RP2350 work.
 
-Every number on the page comes from the GitHub API at build time rather than
-from a hand-kept list, because a hand-kept list goes stale silently and this
-page exists to be trusted. Prose lives in CONTENT below; status, sizes, dates
-and review state are fetched.
+The page exists to answer two questions a reviewer asked out loud: which
+commits belong to which pull request, when one branch is a stack that GitHub
+cannot express; and what the testing strategy is. Both are answered by the
+graph rather than by prose.
 
-    ./build.py            # fetch and write index.html
+Everything structural is derived, not asserted. Nodes are the distinct commits
+across every pull request. Edges come from commit order inside each branch.
+"These two branches collide" comes from comparing file lists. Only the short
+labels, the verification badges and the prose are hand-written, and they live
+in WORK below.
+
+    ./build.py            # fetch, then write data.json and index.html
     ./build.py --offline  # rebuild from the cached data.json, no network
 
 Requires the `gh` CLI, authenticated.
@@ -16,6 +22,7 @@ import argparse
 import html
 import json
 import pathlib
+import re
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -25,218 +32,215 @@ REPO = "tock/tock"
 AUTHOR = "bigmark222"
 
 # --------------------------------------------------------------------------
-# Prose. Everything here is written by hand; everything else is fetched.
+# Prose and hand annotation. Everything else is derived.
 # --------------------------------------------------------------------------
 
 SITE = {
     "title": "Tock on the RP2350",
-    "tagline": "Bringing the Raspberry Pi Pico 2 and Pico 2 W up on the Tock embedded kernel — what has landed, what is open, what is broken.",
-    "intro": """
-The RP2350 is the chip in the Raspberry Pi Pico 2. Tock has booted on it since
-April 2025, but booting was most of what it did: the chip had no SPI, no PIO
-and no DMA driver, the Pico 2 W's radio had no support at all, and several
-things that looked finished turned out not to work when a board was put in
-front of them.
+    "tagline": "A dependency graph of one contributor's work on the Raspberry Pi Pico 2 and Pico 2 W.",
+}
 
-This page maps the work closing that gap. It is one contributor's queue, not a
-roadmap for the project, and it is deliberately honest about the parts that are
-unfinished, unfiled or wrong — a map that only showed the wins would not be
-worth reading.
+PROVOCATION = {
+    "quote": (
+        "I'm thoroughly confused. I guess the tests were added to the chip crate "
+        "in one PR, used in a different PR for testing, but reverted from the "
+        "second PR's main.rs changes before the second PR was merged. [...] It "
+        "doesn't seem like there is a clear testing/bring up strategy for the "
+        "rp2x PIO."
+    ),
+    "who": "bradjc",
+    "where": "#5126",
+    "url": "https://github.com/tock/tock/pull/5126",
+    "answer": """
+That was fair, and this page is the answer to it. The work is a stack: one long
+chain of commits where each depends on the one before, and the early links are
+also open as small reviewable pull requests of their own. GitHub cannot express
+a stack when the branches live in a fork, so the same commit appears in two
+places and reads as the same work submitted twice.
+
+Below is that stack, drawn. Click a pull request to light up exactly the commits
+it carries. Every node also shows how it is checked, which is the other half of
+the question: a pure code move is proved by the binary coming out with identical
+sections, logic is covered by a host test that fails without the change, and
+anything touching hardware is run on a board.
 """,
-    "method": """
-Two rules produce most of what is here. Every claim about hardware is made
-against hardware, on a bench where a Raspberry Pi flashes the board and holds
-its serial line so the development machine never touches it. And every defect
-is demonstrated before it is reported — by a failing test where a test can
-reach it, and by an instrumented kernel on silicon where it cannot.
-""",
 }
 
-# Per-PR prose, keyed by number. `what` is the change; `why` is the reason it
-# matters to somebody who does not already know the codebase.
-PR_NOTES = {
-    5086: {
-        "what": "The Pico 2 board declared a fraction of the RAM the chip has.",
-        "why": "One constant, and the smallest possible first contribution — which is the point. It established that the patches were real before anything large was proposed.",
+# How a unit of work is verified. This vocabulary is the testing strategy.
+VERIFY = {
+    "host": ("host test", "A test in the tree that fails if the change is reverted."),
+    "silicon": ("on silicon", "Run on a real board and observed, not inferred."),
+    "sections": ("identical sections", "A pure move: the linked binary comes out with the same text, data and bss, so the change provably alters no behaviour."),
+    "build": ("build only", "Checked by the thing building or linking, and nothing further."),
+    "none": ("unchecked", "No automated check reaches this."),
+}
+
+# Keyed by exact commit headline. Anything fetched but absent here still
+# renders, unannotated: new work must appear on the page rather than vanish
+# because this table was not updated.
+WORK = {
+    "boards: declare all 520 kB of SRAM on Pico 2": {
+        "short": "Declare all 520 kB of SRAM",
+        "verify": "build",
+        "note": "The board declared a fraction of the RAM the chip has.",
     },
-    5109: {
-        "what": "Gave the board's boot-from-RAM memory layout addresses that actually link.",
-        "why": "Booting a kernel into RAM instead of flash saves the flash write on every iteration. The layout had been in the tree for a while and could not have worked.",
+    "boards: remove dead boot-from-RAM layout": {
+        "short": "Remove the boot-from-RAM layout",
+        "verify": "none",
+        "note": "Closed. A maintainer pointed out that the Pico can boot from RAM and the addresses should be fixed instead, which became #5109.",
     },
-    5104: {
-        "what": "Proposed deleting the boot-from-RAM layout as dead code.",
-        "why": "Closed, and correctly. A maintainer pointed out that the Pico can boot from RAM and the addresses should be fixed rather than the feature removed. That became #5109, which merged. Worth leaving on the map: the first instinct was wrong and the review caught it.",
+    "boards: give the boot-from-RAM layout addresses that link": {
+        "short": "Fix the boot-from-RAM addresses",
+        "verify": "silicon",
+        "note": "The layout was in the tree and could not have linked.",
     },
-    5112: {
-        "what": "Moved the RP2040's PL022 SPI driver into a crate both chips share, then added SPI to the RP2350.",
-        "why": "The two chips carry the same SPI block. Sharing the driver rather than copying it is the pattern the rest of this work follows — and the shared crate it created, rp2xxx, is where PIO and DMA later went.",
+    "chips: rp2040: move the PL022 SPI driver into a shared rp2xxx crate": {
+        "short": "Move PL022 SPI into a shared crate",
+        "verify": "sections",
+        "note": "Creates rp2xxx, the crate both chips share. Everything downstream lives there.",
     },
-    5126: {
-        "what": "Removed a module of PIO example programs that nothing called.",
-        "why": "Dead API in a driver is a liability: it constrains every later change while proving nothing. Clearing it first made the PIO work that follows much smaller.",
+    "chips: rp2350: add SPI driver": {
+        "short": "Add SPI to the RP2350",
+        "verify": "silicon",
+        "note": "A loopback app writes and reads back a 32-byte pattern, varied so a stuck line cannot pass it.",
     },
-    5140: {
-        "what": "Shared the GPIO pad-control enums between the chips and gave the RP2350 the pad controls the RP2040 already had.",
-        "why": "Drive strength, slew rate and Schmitt trigger. The radio's SPI bus needs them, and the RP2350 side simply did not exist.",
+    "Update chips/rp2xxx/README.md": {
+        "short": "rp2xxx README",
+        "verify": "none",
     },
-    5141: {
-        "what": "The Pico 2 W: PIO and DMA for the RP2350, the gSPI driver moved into the shared crate, the board split into a library and a binary, and the CYW43439 radio brought up on top.",
-        "why": "The largest piece of the work and the one everything else was for. On silicon the board reads its MAC out of the radio's OTP and completes a scan — which means the firmware uploaded over a PIO state machine and a DMA channel, on a chip that had neither before this series.",
+    "chips: rp2040: pio: retire the examples module": {
+        "short": "Retire the PIO examples module",
+        "verify": "none",
+        "note": "Dead API in a driver constrains every later change while proving nothing.",
     },
-    5150: {
-        "what": "Five defects in the RP2040 PIO driver, and the first host tests that driver has ever had.",
-        "why": "Each fix ships with a test that fails without it. The driver had no tests at all, so the bugs below had nothing to catch them.",
+    "chips: rp2xxx: share the GPIO pad control enums": {
+        "short": "Share the GPIO pad enums",
+        "verify": "sections",
+    },
+    "chips: rp2350: gpio: add the pad controls the RP2040 has": {
+        "short": "Add RP2350 pad controls",
+        "verify": "silicon",
+        "note": "Drive strength, slew rate and Schmitt trigger. This code has run on silicon in the radio bring-up, though a completed scan does not prove the analog bit positions; the datasheet does.",
+    },
+    "chips: rp2040: move the PIO driver into the shared rp2xxx crate": {
+        "short": "Move the PIO driver into rp2xxx",
+        "verify": "sections",
+    },
+    "chips: rp2350: add PIO": {
+        "short": "Add PIO to the RP2350",
+        "verify": "silicon",
+        "note": "The one chip-specific constant no unit test can reach, the interrupt block's offset, was checked by reading the registers over the debug port.",
+    },
+    "chips: rp2350: add DMA": {
+        "short": "Add DMA to the RP2350",
+        "verify": "host",
+        "note": "The five control-register shifts that differ between the chips have tests on both sides, each confirmed to fail when given the other chip's value.",
+    },
+    "chips: rp2040: move the PIO gSPI driver into the shared rp2xxx crate": {
+        "short": "Move the gSPI driver into rp2xxx",
+        "verify": "sections",
+    },
+    "boards: pico 2: resolve openocd config path": {
+        "short": "Fix the openocd config path",
+        "verify": "build",
+        "note": "Only broken when a sibling board includes the Makefile, which is exactly how a derived board reuses it.",
+    },
+    "boards: pico 2: split into library and binary": {
+        "short": "Split Pico 2 into library and binary",
+        "verify": "sections",
+        "note": "Section sizes identical; the stripped binary is not, and cannot be, because compiling into a library changes where the optimiser starts.",
+    },
+    "boards: add Raspberry Pi Pico 2 W": {
+        "short": "Add the Pico 2 W board",
+        "verify": "silicon",
+        "note": "The Pico 2's LED pin is the radio's chip select here, so a stock Pico 2 kernel asserts it at boot and holds it. Measured on both boards, alternating, so it is not residue.",
+    },
+    "chips: rp2350: hold the DMA and PIO0 in the default peripherals": {
+        "short": "Hold DMA and PIO0 in peripherals",
+        "verify": "silicon",
+    },
+    "boards: raspberry_pi_pico_2_w: bring up the CYW43439": {
+        "short": "Bring up the CYW43439 radio",
+        "verify": "silicon",
+        "note": "Reads its MAC from the radio's OTP and completes a scan, which means 231 kB of firmware went up over a PIO state machine and a DMA channel on a chip that had neither.",
+    },
+    "chips: rp2040: fix the PIO RX FIFO join, which never happened": {
+        "short": "Fix the RX FIFO join",
+        "verify": "host",
+        "note": "Joining two four-word FIFOs into one eight-word FIFO silently did nothing.",
+    },
+    "chips: rp2040: stop add_program panicking on half of its own range": {
+        "short": "Stop add_program panicking",
+        "verify": "host",
+        "note": "Loading into the upper half of instruction memory panicked the kernel instead of returning an error.",
+    },
+    "chips: rp2040: test the PIO arithmetic that has no other check": {
+        "short": "Test the PIO arithmetic",
+        "verify": "host",
+    },
+    "chips: rp2040: service every PIO interrupt line, not one of four": {
+        "short": "Service every PIO interrupt line",
+        "verify": "host",
+        "note": "Three of the four state machines could raise an interrupt that nothing handled.",
+    },
+    "chips: rp2040: an irq flag belongs to the block, not a state machine": {
+        "short": "Scope the irq flag to the block",
+        "verify": "host",
     },
 }
 
-ISSUE_NOTES = {
-    5152: {
-        "what": "A test plan for the RP2 PIO driver, in three tiers.",
-        "why": "Answering a maintainer's question about how this code gets tested. Tier one is host tests and is done; tier two is six hardware tests, each of which stands alone; tier three is the project's hardware CI, named as a dependency rather than promised.",
-    },
+# Real dependencies the API cannot see, because they cross pull requests.
+EXTRA_DEPS = {
+    "chips: rp2040: move the PIO driver into the shared rp2xxx crate": [
+        "chips: rp2040: move the PL022 SPI driver into a shared rp2xxx crate",
+    ],
+    "chips: rp2xxx: share the GPIO pad control enums": [
+        "chips: rp2040: move the PL022 SPI driver into a shared rp2xxx crate",
+    ],
 }
 
-# Defects found. `status` is one of: fixed-pr, unfiled, reported.
 DEFECTS = [
-    {
-        "name": "PIO: the RX FIFO join never happened",
-        "status": "fixed-pr",
-        "where": "chips/rp2040/src/pio.rs",
-        "detail": "Joining the two four-word FIFOs into one eight-word RX FIFO silently did nothing, so a program that relied on the depth would drop words.",
-        "evidence": "Host test that fails without the fix.",
-        "ref": 5150,
-    },
-    {
-        "name": "PIO: add_program panicked on half its own range",
-        "status": "fixed-pr",
-        "where": "chips/rp2040/src/pio.rs",
-        "detail": "Loading a program into the upper half of instruction memory panicked the kernel rather than returning an error.",
-        "evidence": "Host test that fails without the fix.",
-        "ref": 5150,
-    },
-    {
-        "name": "PIO: only one interrupt line of four was serviced",
-        "status": "fixed-pr",
-        "where": "chips/rp2040/src/pio.rs",
-        "detail": "Three of the four state machines could raise an interrupt that nothing handled.",
-        "evidence": "Host test that fails without the fix.",
-        "ref": 5150,
-    },
-    {
-        "name": "PIO: an interrupt flag was scoped to a state machine, not the block",
-        "status": "fixed-pr",
-        "where": "chips/rp2040/src/pio.rs",
-        "detail": "The hardware flag belongs to the PIO block; treating it as per-state-machine mis-attributes interrupts.",
-        "evidence": "Host test that fails without the fix.",
-        "ref": 5150,
-    },
-    {
-        "name": "PIO: arithmetic with no other check",
-        "status": "fixed-pr",
-        "where": "chips/rp2040/src/pio.rs",
-        "detail": "Clock divider and FIFO address arithmetic that nothing in the tree exercised.",
-        "evidence": "Tests added; no behaviour change.",
-        "ref": 5150,
-    },
-    {
-        "name": "UART: an aborted receive tears down every other receive on the mux",
-        "status": "unfiled",
-        "where": "chips/rp2040, chips/rp2350, chips/sifive — uart.rs",
-        "detail": (
-            "The abort completion calls the client back and only then marks the "
-            "receiver idle. The UART multiplexer always restarts its read from "
-            "inside that callback, so the restart is refused as BUSY and the mux "
-            "responds by ending every device's receive. The three chip drivers "
-            "carry the block character for character."
-        ),
-        "evidence": "Demonstrated on silicon with an instrumented kernel, September 2026.",
-        "ref": None,
-    },
-    {
-        "name": "UART: a failed receive hands back the wrong static buffer",
-        "status": "unfiled",
-        "where": "capsules/core/src/virtualizers/virtual_uart.rs",
-        "detail": (
-            "A virtual device propagates the multiplexer's error with `?`, and that "
-            "error carries a buffer — the multiplexer's, not the caller's. The device "
-            "keeps the caller's buffer and the caller is handed the multiplexer's. "
-            "Two static buffers change owners silently, and the multiplexer's slot is "
-            "left empty for the life of the board. No process memory is involved, but "
-            "the console is wedged from then on."
-        ),
-        "evidence": "Demonstrated on silicon; the swapped buffer is visible in the trace.",
-        "ref": None,
-    },
-    {
-        "name": "A stopped process never gets its GPIO reclaimed",
-        "status": "unfiled",
-        "where": "capsules/extra/src/pwm.rs and four others",
-        "detail": (
-            "When a process dies, the capsule does not release the pin it was driving, "
-            "so the pin stays driven for the life of the board. A sibling capsule, "
-            "adc.rs, already has the fix, which makes this a consistency bug rather "
-            "than a design question. Five of forty-five capsules are affected."
-        ),
-        "evidence": "Demonstrated on silicon.",
-        "ref": None,
-    },
-    {
-        "name": "`make program` cannot flash an app on the Pico 2 boards",
-        "status": "unfiled",
-        "where": "boards/raspberry_pi_pico_2/Makefile",
-        "detail": (
-            "The objcopy step marks the app section loadable, which rewrites the "
-            "program headers and gives the stack segment a file size it should not "
-            "have. picotool then refuses the image, exits non-zero and leaves a "
-            "zero-byte UF2 behind."
-        ),
-        "evidence": "Reproducible on a laptop with no board attached.",
-        "ref": None,
-    },
+    ("PIO: the RX FIFO join never happened", "fixed", 5150,
+     "Joining the FIFOs silently did nothing, so a program relying on the depth dropped words."),
+    ("PIO: add_program panicked on half its own range", "fixed", 5150,
+     "A valid load address panicked the kernel instead of returning an error."),
+    ("PIO: three of four interrupt lines unserviced", "fixed", 5150,
+     "Only one state machine's interrupt was ever handled."),
+    ("PIO: an interrupt flag scoped to the wrong thing", "fixed", 5150,
+     "The flag belongs to the block; treating it as per-state-machine mis-attributes interrupts."),
+    ("UART: an aborted receive tears down every other receive", "unfiled", None,
+     "The abort completion calls the client back before marking the receiver idle, so the multiplexer's restart is refused and it ends every device's receive instead. The same code is in three chip drivers, and eleven boards pair a process console with the userspace console on one multiplexer."),
+    ("UART: a failed receive hands back the wrong static buffer", "unfiled", None,
+     "A virtual device propagates the multiplexer's error with `?`, and that error carries the multiplexer's buffer rather than the caller's. Two static buffers change owners and the multiplexer's slot is left empty for the life of the board."),
+    ("A stopped process never gets its GPIO reclaimed", "unfiled", None,
+     "The pin stays driven forever. A sibling capsule already has the fix, which makes this a consistency bug. Five of forty-five capsules are affected."),
+    ("`make program` cannot flash an app on the Pico 2", "unfiled", None,
+     "The objcopy step gives the stack segment a file size it should not have; picotool then refuses the image and leaves a zero-byte UF2 behind."),
 ]
 
-# Hardware results — things that have run on real silicon.
 SILICON = [
-    ("Pico 2 W scans WiFi", "The radio's firmware uploads over a PIO state machine and a DMA channel, the MAC reads out of the radio's OTP, and a scan completes. End-to-end validation of the whole #5141 stack."),
-    ("SPI loopback", "The RP2350 SPI driver added in #5112, driven from a test app and read back over the bench."),
-    ("Two co-resident apps", "Applications load, run and print on a Pico 2 W, which is what makes any userspace claim below checkable."),
-    ("Async sleep and cancellation", "A 500 ms await measures within a few hundred microseconds of its deadline across every run, including immediately after a cancelled five-second sleep — which distinguishes a working cancellation from both a leaked callback and a timer left armed."),
-    ("PIO and DMA register readback", "The one chip-specific constant in the series that no unit test can reach — the PIO interrupt block's offset — checked by reading the registers over the debug port."),
+    ("Pico 2 W scans WiFi", "Firmware up over PIO and DMA, MAC read from the radio's OTP, scan completed."),
+    ("SPI loopback", "A 32-byte pattern written and read back through the RP2350 SPI driver."),
+    ("Boot from RAM", "The layout from #5109, booting."),
+    ("Two co-resident apps", "Applications load, run and print, which is what makes any userspace claim checkable."),
+    ("Async sleep and cancellation", "A 500 ms await lands within a few hundred microseconds of its deadline, including immediately after a cancelled five-second sleep. That distinguishes working cancellation from both a leaked callback and a timer left armed."),
+    ("PIO and DMA register readback", "The interrupt block's offset, the state machine count and the instruction memory size, read off the chip."),
 ]
 
-USERSPACE = {
-    "summary": (
-        "A Future and executor layer over Tock's syscalls, built in libtock-rs so an "
-        "application can await a sleep or a console read instead of hand-rolling a "
-        "callback. Validated on a Pico 2 W running the Pico 2 W kernel. Not yet "
-        "proposed upstream."
-    ),
-    "items": [
-        ("Async stack", "done", "Futures over the alarm and console drivers, a single-task executor with block_on, and select. Alarm side validated on silicon."),
-        ("Platform rows for Pico 2 and Pico 2 W", "done", "libtock-rs hardcodes each board's app load addresses; neither board had an entry. The Pico 2 W's differ because the radio's firmware blobs push the app region up."),
-        ("A build error that named nothing", "done", "Registering a platform requires three files that do not know about each other, and missing the third failed with a message that named neither the platform nor the file. It names both now."),
-        ("Console concurrency", "blocked", "Cannot be tested until the UART receive defect above is fixed. The failure is in the kernel, not in the futures."),
-        ("embedded-hal-async implementations", "planned", "The reason to do any of this: drivers written against those traits — hundreds of sensor, display and radio crates — would run unmodified inside a Tock process."),
-    ],
-}
-
-DOCS = {
-    "summary": (
-        "Tock's book has no Pico coverage at all, which is a strange gap for one of "
-        "the cheapest boards it supports."
-    ),
-    "items": [
-        ("A Pico 2 getting-started page for the Tock book", "ready", "Written and pushed; the pull request is not open yet."),
-        ("A nine-chapter series on how the kernel works", "drafted", "From what a register is through grants and the memory protection unit, each chapter interactive rather than prose. Written while learning the codebase, on the theory that the questions a newcomer has are only legible while they still have them."),
-    ],
-}
+DOWNSTREAM = [
+    ("Async userspace", "blocked",
+     "A Future and executor layer over Tock's syscalls in libtock-rs, validated on a Pico 2 W running the Pico 2 W kernel. The console half cannot be tested until the UART defect above is fixed: the failure is in the kernel, not the futures."),
+    ("A Pico page for the Tock book", "ready",
+     "The book has no Pico coverage at all. Written and pushed; the pull request is not open yet."),
+    ("Nine chapters on how the kernel works", "drafted",
+     "From what a register is through grants and the memory protection unit, written while learning the codebase."),
+]
 
 NOT_DONE = [
-    ("Report the four unfiled defects", "Each is demonstrated and none is filed. The constraint is review throughput, not the work — an open pull request that nobody has time to read helps no one."),
-    ("Fix the reclaim leak in pwm.rs", "The sibling capsule already shows what the fix looks like."),
-    ("A userspace driver for PIO", "PIO is the RP2's most distinctive peripheral and no process can reach it."),
-    ("Hardware CI for the RP2 boards", "The project's testbed runs one board and never on pull requests. Named as a dependency in the test plan rather than promised."),
-    ("Get the Pico 2 W board reviewed", "38 files and 4,400 added lines is a large thing to ask anyone to read, which is the price of shipping a board and its radio together."),
+    ("File the four unfiled defects", "Each is demonstrated and none is filed. The constraint is review throughput, not the work."),
+    ("Fix the reclaim leak", "The sibling capsule already shows what the fix looks like."),
+    ("A userspace driver for PIO", "The RP2's most distinctive peripheral, and no process can reach it."),
+    ("Hardware CI for the RP2 boards", "The project's testbed runs one board and never on pull requests. Named as a dependency in #5152 rather than promised."),
 ]
 
 
@@ -246,9 +250,8 @@ NOT_DONE = [
 
 def gh_json(args):
     try:
-        out = subprocess.run(
-            ["gh", *args], capture_output=True, text=True, check=True
-        ).stdout
+        out = subprocess.run(["gh", *args], capture_output=True, text=True,
+                             check=True).stdout
     except FileNotFoundError:
         sys.exit("error: the gh CLI is not installed")
     except subprocess.CalledProcessError as err:
@@ -257,9 +260,9 @@ def gh_json(args):
 
 
 def fetch():
-    # Commits are fetched per pull request rather than in the list query: asking
-    # for them across a 100-item list exceeds GitHub's GraphQL node budget and
-    # the whole query is refused.
+    # Commits and files are fetched per pull request: asking for them across a
+    # 100-item list exceeds GitHub's GraphQL node budget and the whole query is
+    # refused.
     prs = gh_json([
         "pr", "list", "--repo", REPO, "--author", AUTHOR, "--state", "all",
         "--limit", "100", "--json",
@@ -267,12 +270,11 @@ def fetch():
         "deletions,changedFiles,url,reviewDecision",
     ])
     for pr in prs:
-        detail = gh_json([
-            "pr", "view", str(pr["number"]), "--repo", REPO, "--json", "commits",
-        ])
-        pr["commits"] = [
-            {"messageHeadline": c["messageHeadline"]} for c in detail["commits"]
-        ]
+        detail = gh_json(["pr", "view", str(pr["number"]), "--repo", REPO,
+                          "--json", "commits,files"])
+        pr["commits"] = [{"messageHeadline": c["messageHeadline"]}
+                         for c in detail["commits"]]
+        pr["files"] = sorted(f["path"] for f in detail["files"])
     issues = gh_json([
         "issue", "list", "--repo", REPO, "--author", AUTHOR, "--state", "all",
         "--limit", "100", "--json", "number,title,state,createdAt,url",
@@ -285,11 +287,13 @@ def fetch():
 
 
 # --------------------------------------------------------------------------
-# Render
+# Graph, derived from the fetched data
 # --------------------------------------------------------------------------
 
-def pr_status(pr):
-    """Return (slug, label) for a pull request's real state."""
+STATE_RANK = {"merged": 0, "approved": 1, "review": 2, "draft": 3, "closed": 4}
+
+
+def pr_state(pr):
     if pr["mergedAt"]:
         return "merged", "merged"
     if pr["state"] == "CLOSED":
@@ -298,313 +302,555 @@ def pr_status(pr):
         return "draft", "draft"
     if pr.get("reviewDecision") == "APPROVED":
         return "approved", "approved"
-    return "open", "in review"
+    return "review", "in review"
 
 
-def e(text):
-    return html.escape(str(text))
+def slug(text):
+    return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")[:48]
+
+
+def build_graph(data):
+    nodes, order = {}, []
+    for pr in data["prs"]:
+        for i, c in enumerate(pr["commits"]):
+            head = c["messageHeadline"]
+            if head not in nodes:
+                ann = WORK.get(head, {})
+                nodes[head] = {
+                    "id": slug(head), "head": head,
+                    "short": ann.get("short", head),
+                    "verify": ann.get("verify"), "note": ann.get("note"),
+                    "prs": [], "deps": set(),
+                }
+                order.append(head)
+            nodes[head]["prs"].append(pr["number"])
+            if i > 0:
+                nodes[head]["deps"].add(pr["commits"][i - 1]["messageHeadline"])
+
+    for head, deps in EXTRA_DEPS.items():
+        if head in nodes:
+            nodes[head]["deps"].update(d for d in deps if d in nodes)
+
+    layer = {}
+
+    def depth(head, seen=()):
+        if head in layer:
+            return layer[head]
+        if head in seen:          # a cycle would be a data error, not a stack
+            return 0
+        layer[head] = 1 + max((depth(d, seen + (head,))
+                               for d in nodes[head]["deps"]), default=-1)
+        return layer[head]
+
+    for head in order:
+        nodes[head]["layer"] = depth(head)
+
+    # Two open branches that change the same file will conflict on rebase
+    # whichever lands first. Derived so it cannot drift from the branches.
+    overlaps = []
+    open_prs = [p for p in data["prs"] if p["state"] == "OPEN"]
+    for i, a in enumerate(open_prs):
+        for b in open_prs[i + 1:]:
+            shared = sorted(set(a.get("files", [])) & set(b.get("files", [])))
+            if shared:
+                overlaps.append({"a": a["number"], "b": b["number"], "files": shared})
+    return nodes, order, overlaps
+
+
+# --------------------------------------------------------------------------
+# Layout and SVG
+# --------------------------------------------------------------------------
+
+NODE_W, NODE_H = 198, 62
+GAP_X, GAP_Y = 22, 30
+PAD = 22
+HEADER_H = 44
+
+
+def wrap(text, width=30, lines=2):
+    words, out, cur = text.split(), [], ""
+    for w in words:
+        trial = (cur + " " + w).strip()
+        if len(trial) <= width:
+            cur = trial
+        elif len(out) + 1 < lines:
+            out.append(cur or w)
+            cur = "" if not cur else w
+        else:
+            out.append(cur)
+            cur = w
+            break
+    if cur:
+        out.append(cur)
+    out = [o for o in out if o][:lines]
+    joined = " ".join(out)
+    if len(joined) < len(text):
+        out[-1] = out[-1][:width - 1].rstrip() + "…"
+    return out
+
+
+def layout(nodes, order, lanes):
+    """One column per pull request; depth down the column is stack order.
+
+    A commit that appears in two pull requests is drawn in the lane of the
+    lower-numbered one — the smaller review that is already open on its own —
+    so every node has exactly one home and the edges into the taller stack
+    show the crossing rather than hiding it.
+    """
+    lane_x = {pr: PAD + i * (NODE_W + GAP_X) for i, pr in enumerate(lanes)}
+    for head in order:
+        n = nodes[head]
+        n["lane"] = min(n["prs"])
+        n["x"] = lane_x[n["lane"]]
+        n["y"] = PAD + HEADER_H + n["layer"] * (NODE_H + GAP_Y)
+    canvas_w = PAD * 2 + len(lanes) * NODE_W + (len(lanes) - 1) * GAP_X
+    depth = max(nodes[h]["layer"] for h in order) + 1
+    canvas_h = PAD * 2 + HEADER_H + depth * (NODE_H + GAP_Y) - GAP_Y
+    return canvas_w, canvas_h, lane_x
+
+
+def e(t):
+    return html.escape(str(t))
 
 
 def para(text):
-    """Turn a blank-line-separated block into paragraphs."""
     blocks = [b.strip().replace("\n", " ") for b in text.strip().split("\n\n")]
-    return "\n".join(f"<p>{e(b)}</p>" for b in blocks if b)
+    return "\n".join("<p>" + e(b) + "</p>" for b in blocks if b)
 
 
-def render_pr(pr):
-    slug, label = pr_status(pr)
-    note = PR_NOTES.get(pr["number"], {})
-    date = (pr["mergedAt"] or pr["closedAt"] or pr["createdAt"])[:10]
-    commits = "".join(
-        f"<li>{e(c['messageHeadline'])}</li>" for c in pr.get("commits", [])
-    )
-    commit_block = (
-        f"<details><summary>{len(pr.get('commits', []))} commits</summary>"
-        f"<ul class='commits'>{commits}</ul></details>"
-        if len(pr.get("commits", [])) > 1
-        else ""
-    )
-    return f"""
-    <article class="card">
-      <div class="card-head">
-        <a class="ref" href="{e(pr['url'])}">#{pr['number']}</a>
-        <span class="pill {slug}">{e(label)}</span>
-      </div>
-      <h3>{e(pr['title'])}</h3>
-      {f"<p>{e(note['what'])}</p>" if note.get('what') else ''}
-      {f"<p class='why'>{e(note['why'])}</p>" if note.get('why') else ''}
-      <div class="meta">
-        <span>+{pr['additions']} / &minus;{pr['deletions']}</span>
-        <span>{pr['changedFiles']} files</span>
-        <span>{e(date)}</span>
-      </div>
-      {commit_block}
-    </article>"""
+def svg(nodes, order, pr_by_num):
+    lanes = sorted(pr_by_num)
+    w, h, lane_x = layout(nodes, order, lanes)
+
+    bands, heads = [], []
+    for pr in lanes:
+        st, label = pr_state(pr_by_num[pr])
+        x = lane_x[pr]
+        bands.append('<rect class="lane l-%s" x="%.0f" y="%.0f" width="%d" height="%.0f" rx="9"/>'
+                     % (st, x - 9, PAD + 4, NODE_W + 18, h - PAD * 2 - 4))
+        heads.append('<text class="lanenum" x="%.0f" y="%.0f">#%d</text>'
+                     '<text class="lanest s-%s" x="%.0f" y="%.0f">%s</text>'
+                     % (x, PAD + 22, pr, st, x, PAD + 37, e(label)))
+
+    edges = []
+    for head in order:
+        n = nodes[head]
+        for dep in sorted(n["deps"]):
+            d = nodes[dep]
+            x1, y1 = d["x"] + NODE_W / 2, d["y"] + NODE_H
+            x2, y2 = n["x"] + NODE_W / 2, n["y"]
+            mid = (y1 + y2) / 2
+            cross = " cross" if d["lane"] != n["lane"] else ""
+            shared = " ".join(str(p) for p in sorted(set(d["prs"]) & set(n["prs"])))
+            edges.append('<path class="edge%s" d="M%.0f,%.0f C%.0f,%.0f %.0f,%.0f %.0f,%.0f" '
+                         'data-prs="%s"/>'
+                         % (cross, x1, y1, x1, mid, x2, mid, x2, y2, shared))
+
+    boxes = []
+    for head in order:
+        n = nodes[head]
+        st = min((pr_state(pr_by_num[p])[0] for p in n["prs"]),
+                 key=lambda s: STATE_RANK[s])
+        tspans = "".join('<tspan x="%.0f" dy="%d">%s</tspan>'
+                         % (n["x"] + 12, 0 if i == 0 else 14, e(l))
+                         for i, l in enumerate(wrap(n["short"], 25, 2)))
+        badge = ""
+        if n["verify"]:
+            badge = ('<text class="badge v-%s" x="%.0f" y="%.0f">%s</text>'
+                     % (n["verify"], n["x"] + 12, n["y"] + NODE_H - 9,
+                        e(VERIFY[n["verify"]][0])))
+        refs = " ".join("#%d" % p for p in sorted(n["prs"]))
+        shared_cls = " shared" if len(n["prs"]) > 1 else ""
+        aria = "%s, in %s, %s" % (n["short"], refs,
+                                  VERIFY[n["verify"]][0] if n["verify"] else "unannotated")
+        boxes.append(
+            '<g class="node st-%s%s" data-prs="%s" data-id="%s" tabindex="0" '
+            'role="listitem" aria-label="%s">'
+            '<rect x="%.0f" y="%.0f" width="%d" height="%d" rx="7"/>'
+            '<text class="label" x="%.0f" y="%.0f">%s</text>%s'
+            '<text class="refs" x="%.0f" y="%.0f" text-anchor="end">%s</text></g>'
+            % (st, shared_cls, " ".join(str(p) for p in n["prs"]), n["id"], e(aria),
+               n["x"], n["y"], NODE_W, NODE_H,
+               n["x"] + 12, n["y"] + 21, tspans, badge,
+               n["x"] + NODE_W - 12, n["y"] + NODE_H - 9, e(refs))
+        )
+
+    return ('<svg id="graph" viewBox="0 0 %.0f %.0f" width="%.0f" height="%.0f" '
+            'role="list" aria-label="Every commit across the pull requests, one column per request">'
+            '<g class="lanes">%s</g><g class="laneheads">%s</g>'
+            '<g class="edges">%s</g>%s</svg>'
+            % (w, h, w, h, "".join(bands), "".join(heads), "".join(edges), "".join(boxes)))
 
 
-def render_issue(issue):
-    note = ISSUE_NOTES.get(issue["number"], {})
-    slug = "merged" if issue["state"] == "CLOSED" else "open"
-    label = "closed" if issue["state"] == "CLOSED" else "open"
-    return f"""
-    <article class="card">
-      <div class="card-head">
-        <a class="ref" href="{e(issue['url'])}">#{issue['number']}</a>
-        <span class="pill {slug}">{e(label)}</span>
-      </div>
-      <h3>{e(issue['title'])}</h3>
-      {f"<p>{e(note['what'])}</p>" if note.get('what') else ''}
-      {f"<p class='why'>{e(note['why'])}</p>" if note.get('why') else ''}
-      <div class="meta"><span>{e(issue['createdAt'][:10])}</span></div>
-    </article>"""
+# --------------------------------------------------------------------------
+# Render
+# --------------------------------------------------------------------------
 
+CSS = """
+:root{--bg:#fbfaf8;--panel:#fff;--ink:#16171a;--ink-soft:#4f5157;--ink-faint:#6f7278;
+--line:#e4e2dd;--accent:#7a4b1e;--edge:#c6c3bc;
+--merged-bg:#e3f0e4;--merged-ink:#1c5228;--merged-line:#5f9c6d;
+--review-bg:#e2ecf7;--review-ink:#1d4b7a;--review-line:#6b9ac6;
+--approved-bg:#e7ecda;--approved-ink:#46561f;--approved-line:#8aa053;
+--draft-bg:#eceae7;--draft-ink:#4e4f54;--draft-line:#a3a2a0;
+--closed-bg:#f6e3e3;--closed-ink:#86282a;--closed-line:#c08a8a;
+--unfiled-bg:#f8ecd8;--unfiled-ink:#744d0d;
+--host:#1d4b7a;--silicon:#7a3b12;--sections:#46561f;--build:#5b5c62;--none:#636469;}
+@media (prefers-color-scheme:dark){:root{
+--bg:#131316;--panel:#1b1c20;--ink:#edecea;--ink-soft:#b6b6ba;--ink-faint:#8e8f95;
+--line:#2c2d33;--accent:#d9a273;--edge:#42444c;
+--merged-bg:#1d3324;--merged-ink:#8fd3a0;--merged-line:#4a8a5e;
+--review-bg:#1b2c3f;--review-ink:#8fbde8;--review-line:#4574a0;
+--approved-bg:#2a3119;--approved-ink:#b9cd88;--approved-line:#728848;
+--draft-bg:#26272c;--draft-ink:#a9aab0;--draft-line:#5d5e65;
+--closed-bg:#3a2222;--closed-ink:#e29a9a;--closed-line:#8a5252;
+--unfiled-bg:#3a2f1a;--unfiled-ink:#e3bd7c;
+--host:#8fbde8;--silicon:#e0a874;--sections:#b9cd88;--build:#a9aab0;--none:#9a9ba1;}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);min-width:1040px;
+font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1280px;margin:0 auto;padding:0 32px 100px}
+header{padding:64px 0 30px}
+h1{font-size:2.4rem;margin:0 0 10px;letter-spacing:-.02em}
+.tagline{color:var(--ink-soft);font-size:1.1rem;margin:0 0 30px;max-width:64ch}
+blockquote{margin:0 0 20px;padding:16px 22px;border-left:3px solid var(--accent);
+background:var(--panel);border-radius:0 8px 8px 0;color:var(--ink-soft);font-size:.97rem}
+blockquote cite{display:block;margin-top:9px;font-style:normal;font-size:.83rem;color:var(--ink-faint)}
+blockquote cite a{color:var(--accent)}
+header p{max-width:76ch;color:var(--ink-soft)}
+h2{font-size:1.4rem;margin:0 0 6px;letter-spacing:-.01em}
+.lede{color:var(--ink-soft);max-width:78ch;margin:0 0 18px}
+section{padding:50px 0 0}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 8px}
+.chip{display:flex;align-items:center;gap:9px;padding:7px 12px 7px 13px;border-radius:999px;
+border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer;font:inherit;font-size:.84rem}
+.chip:hover{border-color:var(--accent)}
+.chip .num{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:600;color:var(--accent)}
+.chip .ct{color:var(--ink-faint);font-size:.78rem}
+.chip[aria-pressed=true]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.hint{color:var(--ink-faint);font-size:.84rem;margin:0 0 16px}
+.canvas{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px;overflow-x:auto}
+svg#graph{display:block}
+.lane{fill:var(--bg);stroke:var(--line);stroke-width:1}
+.lane.l-merged{fill:color-mix(in srgb,var(--merged-bg) 34%,var(--bg))}
+.lane.l-approved{fill:color-mix(in srgb,var(--approved-bg) 34%,var(--bg))}
+.lane.l-review{fill:color-mix(in srgb,var(--review-bg) 30%,var(--bg))}
+.lane.l-draft{fill:var(--bg)}
+.lane.l-closed{fill:color-mix(in srgb,var(--closed-bg) 26%,var(--bg))}
+.lanenum{font:700 14px ui-monospace,SFMono-Regular,Menlo,monospace;fill:var(--accent)}
+.lanest{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.s-merged{fill:var(--merged-ink)}.s-approved{fill:var(--approved-ink)}
+.s-review{fill:var(--review-ink)}.s-draft{fill:var(--draft-ink)}.s-closed{fill:var(--closed-ink)}
+.edge{fill:none;stroke:var(--edge);stroke-width:1.6}
+.edge.cross{stroke-dasharray:5 4;stroke:var(--accent);stroke-width:2}
+.node.shared rect{stroke-dasharray:6 3;stroke-width:2.2}
+.node{cursor:pointer;outline:none}
+.node rect{fill:var(--panel);stroke:var(--draft-line);stroke-width:1.5}
+.node .label{font-size:12.5px;font-weight:600;fill:var(--ink)}
+.node .refs{font-size:10.5px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;fill:var(--ink-faint)}
+.node .badge{font-size:9.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+.node:hover rect,.node:focus rect{stroke-width:3}
+.st-merged rect{stroke:var(--merged-line);fill:var(--merged-bg)}
+.st-approved rect{stroke:var(--approved-line);fill:var(--approved-bg)}
+.st-review rect{stroke:var(--review-line);fill:var(--review-bg)}
+.st-draft rect{stroke:var(--draft-line);fill:var(--draft-bg)}
+.st-closed rect{stroke:var(--closed-line);fill:var(--closed-bg)}
+.v-host{fill:var(--host)}.v-silicon{fill:var(--silicon)}.v-sections{fill:var(--sections)}
+.v-build{fill:var(--build)}.v-none{fill:var(--none)}
+svg.filtered .node{opacity:.15}svg.filtered .node.on{opacity:1}
+svg.filtered .edge{opacity:.07}
+svg.filtered .edge.on{opacity:1;stroke:var(--accent);stroke-width:2.2}
+.readout{display:grid;grid-template-columns:1fr 340px;gap:18px;margin-top:18px;align-items:start}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px}
+.panel h3{margin:0 0 8px;font-size:1rem}
+.panel p{margin:0 0 8px;font-size:.9rem;color:var(--ink-soft)}
+.panel .head{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.76rem;
+color:var(--ink-faint);word-break:break-word;margin:0}
+ul.plain{list-style:none;padding:0;margin:0}
+ul.plain li{padding:13px 0;border-top:1px solid var(--line);color:var(--ink-soft);font-size:.93rem}
+ul.plain li strong{color:var(--ink);font-weight:600}
+ul.plain li .dd{display:block;margin-top:3px}
+ul.plain li .pill{margin-right:9px}
+ul.legend li{display:flex;gap:14px;align-items:baseline}
+ul.legend .badge{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
+min-width:132px;display:inline-block}
+ul.legend .n{min-width:24px;text-align:right;color:var(--ink);font-weight:600}
+.badge.v-host{color:var(--host)}.badge.v-silicon{color:var(--silicon)}
+.badge.v-sections{color:var(--sections)}.badge.v-build{color:var(--build)}.badge.v-none{color:var(--none)}
+.prgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(350px,1fr));gap:14px}
+.prcard{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;scroll-margin:80px}
+.prcard.lit{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.prhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
+.prcard h3{font-size:.97rem;margin:0 0 9px;line-height:1.4}
+.prcard .share{font-size:.85rem;color:var(--ink-faint);margin:9px 0 0;
+border-top:1px dashed var(--line);padding-top:9px}
+.ref{font:600 .85rem/1 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--accent);text-decoration:none}
+.ref:hover{text-decoration:underline}
+.pill{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
+padding:3px 9px;border-radius:999px;white-space:nowrap}
+.pill.merged{background:var(--merged-bg);color:var(--merged-ink)}
+.pill.review{background:var(--review-bg);color:var(--review-ink)}
+.pill.approved{background:var(--approved-bg);color:var(--approved-ink)}
+.pill.draft{background:var(--draft-bg);color:var(--draft-ink)}
+.pill.closed{background:var(--closed-bg);color:var(--closed-ink)}
+.pill.unfiled{background:var(--unfiled-bg);color:var(--unfiled-ink)}
+.meta{display:flex;gap:14px;font-size:.78rem;color:var(--ink-faint)}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.82em}
+footer{margin-top:70px;padding-top:22px;border-top:1px solid var(--line);color:var(--ink-faint);font-size:.85rem}
+footer a{color:var(--accent)}
+"""
 
-DEFECT_LABEL = {
-    "fixed-pr": ("fixed", "fix proposed"),
-    "unfiled": ("unfiled", "not filed"),
-    "reported": ("open", "reported"),
+JS = """
+const NODES = __NODES__;
+const svg = document.getElementById('graph');
+const chips = [...document.querySelectorAll('.chip')];
+let active = null;
+
+function applyFilter(pr) {
+  active = pr;
+  chips.forEach(c => c.setAttribute('aria-pressed', String(c.dataset.pr === pr)));
+  document.querySelectorAll('.prcard').forEach(
+    c => c.classList.toggle('lit', c.dataset.pr === pr));
+  if (!pr) { svg.classList.remove('filtered'); return; }
+  svg.classList.add('filtered');
+  svg.querySelectorAll('.node, .edge').forEach(el => {
+    const prs = (el.dataset.prs || '').split(' ').filter(Boolean);
+    el.classList.toggle('on', prs.includes(pr));
+  });
 }
 
+chips.forEach(c => c.addEventListener('click', () => {
+  applyFilter(active === c.dataset.pr ? null : c.dataset.pr);
+}));
 
-def render_defect(d):
-    slug, label = DEFECT_LABEL[d["status"]]
-    ref = (
-        f"<a class='ref' href='https://github.com/{REPO}/pull/{d['ref']}'>#{d['ref']}</a>"
-        if d["ref"]
-        else "<span class='ref muted'>—</span>"
-    )
-    return f"""
-    <article class="card">
-      <div class="card-head">{ref}<span class="pill {slug}">{e(label)}</span></div>
-      <h3>{e(d['name'])}</h3>
-      <p>{e(d['detail'])}</p>
-      <div class="meta">
-        <span class="mono">{e(d['where'])}</span>
-        <span>{e(d['evidence'])}</span>
-      </div>
-    </article>"""
-
-
-STATE_LABEL = {
-    "done": ("merged", "working"),
-    "blocked": ("closed", "blocked"),
-    "planned": ("draft", "planned"),
-    "ready": ("approved", "ready"),
-    "drafted": ("draft", "drafted"),
+function showDetail(id) {
+  const n = NODES[id];
+  if (!n) return;
+  document.getElementById('d-title').textContent = n.short;
+  const bits = [];
+  if (n.note) bits.push(n.note);
+  if (n.verify) bits.push(n.verifyLabel.toUpperCase() + ' — ' + n.verify);
+  document.getElementById('d-note').textContent =
+    bits.join(' ') || 'No annotation for this commit yet.';
+  document.getElementById('d-head').textContent =
+    n.head + '  ·  in ' + n.prs.map(p => '#' + p).join(', ');
 }
 
-
-def render_item(name, state, detail):
-    slug, label = STATE_LABEL[state]
-    return f"""
-    <article class="card">
-      <div class="card-head"><span class="pill {slug}">{e(label)}</span></div>
-      <h3>{e(name)}</h3>
-      <p>{e(detail)}</p>
-    </article>"""
+svg.querySelectorAll('.node').forEach(g => {
+  g.addEventListener('click', () => showDetail(g.dataset.id));
+  g.addEventListener('focus', () => showDetail(g.dataset.id));
+  g.addEventListener('keydown', ev => {
+    if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); showDetail(g.dataset.id); }
+  });
+});
+"""
 
 
 def render(data):
-    prs = data["prs"]
-    issues = data["issues"]
-    merged = [p for p in prs if p["mergedAt"]]
-    open_prs = [p for p in prs if p["state"] == "OPEN"]
-    closed = [p for p in prs if p["state"] == "CLOSED" and not p["mergedAt"]]
-    added = sum(p["additions"] for p in prs)
-    removed = sum(p["deletions"] for p in prs)
-    unfiled = len([d for d in DEFECTS if d["status"] == "unfiled"])
+    nodes, order, overlaps = build_graph(data)
+    pr_by_num = {p["number"]: p for p in data["prs"]}
+    graph = svg(nodes, order, pr_by_num)
 
-    pr_cards = "".join(render_pr(p) for p in sorted(prs, key=lambda p: -p["number"]))
-    issue_cards = "".join(render_issue(i) for i in issues)
-    defect_cards = "".join(render_defect(d) for d in DEFECTS)
-    userspace_cards = "".join(render_item(*i) for i in USERSPACE["items"])
-    docs_cards = "".join(render_item(n, s, d) for n, s, d in DOCS["items"])
-    silicon_rows = "".join(
-        f"<li><strong>{e(n)}</strong> {e(d)}</li>" for n, d in SILICON
-    )
-    not_done_rows = "".join(
-        f"<li><strong>{e(n)}</strong> {e(d)}</li>" for n, d in NOT_DONE
+    chips = []
+    for pr in sorted(data["prs"], key=lambda p: -p["number"]):
+        st, label = pr_state(pr)
+        n = sum(1 for h in order if pr["number"] in nodes[h]["prs"])
+        chips.append(
+            '<button class="chip" aria-pressed="false" data-pr="%d">'
+            '<span class="num">#%d</span><span class="ct">%d commit%s</span>'
+            '<span class="pill %s">%s</span></button>'
+            % (pr["number"], pr["number"], n, "" if n == 1 else "s", st, e(label))
+        )
+
+    cards = []
+    for pr in sorted(data["prs"], key=lambda p: -p["number"]):
+        st, label = pr_state(pr)
+        shared = sorted({p for h in order if pr["number"] in nodes[h]["prs"]
+                         for p in nodes[h]["prs"] if p != pr["number"]})
+        note = ""
+        if shared:
+            note = ('<p class="share">Shares commits with %s. Those are the base of '
+                    'this stack and are already in review on their own — not a second '
+                    'submission of the same work.</p>'
+                    % ", ".join("#%d" % p for p in shared))
+        date = (pr["mergedAt"] or pr["closedAt"] or pr["createdAt"])[:10]
+        cards.append(
+            '<article class="prcard" data-pr="%d"><div class="prhead">'
+            '<a class="ref" href="%s">#%d</a><span class="pill %s">%s</span></div>'
+            '<h3>%s</h3><div class="meta"><span>+%d / &minus;%d</span>'
+            '<span>%d files</span><span>%s</span></div>%s</article>'
+            % (pr["number"], e(pr["url"]), pr["number"], st, e(label), e(pr["title"]),
+               pr["additions"], pr["deletions"], pr["changedFiles"], e(date), note)
+        )
+
+    rows = []
+    for o in overlaps:
+        shown = ", ".join("<code>%s</code>" % e(f) for f in o["files"][:3])
+        more = (" and %d more" % (len(o["files"]) - 3)) if len(o["files"]) > 3 else ""
+        rows.append("<li><strong>#%d and #%d</strong> both change %s%s — whichever "
+                    "lands first, the other rebases.</li>"
+                    % (o["a"], o["b"], shown, more))
+    overlap_rows = "".join(rows) or "<li>No two open pull requests touch the same file.</li>"
+
+    counts = {}
+    for h in order:
+        k = nodes[h]["verify"] or "none"
+        counts[k] = counts.get(k, 0) + 1
+    verify_rows = "".join(
+        '<li><span class="badge v-%s">%s</span><span class="n">%d</span>'
+        '<span>%s</span></li>' % (k, e(VERIFY[k][0]), counts.get(k, 0), e(VERIFY[k][1]))
+        for k in ("host", "silicon", "sections", "build", "none")
     )
 
-    return f"""<!doctype html>
+    defect_rows = "".join(
+        '<li><span class="pill %s">%s</span><strong>%s</strong>%s'
+        '<span class="dd">%s</span></li>'
+        % ("merged" if st == "fixed" else "unfiled",
+           "fix proposed" if st == "fixed" else "not filed", e(name),
+           (' <a class="ref" href="https://github.com/%s/pull/%d">#%d</a>'
+            % (REPO, ref, ref)) if ref else "",
+           e(detail))
+        for name, st, ref, detail in DEFECTS
+    )
+    silicon_rows = "".join("<li><strong>%s</strong><span class='dd'>%s</span></li>"
+                           % (e(n), e(d)) for n, d in SILICON)
+    downstream_rows = "".join(
+        '<li><span class="pill %s">%s</span><strong>%s</strong>'
+        '<span class="dd">%s</span></li>'
+        % ("closed" if s == "blocked" else "draft", e(s), e(n), e(d))
+        for n, s, d in DOWNSTREAM)
+    not_done_rows = "".join("<li><strong>%s</strong><span class='dd'>%s</span></li>"
+                            % (e(n), e(d)) for n, d in NOT_DONE)
+    issue_rows = "".join('<li><a class="ref" href="%s">#%d</a> <strong>%s</strong></li>'
+                         % (e(i["url"]), i["number"], e(i["title"]))
+                         for i in data["issues"])
+
+    merged = [p for p in data["prs"] if p["mergedAt"]]
+    open_prs = [p for p in data["prs"] if p["state"] == "OPEN"]
+
+    node_json = json.dumps({
+        n["id"]: {"head": n["head"], "short": n["short"], "note": n.get("note") or "",
+                  "verify": VERIFY[n["verify"]][1] if n["verify"] else "",
+                  "verifyLabel": VERIFY[n["verify"]][0] if n["verify"] else "",
+                  "prs": sorted(n["prs"])}
+        for n in nodes.values()
+    })
+
+    return """<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{e(SITE['title'])}</title>
-<meta name="description" content="{e(SITE['tagline'])}">
-<style>
-:root {{
-  --bg: #fbfaf8;
-  --panel: #ffffff;
-  --ink: #16171a;
-  --ink-soft: #56585e;
-  --ink-faint: #6f7278;  /* 4.82:1 on the card, 4.62:1 on the page ground */
-  --line: #e4e2dd;
-  --accent: #7a4b1e;
-  --merged-bg: #e3f0e4; --merged-ink: #1f5b2b;
-  --open-bg: #e2ecf7; --open-ink: #1d4b7a;
-  --draft-bg: #eceaea; --draft-ink: #55565b;
-  --closed-bg: #f6e3e3; --closed-ink: #86282a;
-  --unfiled-bg: #f8ecd8; --unfiled-ink: #7c5310;
-  --approved-bg: #e7ecda; --approved-ink: #4a5c23;
-}}
-@media (prefers-color-scheme: dark) {{
-  :root {{
-    --bg: #131316;
-    --panel: #1b1c20;
-    --ink: #edecea;
-    --ink-soft: #b0b0b4;
-    --ink-faint: #85868b;
-    --line: #2c2d33;
-    --accent: #d9a273;
-    --merged-bg: #1d3324; --merged-ink: #8fd3a0;
-    --open-bg: #1b2c3f; --open-ink: #8fbde8;
-    --draft-bg: #26272c; --draft-ink: #a9aab0;
-    --closed-bg: #3a2222; --closed-ink: #e29a9a;
-    --unfiled-bg: #3a2f1a; --unfiled-ink: #e3bd7c;
-    --approved-bg: #2a3119; --approved-ink: #b9cd88;
-  }}
-}}
-* {{ box-sizing: border-box; }}
-body {{
-  margin: 0; background: var(--bg); color: var(--ink);
-  font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  -webkit-font-smoothing: antialiased;
-}}
-.wrap {{ max-width: 1080px; margin: 0 auto; padding: 0 24px 96px; }}
-header {{ padding: 72px 0 40px; border-bottom: 1px solid var(--line); }}
-h1 {{ font-size: 2.6rem; line-height: 1.1; margin: 0 0 12px; letter-spacing: -0.02em; }}
-.tagline {{ font-size: 1.15rem; color: var(--ink-soft); margin: 0 0 28px; max-width: 62ch; }}
-header p {{ max-width: 68ch; color: var(--ink-soft); }}
-header p:first-of-type {{ color: var(--ink); }}
-.stats {{ display: flex; flex-wrap: wrap; gap: 28px; margin: 32px 0 0; padding: 0; list-style: none; }}
-.stats li {{ min-width: 84px; }}
-.stats .n {{ display: block; font-size: 1.9rem; font-weight: 600; letter-spacing: -0.02em; }}
-.stats .k {{ display: block; font-size: 0.78rem; text-transform: uppercase;
-  letter-spacing: 0.07em; color: var(--ink-faint); }}
-section {{ padding: 56px 0 0; }}
-h2 {{ font-size: 1.5rem; margin: 0 0 6px; letter-spacing: -0.01em; }}
-.lede {{ color: var(--ink-soft); max-width: 68ch; margin: 0 0 24px; }}
-.grid {{ display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }}
-.card {{
-  background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
-  padding: 18px 18px 16px;
-}}
-.card-head {{ display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }}
-.card h3 {{ font-size: 1rem; margin: 0 0 8px; line-height: 1.4; }}
-.card p {{ margin: 0 0 8px; font-size: 0.92rem; color: var(--ink-soft); }}
-.card p.why {{ color: var(--ink-faint); }}
-.ref {{ font: 600 0.85rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
-  color: var(--accent); text-decoration: none; }}
-.ref:hover {{ text-decoration: underline; }}
-.ref.muted {{ color: var(--ink-faint); }}
-.pill {{
-  font-size: 0.72rem; font-weight: 600; text-transform: uppercase;
-  letter-spacing: 0.05em; padding: 3px 9px; border-radius: 999px; white-space: nowrap;
-}}
-.pill.merged {{ background: var(--merged-bg); color: var(--merged-ink); }}
-.pill.open {{ background: var(--open-bg); color: var(--open-ink); }}
-.pill.approved {{ background: var(--approved-bg); color: var(--approved-ink); }}
-.pill.draft {{ background: var(--draft-bg); color: var(--draft-ink); }}
-.pill.closed {{ background: var(--closed-bg); color: var(--closed-ink); }}
-.pill.unfiled {{ background: var(--unfiled-bg); color: var(--unfiled-ink); }}
-.pill.fixed {{ background: var(--merged-bg); color: var(--merged-ink); }}
-.meta {{ display: flex; flex-wrap: wrap; gap: 14px; font-size: 0.78rem; color: var(--ink-faint); margin-top: 10px; }}
-.mono {{ font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.74rem; }}
-details {{ margin-top: 10px; }}
-summary {{ cursor: pointer; font-size: 0.8rem; color: var(--ink-faint); }}
-ul.commits {{ margin: 8px 0 0; padding-left: 18px; font-size: 0.82rem; color: var(--ink-soft); }}
-ul.commits li {{ margin: 3px 0; }}
-ul.plain {{ list-style: none; padding: 0; margin: 0; }}
-ul.plain li {{
-  padding: 14px 0; border-top: 1px solid var(--line); color: var(--ink-soft);
-  font-size: 0.94rem; max-width: 76ch;
-}}
-ul.plain li strong {{ color: var(--ink); display: block; margin-bottom: 2px; font-weight: 600; }}
-h3.sub {{ margin: 32px 0 4px; font-size: 1.05rem; }}
-footer {{ margin-top: 72px; padding-top: 24px; border-top: 1px solid var(--line);
-  color: var(--ink-faint); font-size: 0.85rem; }}
-footer a {{ color: var(--accent); }}
-@media (max-width: 640px) {{
-  h1 {{ font-size: 2rem; }}
-  header {{ padding-top: 48px; }}
-  .grid {{ grid-template-columns: 1fr; }}
-}}
-</style>
+<title>%(title)s</title>
+<meta name="description" content="%(tagline)s">
+<style>%(css)s</style>
 </head>
 <body>
 <div class="wrap">
 
 <header>
-  <h1>{e(SITE['title'])}</h1>
-  <p class="tagline">{e(SITE['tagline'])}</p>
-  {para(SITE['intro'])}
-  {para(SITE['method'])}
-  <ul class="stats">
-    <li><span class="n">{len(merged)}</span><span class="k">merged</span></li>
-    <li><span class="n">{len(open_prs)}</span><span class="k">open</span></li>
-    <li><span class="n">{len(closed)}</span><span class="k">closed</span></li>
-    <li><span class="n">{added:,}</span><span class="k">lines added</span></li>
-    <li><span class="n">{removed:,}</span><span class="k">lines removed</span></li>
-    <li><span class="n">{len(DEFECTS)}</span><span class="k">defects found</span></li>
-  </ul>
+  <h1>%(title)s</h1>
+  <p class="tagline">%(tagline)s</p>
+  <blockquote>%(quote)s
+    <cite>— %(who)s, reviewing <a href="%(qurl)s">%(where)s</a></cite>
+  </blockquote>
+  %(answer)s
 </header>
 
-<section id="kernel">
-  <h2>Kernel: chip and board support</h2>
-  <p class="lede">Pull requests against tock/tock, newest first.</p>
-  <div class="grid">{pr_cards}</div>
+<section>
+  <h2>The stack</h2>
+  <p class="lede">One column per pull request, %(nprs)d of them, holding all %(nnodes)d commits.
+  Depth down a column is stack order: an arrow runs from each commit to the one that needs it
+  first. A <strong>dashed box</strong> is a commit that belongs to two pull requests, and a
+  <strong>dashed orange arrow</strong> is a dependency that crosses between columns — together
+  those are the whole reason the same work appears twice on GitHub. The word at the bottom left
+  of a box is how that change is verified.</p>
+  <div class="chips">%(chips)s</div>
+  <p class="hint">Click a pull request to light up exactly the commits it carries.
+  Click a node for detail.</p>
+  <div class="canvas">%(graph)s</div>
+  <div class="readout">
+    <div class="panel">
+      <h3>How each change is verified</h3>
+      <ul class="plain legend">%(verify)s</ul>
+    </div>
+    <div class="panel">
+      <h3 id="d-title">Nothing selected</h3>
+      <p id="d-note">Click any node in the graph.</p>
+      <p class="head" id="d-head"></p>
+    </div>
+  </div>
 </section>
 
-<section id="defects">
+<section>
+  <h2>Where the open branches collide</h2>
+  <p class="lede">Derived by comparing the file list of every open pull request against
+  every other, so it cannot drift from what the branches do.</p>
+  <ul class="plain">%(overlaps)s</ul>
+</section>
+
+<section>
+  <h2>Pull requests</h2>
+  <p class="lede">%(nmerged)d merged, %(nopen)d open.</p>
+  <div class="prgrid">%(cards)s</div>
+</section>
+
+<section>
   <h2>Defects found</h2>
-  <p class="lede">Every one of these was demonstrated before it was written down —
-  by a test that fails without the fix, or by an instrumented kernel on real
-  silicon. {unfiled} are not yet filed upstream.</p>
-  <div class="grid">{defect_cards}</div>
+  <p class="lede">Each demonstrated before it was written down — by a test that fails
+  without the fix, or by an instrumented kernel on a board.</p>
+  <ul class="plain">%(defects)s</ul>
 </section>
 
-<section id="testing">
-  <h2>Testing</h2>
-  <p class="lede">The RP2 drivers had no tests. Adding them is most of why the
-  defects above were findable.</p>
-  <div class="grid">{issue_cards}</div>
-  <h3 class="sub">What has run on hardware</h3>
-  <ul class="plain">{silicon_rows}</ul>
+<section>
+  <h2>Run on hardware</h2>
+  <p class="lede">A Raspberry Pi flashes the board and holds its serial line, so the
+  machine that builds never touches the hardware.</p>
+  <ul class="plain">%(silicon)s</ul>
 </section>
 
-<section id="userspace">
-  <h2>Userspace: async applications</h2>
-  <p class="lede">{e(USERSPACE['summary'])}</p>
-  <div class="grid">{userspace_cards}</div>
+<section>
+  <h2>Test plan</h2>
+  <ul class="plain">%(issues)s</ul>
 </section>
 
-<section id="docs">
-  <h2>Documentation</h2>
-  <p class="lede">{e(DOCS['summary'])}</p>
-  <div class="grid">{docs_cards}</div>
+<section>
+  <h2>Downstream</h2>
+  <ul class="plain">%(downstream)s</ul>
 </section>
 
-<section id="next">
+<section>
   <h2>Not done</h2>
-  <p class="lede">The honest half of the map.</p>
-  <ul class="plain">{not_done_rows}</ul>
+  <ul class="plain">%(notdone)s</ul>
 </section>
 
 <footer>
-  <p>Status, sizes and dates on this page are read from the GitHub API when it is
-  built, so they are current as of {e(data['fetched'])}. Everything else is
-  written by hand.</p>
-  <p>Work by <a href="https://github.com/{AUTHOR}">{AUTHOR}</a> ·
-  <a href="https://github.com/{REPO}">tock/tock</a> ·
+  <p>Pull request state, sizes, dates, commit lists and file overlaps are read from the
+  GitHub API when this page is built — current as of %(fetched)s. The graph's edges come
+  from commit order inside each branch. Short labels and notes are written by hand.</p>
+  <p><a href="https://github.com/%(author)s">%(author)s</a> ·
+  <a href="https://github.com/%(repo)s">%(repo)s</a> ·
   <a href="https://github.com/tock/libtock-rs">tock/libtock-rs</a></p>
 </footer>
 
 </div>
+<script>%(js)s</script>
 </body>
 </html>
-"""
+""" % {
+        "title": e(SITE["title"]), "tagline": e(SITE["tagline"]),
+        # `</` inside the JSON would close the script element early.
+        "css": CSS, "js": JS.replace("__NODES__", node_json.replace("</", "<\\/")),
+        "quote": e(PROVOCATION["quote"]), "who": e(PROVOCATION["who"]),
+        "where": e(PROVOCATION["where"]), "qurl": e(PROVOCATION["url"]),
+        "answer": para(PROVOCATION["answer"]),
+        "nprs": len(data["prs"]), "nnodes": len(order),
+        "chips": "".join(chips), "graph": graph, "verify": verify_rows,
+        "overlaps": overlap_rows, "cards": "".join(cards),
+        "nmerged": len(merged), "nopen": len(open_prs),
+        "defects": defect_rows, "silicon": silicon_rows, "issues": issue_rows,
+        "downstream": downstream_rows, "notdone": not_done_rows,
+        "fetched": e(data["fetched"]), "author": AUTHOR, "repo": REPO,
+    }
 
 
 def main():
@@ -622,9 +868,15 @@ def main():
         data = fetch()
         cache.write_text(json.dumps(data, indent=2) + "\n")
 
+    nodes, order, overlaps = build_graph(data)
     (ROOT / "index.html").write_text(render(data))
-    print(f"wrote index.html — {len(data['prs'])} pull requests, "
-          f"{len(data['issues'])} issues, data from {data['fetched']}")
+    print("wrote index.html — %d commits, %d pull requests, %d branch collisions, "
+          "data from %s" % (len(order), len(data["prs"]), len(overlaps), data["fetched"]))
+    missing = [h for h in order if h not in WORK]
+    if missing:
+        print("  no annotation in WORK (these still render, unlabelled):")
+        for h in missing:
+            print("    " + h)
 
 
 if __name__ == "__main__":
