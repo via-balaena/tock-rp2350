@@ -592,6 +592,15 @@
         ],
         "pushed": true
       },
+      "rp2-uart-abort-fix": {
+        "ahead": 3,
+        "commits": [
+          "capsules: virtual_uart: do not drop a buffer the teardown cannot deliver",
+          "capsules: virtual_uart: hand back the caller's buffer, not the mux's",
+          "chips: rp2040, rp2350, sifive: finish an abort before calling the client"
+        ],
+        "pushed": false
+      },
       "rp2350-spi-bench": {
         "ahead": 2,
         "commits": [

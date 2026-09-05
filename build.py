@@ -96,6 +96,7 @@ INTENT = {
     "tock:rp2-pio-tests": ("upstream", "Five PIO fixes and the driver's first host tests.", None),
     "tock:boards-fix-ram-layout": ("upstream", "Merged.", None),
     "tock:boards-remove-dead-ram-layout": ("upstream", "Closed in favour of fixing the addresses.", None),
+    "tock:rp2-uart-abort-fix": ("upstream", "The fix for all three UART defects: the abort ordering in the three chip drivers, and the two buffer-ownership bugs in the mux. Three commits, each building standalone, no size change on any board.", "Verified by A/B under QEMU on the pinned hifive1 kernel — Err(BUSY) without it, the read left outstanding with it, and 16 bytes typed completing it Ok. Waiting only on a pull request description."),
     "tock:rp2350-spi-bench": ("never", "A bench harness that drives the SPI loopback.", None),
     "tock:pico2w-radio-bench": ("never", "Every commit titled NOT FOR UPSTREAM: it starts the radio from the board so a scan can be driven without an app.", None),
     "tock:bench/reclaim-leak-demo": ("never", "Reproduces the GPIO reclaim leak on a board.", None),
@@ -244,6 +245,13 @@ EXTRA_DEPS = {
     ],
 }
 
+# status -> (pill class, pill label)
+DEFECT_PILL = {
+    "fixed": ("merged", "fix proposed"),
+    "fixed-local": ("approved", "fix written, not sent"),
+    "unfiled": ("unfiled", "not filed"),
+}
+
 DEFECTS = [
     ("PIO: the RX FIFO join never happened", "fixed", 5150,
      "Joining the FIFOs silently did nothing, so a program relying on the depth dropped words."),
@@ -253,10 +261,12 @@ DEFECTS = [
      "Only one state machine's interrupt was ever handled."),
     ("PIO: an interrupt flag scoped to the wrong thing", "fixed", 5150,
      "The flag belongs to the block; treating it as per-state-machine mis-attributes interrupts."),
-    ("UART: an aborted receive tears down every other receive", "unfiled", None,
+    ("UART: an aborted receive tears down every other receive", "fixed-local", None,
      "The abort completion calls the client back before marking the receiver idle, so the multiplexer's restart is refused and it ends every device's receive instead. The same code is in three chip drivers, and eleven boards pair a process console with the userspace console on one multiplexer. Reproducible under QEMU with no hardware, on hifive1, at the eighteen-month-old revision libtock-rs already pins — and no application can avoid it. Removing the delay before the read, and then issuing the read before any other system call, both still fail: the process console's prompt prints before the application's first line, so the receive is already armed before the application's first instruction. \u201cThe app read too early\u201d is not an available explanation. What the reproduction still lacks is the opposite control, a kernel with no process console on that multiplexer, which is a board change rather than an application one."),
-    ("UART: a failed receive hands back the wrong static buffer", "unfiled", None,
+    ("UART: a failed receive hands back the wrong static buffer", "fixed-local", None,
      "A virtual device propagates the multiplexer's error with `?`, and that error carries the multiplexer's buffer rather than the caller's. Two static buffers change owners and the multiplexer's slot is left empty for the life of the board."),
+    ("UART: the teardown drops a buffer it cannot deliver", "fixed-local", None,
+     "When a restart fails the mux takes every device's buffer, but only returns it to devices still in the Receiving state — so a device that had aborted a read loses its buffer permanently. Found while fixing the two above."),
     ("A stopped process never gets its GPIO reclaimed", "unfiled", None,
      "The pin stays driven forever. A sibling capsule already has the fix, which makes this a consistency bug. Five of forty-five capsules are affected."),
     ("`make program` cannot flash an app on the Pico 2", "unfiled", None,
@@ -875,8 +885,7 @@ def render(data):
     defect_rows = "".join(
         '<li><span class="pill %s">%s</span><strong>%s</strong>%s'
         '<span class="dd">%s</span></li>'
-        % ("merged" if st == "fixed" else "unfiled",
-           "fix proposed" if st == "fixed" else "not filed", e(name),
+        % (DEFECT_PILL[st][0], DEFECT_PILL[st][1], e(name),
            (' <a class="ref" href="https://github.com/%s/pull/%d">#%d</a>'
             % (REPO, ref, ref)) if ref else "",
            e(detail))
