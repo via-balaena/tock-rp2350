@@ -678,6 +678,41 @@ _STATIC_REF = re.compile(r"StaticRef::new\((0x[0-9A-Fa-f_]+)")
 _REG_STRUCT = re.compile(r"register_structs!\s*\{(.*?)\n\}", re.S)
 _REG_NAME = re.compile(r"pub\s+(\w+)\s*\{")
 _REG_FIELD = re.compile(r"\((0x[0-9A-Fa-f]+)\s*=>\s*(\w+)")
+# The bitfield block a register is typed with: `cs: ReadWrite<u32, CS::Register>`.
+_REG_TYPE = re.compile(r"\((0x[0-9A-Fa-f]+)\s*=>\s*(\w+):\s*\w+<u(\d+)(?:,\s*(\w+)::Register)?>")
+_BITFIELD_HEAD = re.compile(r"\s*(?://[^\n]*\n\s*)*([A-Z][A-Z0-9_]*)\s*\[")
+_BITFIELD_FIELD = re.compile(r"([A-Z][A-Z0-9_]*)\s+OFFSET\((\d+)\)\s+NUMBITS\((\d+)\)")
+_BITFIELD_SEP = re.compile(r"\s*,")
+
+
+def _bitfields(src):
+    """The named fields inside each register, from `register_bitfields!`.
+
+    Bracket-matched rather than regexed as a whole, because a field may carry
+    its own `[ VARIANT = 0 ]` list and a non-greedy match to the first `]`
+    stops inside the first field it meets.
+    """
+    out = {}
+    start = re.search(r"register_bitfields!\s*\[\s*u(\d+)\s*,", src)
+    if not start:
+        return out, 32
+    width, i = int(start.group(1)), start.end()
+    while True:
+        head = _BITFIELD_HEAD.match(src, i)
+        if not head:
+            break
+        depth, j = 1, head.end()
+        while j < len(src) and depth:
+            depth += 1 if src[j] == "[" else -1 if src[j] == "]" else 0
+            j += 1
+        out[head.group(1)] = [[f, int(o), int(n)] for f, o, n
+                              in _BITFIELD_FIELD.findall(src[head.end():j - 1])]
+        i = j
+        sep = _BITFIELD_SEP.match(src, i)
+        if not sep:
+            break
+        i = sep.end()
+    return out, width
 _HIL_PATH = re.compile(r"hil::([a-z_0-9]+)::([A-Z]\w+)")
 _HIL_MOD = re.compile(r"hil::([a-z_0-9]+)")
 _HIL_USE = re.compile(r"use\s+kernel::hil::([a-z_0-9]+)::(?:\{([^}]*)\}|(\w+))")
@@ -893,13 +928,18 @@ def _chain(repo, ref, crate, module):
     src = _show(repo, ref, path)
     if src is None:
         return None
-    regs, block = [], ""
+    regs, block, typed = [], "", []
     for body in _REG_STRUCT.findall(src):
         name = _REG_NAME.search(body)
         if name and not block:
             block = name.group(1)
         regs += _REG_FIELD.findall(body)
+        typed += _REG_TYPE.findall(body)
+    bits, width = _bitfields(src)
     return {
+        "bitfields": bits,
+        "bitwidth": width,
+        "typed": [[off, name, bf] for off, name, _, bf in typed if bf],
         "path": path,
         "lines": len(src.splitlines()),
         "hil": sorted(set(_HIL_MOD.findall(src))),
@@ -1243,6 +1283,18 @@ def traces(data, cov):
         # The join is on what the chip driver implements, not what it mentions.
         hil = sorted({i.split("::")[0] for i in impls})
         regs = next((c for c in here if c["regs"]), None)
+        source = regs or next((c for c in older if c.get("typed")), None)
+        # Up to three registers to open up, richest first and one per bitfield
+        # block: inte, intf and ints on the ADC are all typed `INTE::Register`
+        # and would otherwise draw the same strip three times.
+        inside, seen_blocks = [], set()
+        for off, name, blk in (source or {}).get("typed") or []:
+            fields = ((source or {}).get("bitfields") or {}).get(blk)
+            if not fields or blk in seen_blocks:
+                continue
+            seen_blocks.add(blk)
+            inside.append({"offset": off, "name": name, "block": blk, "fields": fields})
+        inside.sort(key=lambda r: (-len(r["fields"]), r["offset"]))
         base = next((c for c in here if c["bases"]), None)
         above = sorted({cap for h in hil for cap in by_hil.get(h, [])})
         out[row["name"]] = {
@@ -1263,6 +1315,8 @@ def traces(data, cov):
             "nregs": len([r for r in (regs["regs"] if regs else [])
                           if not r[1].startswith("_")]),
             "bases": base["bases"] if base else [],
+            "inside": inside[:3],
+            "bitwidth": (source or {}).get("bitwidth", 32),
             "on2350": row["on"]["rp2350"],
         }
     return out
@@ -1751,6 +1805,24 @@ ul.offpins .pin{border:1px solid var(--line);flex-direction:column;align-items:f
 ul.offpins .pname{width:auto}
 ul.offpins .prole{white-space:normal;font-size:.78rem}
 
+/* ---- one register, opened up ---- */
+.insides{margin-top:9px}
+.rtabs{display:flex;gap:6px;margin:0 0 9px;flex-wrap:wrap}
+.rtab{display:flex;align-items:baseline;gap:7px;padding:4px 10px;border-radius:7px;
+border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;
+font-size:.78rem;cursor:pointer}
+.rtab:hover{border-color:var(--accent)}
+.rtab.sel{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.rtab code{font-weight:600}
+.bits{display:flex;gap:2px;align-items:stretch;min-height:44px}
+.bf{display:flex;flex-direction:column;justify-content:center;gap:2px;min-width:0;
+padding:5px 4px;border-radius:5px;background:color-mix(in srgb,var(--review-bg) 70%,transparent);
+border:1px solid var(--review-line);font-size:.66rem;color:var(--ink);text-align:center;
+overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bf b{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:600;
+font-size:.6rem;color:var(--ink-faint)}
+.bf.gap{background:transparent;border-style:dashed;border-color:var(--line);color:var(--ink-faint)}
+
 /* ---- what selecting a block lights up elsewhere ---- */
 .rel{box-shadow:inset 3px 0 0 var(--accent)}
 .chip.rel,.prcard.rel{box-shadow:0 0 0 1px var(--accent)}
@@ -1868,6 +1940,20 @@ ptabs.forEach(tab => tab.addEventListener('click', () => {
   document.querySelectorAll('.pinmap').forEach(
     map => { map.hidden = map.id !== 'pm-' + tab.dataset.board; });
 }));
+
+/* ---- register tabs, scoped to the trace they sit in ---- */
+document.querySelectorAll('.insides').forEach(group => {
+  const tabs = [...group.querySelectorAll('.rtab')];
+  tabs.forEach(tab => tab.addEventListener('click', () => {
+    tabs.forEach(other => {
+      const on = other === tab;
+      other.classList.toggle('sel', on);
+      other.setAttribute('aria-pressed', String(on));
+    });
+    group.querySelectorAll('.bits').forEach(
+      strip => { strip.hidden = strip.id !== tab.dataset.panel; });
+  }));
+});
 
 /* ---- which section the rail points at ----
    Feature-detected, and deliberately so: this is a nicety, and everything
@@ -2134,6 +2220,61 @@ def rung(name, value, empty=False):
             % (' class="off"' if empty else "", e(name), value))
 
 
+
+def bit_strip(width, fields):
+    """One register drawn as its bits, high to low, gaps included.
+
+    The gaps are the point as much as the fields are: a control register is
+    mostly nothing, and a picture that packs the named fields together tells
+    you the opposite of what the silicon does.
+    """
+    taken = {}
+    for name, offset, count in fields:
+        for bit in range(offset, min(offset + count, width)):
+            taken[bit] = (name, offset, count)
+    out, bit = [], width - 1
+    while bit >= 0:
+        here = taken.get(bit)
+        if here:
+            name, offset, count = here
+            high, low, label = offset + count - 1, offset, name
+        else:
+            low = bit
+            while low >= 0 and low not in taken:
+                low -= 1
+            low, high, label = low + 1, bit, ""
+        span = "%d" % high if high == low else "%d:%d" % (high, low)
+        out.append('<span class="bf%s" style="flex:%d"><b>%s</b>%s</span>'
+                   % ("" if label else " gap", high - low + 1, span, e(label)))
+        bit = low - 1
+    return "".join(out)
+
+
+def inside_html(block, trace):
+    """The registers worth opening up, as tabs over bit strips."""
+    inside = trace.get("inside") or []
+    if not inside:
+        return ""
+    width = trace.get("bitwidth", 32)
+    tabs, strips = [], []
+    for i, reg in enumerate(inside):
+        ident = "bf-%s-%s" % (block, reg["name"])
+        tabs.append('<button class="rtab%s" data-panel="%s" aria-pressed="%s">'
+                    '<code>%s</code><span class="dim">%s</span></button>'
+                    % (" sel" if i == 0 else "", e(ident), "true" if i == 0 else "false",
+                       e(reg["name"]), e(reg["offset"])))
+        says = ", ".join(
+            "%s at %s" % (name, offset if count == 1
+                          else "%d to %d" % (offset + count - 1, offset))
+            for name, offset, count in reg["fields"])
+        strips.append('<div class="bits" id="%s"%s role="img" '
+                      'aria-label="%s, %d bits: %s">%s</div>'
+                      % (e(ident), "" if i == 0 else " hidden", e(reg["block"]),
+                         width, e(says), bit_strip(width, reg["fields"])))
+    return ('<div class="insides"><div class="rtabs">%s</div>%s</div>'
+            % ("".join(tabs), "".join(strips)))
+
+
 def trace_html(cov, traces, opening):
     """Every block's trace, in the markup, all but one hidden.
 
@@ -2194,6 +2335,10 @@ def trace_html(cov, traces, opening):
                              '%s<span class="regs">%s%s</span>' % (block, strip, more)))
         elif files:
             rows.append(rung("Registers", "no register block in these files", True))
+
+        opened = inside_html(r["name"], t)
+        if opened:
+            rows.append(rung("Inside a register", opened))
 
         # The RP2040's driver, named as the RP2040's. For a block the RP2350
         # has and nothing drives, this is what would be ported.

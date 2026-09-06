@@ -126,6 +126,28 @@ setTimeout(() => {
     }
   }
 
+  // Register tabs, in a trace that actually has some. Taking whichever trace
+  // happened to be open ran this against a block with no registers, so it
+  // silently asserted nothing.
+  const withRegs = rows.find(
+    r => (doc.getElementById('tr-' + r.dataset.block) || {querySelectorAll: () => []})
+           .querySelectorAll('.rtab').length > 1);
+  if (withRegs) click(withRegs);
+  const open = showing()[0];
+  const rtabs = open ? [...open.querySelectorAll('.rtab')] : [];
+  check('some block opens a register up', rtabs.length > 1,
+        open ? open.id + ' has ' + rtabs.length : 'no trace open');
+  if (rtabs.length > 1) {
+    const strips = () => [...open.querySelectorAll('.bits')].filter(s => !s.hidden);
+    check('one bit strip shows at rest', strips().length === 1, strips().length + ' showing');
+    click(rtabs[1]);
+    check('a register tab shows only its own bit strip',
+          strips().length === 1 && strips()[0].id === rtabs[1].dataset.panel,
+          strips().map(s => s.id).join(','));
+    check('the register tab reports itself pressed',
+          rtabs.filter(t => t.getAttribute('aria-pressed') === 'true').length === 1);
+  }
+
   const node = doc.querySelector('#graph .node');
   if (node) {
     click(node);

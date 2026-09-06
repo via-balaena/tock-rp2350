@@ -58,6 +58,10 @@ sections are skipped and the rest of the page still builds.
   own `with_driver`, the kernel interface from what that capsule imports, the
   chip driver from the crate implementing it, the registers from its
   `register_structs!`.
+- **One register opened up.** The bottom rung draws a register as its bits,
+  high to low, from `register_bitfields!`. The gaps are drawn as gaps: a
+  control register is mostly nothing, and a picture that packs the named
+  fields together tells you the opposite of what the silicon does.
 - **The forty pins** are read the same way. The header's shape is the board's
   form factor and is written down; every role on it comes from that board's
   own source — the binding beside the pin, or the component being built with
@@ -115,6 +119,7 @@ to pass:
 | `pins` | a pin used for something `PIN_ROLE` cannot name, so the map would render a raw `into_cs`; or a name no board uses any more |
 | `header` | the forty-pin table is internally consistent. A typo, not a pinout — nothing here can tell you the pinout is *right* |
 | `pinmaps` | the board tabs and the pin maps agree, and one map shows at rest |
+| `bits` | a register drawn as bits that does not add up to the register's width. The strips stretch to fill the row, so a mis-read field still looks like a register — only the sum shows it |
 
 Run it before every push. Most failures are fixed by running `./build.py`.
 

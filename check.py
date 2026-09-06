@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Check that the published page is still true, still current and still legible.
 
-Sixteen checks, and a seventeenth that runs when node and jsdom are there. Each one exists because it has already caught something, or because
+Seventeen checks, and an eighteenth that runs when node and jsdom are there. Each one exists because it has already caught something, or because
 it guards a mistake that was actually made here:
 
   drift       index.html is not what build.py would produce from data.json,
@@ -38,6 +38,9 @@ it guards a mistake that was actually made here:
               board uses any more; and the tabs and maps agreeing.
   header      the forty-pin table is internally consistent. A typo, not a
               pinout: nothing here can tell you the pinout is right.
+  bits        a register drawn as bits that does not add up to the register's
+              width. The strips stretch to fill the row, so a mis-read field
+              still looks like a register -- only the sum shows it.
   interactions  the page driven in a real DOM: every block opening its own
               trace, the keys, the search, the pull request filter. Optional,
               and skipped rather than failed when node or jsdom is missing.
@@ -413,6 +416,27 @@ def check_pinmaps(build, html, problems):
     if maps and len(shown) != 1:
         problems.append(f"pins: {len(shown)} pin maps are visible at rest, expected 1")
 
+
+def check_bits(html, problems):
+    """Every register drawn as bits accounts for all of them.
+
+    The strips are drawn with proportional widths, so a field the parser
+    mis-read does not leave a hole -- the remaining pieces stretch to fill the
+    row and the picture still looks like a register. Summing the widths against
+    the width the register actually is, is the only way to see it.
+    """
+    for ident, label, body in re.findall(
+            r'<div class="bits" id="([^"]+)"[^>]*aria-label="([^"]+)"[^>]*>(.*?)</div>',
+            html, re.S):
+        width = re.search(r"(\d+) bits", label)
+        if not width:
+            problems.append(f"bits: {ident} does not say how wide the register is")
+            continue
+        drawn = sum(int(n) for n in re.findall(r'style="flex:(\d+)"', body))
+        if drawn != int(width.group(1)):
+            problems.append(
+                f"bits: {ident} draws {drawn} bits of a {width.group(1)}-bit register")
+
 def check_drift(build, data, html, problems):
     if build.render(data) != html:
         problems.append(
@@ -478,11 +502,12 @@ def main():
     check_pins(build, data, problems)
     check_header(build, problems)
     check_pinmaps(build, html, problems)
+    check_bits(html, problems)
     skipped = check_interactions(problems)
     if not args.offline:
         check_fresh(build, data, problems)
 
-    ran = (15 if args.offline else 16) + (0 if skipped else 1)
+    ran = (16 if args.offline else 17) + (0 if skipped else 1)
     if skipped:
         print(f"note: the interaction check did not run — {skipped}\n")
     if problems:
