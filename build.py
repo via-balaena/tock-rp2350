@@ -1823,8 +1823,25 @@ overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 font-size:.6rem;color:var(--ink-faint)}
 .bf.gap{background:transparent;border-style:dashed;border-color:var(--line);color:var(--ink-faint)}
 
+/* ---- the queue, drawn ---- */
+svg#queuegraph{display:block}
+.qhname{font-size:12px;font-weight:700;letter-spacing:.02em}
+.qhname.s-draft{fill:var(--accent)}
+.qhsub{font-size:10px;fill:var(--ink-faint)}
+.qcard{cursor:pointer;outline:none}
+.qcard rect{fill:var(--panel);stroke:var(--draft-line);stroke-width:1.5}
+.qcard .qlabel{font-size:12px;font-weight:600;fill:var(--ink)}
+.qcard .qmeta{font-size:10px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+fill:var(--ink-soft)}
+.qcard .qwait{fill:var(--accent);font-weight:700}
+.qcard:hover rect,.qcard:focus rect{stroke-width:3}
+.qcard.sel rect{stroke-width:3;stroke:var(--accent)}
+.qedge{fill:none;stroke:var(--accent);stroke-width:2;stroke-dasharray:5 4}
+.qhead{fill:var(--accent)}
+
 /* ---- what selecting a block lights up elsewhere ---- */
 .rel{box-shadow:inset 3px 0 0 var(--accent)}
+.qcard.rel rect{stroke:var(--accent);stroke-width:3}
 .chip.rel,.prcard.rel{box-shadow:0 0 0 1px var(--accent)}
 
 /* ---- search and the key sheet ---- */
@@ -1928,6 +1945,36 @@ function stepBlock(delta) {
   selectBlock(next.dataset.block);
   next.scrollIntoView({block: 'nearest'});
 }
+
+/* ---- the queue graph ---- */
+const QUEUE = __QUEUE__;
+const qcards = [...document.querySelectorAll('.qcard[data-card]')];
+
+function showQueue(id) {
+  const card = QUEUE[id];
+  if (!card) return;
+  qcards.forEach(c => c.classList.toggle('sel', c.dataset.card === id));
+  document.getElementById('q-title').textContent = card.title;
+  const said = [];
+  if (card.note) said.push(card.note);
+  if (card.blocked) said.push(card.blocked);
+  card.waits.forEach(w => said.push(w));
+  document.getElementById('q-note').textContent =
+    said.join(' ') || 'No intent recorded for this one.';
+  document.getElementById('q-meta').textContent =
+    [card.key, card.meta, card.stat].filter(Boolean).join('  ·  ');
+}
+
+qcards.forEach(card => {
+  card.addEventListener('click', () => showQueue(card.dataset.card));
+  card.addEventListener('focus', () => showQueue(card.dataset.card));
+  card.addEventListener('keydown', ev => {
+    if (ev.key === 'Enter' || ev.key === ' ') {
+      ev.preventDefault();
+      showQueue(card.dataset.card);
+    }
+  });
+});
 
 /* ---- the pin map: one board at a time ---- */
 const ptabs = [...document.querySelectorAll('.ptab[data-board]')];
@@ -2220,6 +2267,172 @@ def rung(name, value, empty=False):
             % (' class="off"' if empty else "", e(name), value))
 
 
+
+# --------------------------------------------------------------------------
+# The queue, drawn
+# --------------------------------------------------------------------------
+
+# What has to land before what. Keyed by the thing that waits; the value is
+# what it waits for, either another branch or a pull request number, and why.
+# Hand-written because the coupling is a judgement about review order, not
+# something the commits say -- and checked, so both ends must exist.
+QUEUE_DEPS = {
+    "libtock-rs:async/alarm": [
+        ("libtock-rs:unittest-fakes",
+         "The async tests call fake::Alarm::new_deferred and "
+         "fake::Console::new_deferred, which are exactly what the unittest "
+         "commits add. Either those land first, or this pull request carries "
+         "them itself."),
+    ],
+    "libtock-rs:pico2-platform": [
+        (5141, "The platform row names raspberry_pi_pico_2_w, which is this "
+               "pull request and not upstream yet."),
+    ],
+    "libtock-rs:stepper": [
+        ("tock:stepper-capsule",
+         "The two halves of one feature. Neither is any use without the other, "
+         "and the capsule is the larger ask because it needs a new driver "
+         "number."),
+    ],
+}
+
+STAGES = [
+    ("fork", "On the fork", "finished, not proposed"),
+    ("review", "In review", "waiting on a maintainer"),
+    ("approved", "Approved", "waiting to be merged"),
+    ("merged", "Merged", "upstream"),
+    ("closed", "Closed", "withdrawn"),
+]
+
+QCARD_W, QCARD_H = 200, 62
+QGAP_X, QGAP_Y = 18, 14
+QPAD, QHEAD_H = 18, 42
+
+
+def queue_cards(data, ready, in_review):
+    """One card per thing in the queue, in the stage it is actually in.
+
+    Branches that have no pull request come from the working clones; anything
+    with one is represented by the pull request instead, so a branch in review
+    is not counted twice.
+    """
+    by_pr = {r["pr"]: r for r in in_review if r["pr"]}
+    cards = {stage: [] for stage, _, _ in STAGES}
+    for r in ready:
+        key = "%s:%s" % (r["repo"], r["branch"])
+        cards["fork"].append({
+            "id": "b:" + key, "key": key, "title": r["branch"],
+            "meta": "%s · %d commit%s" % (r["repo"], r["ahead"],
+                                          "" if r["ahead"] == 1 else "s"),
+            "note": r["note"] or "", "blocked": r["blocked"] or "",
+            "branch": r["branch"], "pr": None, "stat": r.get("stat", ""),
+            "pushed": r["pushed"],
+        })
+    for pr in sorted(data["prs"], key=lambda p: -p["number"]):
+        state = pr_state(pr)[0]
+        stage = "review" if state in ("review", "draft") else state
+        if stage not in cards:
+            continue
+        row = by_pr.get(pr["number"])
+        key = ("%s:%s" % (row["repo"], row["branch"])) if row else "#%d" % pr["number"]
+        cards[stage].append({
+            "id": "p:%d" % pr["number"], "key": key, "title": pr["title"],
+            "meta": "#%d · %d commit%s" % (pr["number"], len(pr["commits"]),
+                                           "" if len(pr["commits"]) == 1 else "s"),
+            "note": (row or {}).get("note", ""), "blocked": (row or {}).get("blocked") or "",
+            "branch": (row or {}).get("branch"), "pr": pr["number"],
+            "stat": "+%d / −%d over %d files" % (pr["additions"], pr["deletions"],
+                                                 pr["changedFiles"]),
+            "pushed": True,
+        })
+    return cards
+
+
+def queue_svg(cards):
+    """Stages left to right, one card per unit of work, arrows for what waits.
+
+    The columns are deliberately not balanced. A pipeline whose first column is
+    five times the height of the rest is the whole point of drawing it: the
+    constraint is not how fast the work goes, it is how fast it is asked for.
+    """
+    where = {}
+    for col, (stage, _, _) in enumerate(STAGES):
+        x = QPAD + col * (QCARD_W + QGAP_X)
+        for row, card in enumerate(cards[stage]):
+            card["x"] = x
+            card["y"] = QPAD + QHEAD_H + row * (QCARD_H + QGAP_Y)
+            card["stage"] = stage
+            where[card["key"]] = card
+            if card["pr"]:
+                where["#%d" % card["pr"]] = card
+
+    tall = max(len(cards[s]) for s, _, _ in STAGES)
+    width = QPAD * 2 + len(STAGES) * QCARD_W + (len(STAGES) - 1) * QGAP_X
+    height = QPAD * 2 + QHEAD_H + tall * (QCARD_H + QGAP_Y) - QGAP_Y
+
+    heads = []
+    for col, (stage, label, sub) in enumerate(STAGES):
+        x = QPAD + col * (QCARD_W + QGAP_X)
+        heads.append(
+            '<text class="qhname s-%s" x="%d" y="%d">%s</text>'
+            '<text class="qhsub" x="%d" y="%d">%d — %s</text>'
+            % (stage if stage != "fork" else "draft", x, QPAD + 16, e(label),
+               x, QPAD + 32, len(cards[stage]), e(sub)))
+
+    edges = []
+    for waiter, deps in QUEUE_DEPS.items():
+        target = where.get(waiter)
+        if not target:
+            continue
+        for dep, _ in deps:
+            source = where.get(dep if isinstance(dep, str) else "#%d" % dep)
+            if not source:
+                continue
+            x1, y1 = source["x"] + QCARD_W, source["y"] + QCARD_H / 2
+            x2, y2 = target["x"], target["y"] + QCARD_H / 2
+            if source["stage"] == target["stage"]:      # same column, curve out
+                x1, y1 = source["x"] + QCARD_W / 2, source["y"] + QCARD_H
+                x2, y2 = target["x"] + QCARD_W / 2, target["y"]
+                mid = (y1 + y2) / 2
+                path = "M%.0f,%.0f C%.0f,%.0f %.0f,%.0f %.0f,%.0f" % (
+                    x1, y1, x1, mid, x2, mid, x2, y2)
+            else:
+                mid = (x1 + x2) / 2
+                path = "M%.0f,%.0f C%.0f,%.0f %.0f,%.0f %.0f,%.0f" % (
+                    x1, y1, mid, y1, mid, y2, x2, y2)
+            edges.append('<path class="qedge" d="%s" marker-end="url(#qarrow)"/>' % path)
+
+    boxes = []
+    for stage, _, _ in STAGES:
+        for card in cards[stage]:
+            lines = wrap(card["title"], 26, 2)
+            tspans = "".join('<tspan x="%d" dy="%d">%s</tspan>'
+                             % (card["x"] + 11, 0 if i == 0 else 14, e(line))
+                             for i, line in enumerate(lines))
+            waits = ' <tspan class="qwait">waiting</tspan>' if card["key"] in QUEUE_DEPS else ""
+            boxes.append(
+                '<g class="qcard st-%s" data-card="%s"%s%s tabindex="0" role="listitem" '
+                'aria-label="%s. %s, %s.">'
+                '<rect x="%d" y="%d" width="%d" height="%d" rx="7"/>'
+                '<text class="qlabel" x="%d" y="%d">%s</text>'
+                '<text class="qmeta" x="%d" y="%d">%s%s</text></g>'
+                % (stage if stage != "fork" else "draft", e(card["id"]),
+                   ' data-branch="%s"' % e(card["branch"]) if card["branch"] else "",
+                   ' data-pr="%d"' % card["pr"] if card["pr"] else "",
+                   e(card["title"]), e(card["meta"]),
+                   e(dict((s, l) for s, l, _ in STAGES)[card["stage"]]),
+                   card["x"], card["y"], QCARD_W, QCARD_H,
+                   card["x"] + 11, card["y"] + 21, tspans,
+                   card["x"] + 11, card["y"] + QCARD_H - 10, e(card["meta"]), waits))
+
+    return ('<svg id="queuegraph" viewBox="0 0 %d %d" width="%d" height="%d" '
+            'role="list" aria-label="The queue, one column per stage">'
+            '<defs><marker id="qarrow" viewBox="0 0 8 8" refX="7" refY="4" '
+            'markerWidth="7" markerHeight="7" orient="auto">'
+            '<path d="M0,0 L8,4 L0,8 z" class="qhead"/></marker></defs>'
+            '<g class="qheads">%s</g><g class="qedges">%s</g>%s</svg>'
+            % (width, height, width, height, "".join(heads), "".join(edges),
+               "".join(boxes)))
 
 def bit_strip(width, fields):
     """One register drawn as its bits, high to low, gaps included.
@@ -2548,6 +2761,29 @@ def unplaced_modules(data):
             if m not in MODULE_BLOCK and m not in PLUMBING}
 
 
+
+def dangling_queue_deps(data):
+    """Ends of QUEUE_DEPS that name nothing in the queue.
+
+    A dependency whose branch has been renamed, merged or dropped simply does
+    not draw its arrow. Nothing about the page looks wrong; the coupling just
+    stops being stated, which is the opposite of what this table is for.
+    """
+    in_review, ready, _ = queue_groups(queue_rows(data))
+    cards = queue_cards(data, ready, in_review)
+    known = {c["key"] for group in cards.values() for c in group}
+    known |= {"#%d" % c["pr"] for group in cards.values() for c in group if c["pr"]}
+    missing = set()
+    for waiter, deps in QUEUE_DEPS.items():
+        if waiter not in known:
+            missing.add(waiter)
+        for dep, _ in deps:
+            name = dep if isinstance(dep, str) else "#%d" % dep
+            if name not in known:
+                missing.add(name)
+    return missing
+
+
 def relations(data, cov):
     """Which branches and pull requests touch each hardware block.
 
@@ -2664,6 +2900,12 @@ def render(data):
     cov = coverage(data)
     tr = traces(data, cov) if cov else {}
     rel_json = json.dumps(relations(data, cov))
+    qcards = queue_cards(data, ready, in_review)
+    queue_json = json.dumps({
+        c["id"]: {"title": c["title"], "meta": c["meta"], "note": c["note"],
+                  "blocked": c["blocked"], "stat": c["stat"], "key": c["key"],
+                  "waits": [w for _, w in QUEUE_DEPS.get(c["key"], [])]}
+        for cards in qcards.values() for c in cards})
     reach_rows, reach_counts = reach_html(data)
 
     chip_nav, chip_sections = "", ""
@@ -2866,6 +3108,22 @@ def render(data):
   <p class="lede">Read from the working clones, so it is what exists rather than what
   was last written down. A branch is matched to its pull request by which commits they
   share, not by name.</p>
+  <div class="canvas">%(qgraph)s</div>
+  <div class="readout">
+    <div class="panel">
+      <h3>What the columns mean</h3>
+      <p>A unit of work moves left to right. The first column is not a backlog
+      being worked through &mdash; everything in it is finished, demonstrated and
+      pushed. It is waiting to be <em>asked for</em>, a few at a time, because
+      the constraint upstream is review throughput. A dashed arrow is one piece
+      of work that cannot go until another lands.</p>
+    </div>
+    <div class="panel">
+      <h3 id="q-title">Nothing selected</h3>
+      <p id="q-note">Click any card above.</p>
+      <p class="head" id="q-meta"></p>
+    </div>
+  </div>
   <h3 class="qh">In review now &mdash; %(nreview)d</h3>
   <ul class="plain queue">%(qreview)s</ul>
   <h3 class="qh">Finished, not proposed yet &mdash; %(nready)d branches, %(readyc)d commits</h3>
@@ -2968,7 +3226,8 @@ def render(data):
         # `</` inside the JSON would close the script element early.
         "css": CSS,
         "js": (JS.replace("__NODES__", node_json.replace("</", "<\\/"))
-                 .replace("__REL__", rel_json.replace("</", "<\\/"))),
+                 .replace("__REL__", rel_json.replace("</", "<\\/"))
+                 .replace("__QUEUE__", queue_json.replace("</", "<\\/"))),
         "quote": e(PROVOCATION["quote"]), "who": e(PROVOCATION["who"]),
         "where": e(PROVOCATION["where"]), "qurl": e(PROVOCATION["url"]),
         "answer": para(PROVOCATION["answer"]),
@@ -2980,6 +3239,7 @@ def render(data):
         "policy": para(POLICY), "nreview": len(in_review), "nready": len(ready),
         "nfixed": len([d for d in DEFECTS if d[1] == "fixed-local"]),
         "nnever": len(never), "readyc": ready_commits,
+        "qgraph": queue_svg(qcards),
         "qreview": queue_html(in_review),
         "qready": queue_html(ready, with_facts=True),
         "qnever": queue_html(never),

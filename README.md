@@ -34,6 +34,12 @@ derived rather than remembered, so:
 - **The evidence dropdown** on each unsent branch derives its commit list,
   diffstat and base; only the numbered facts above them are hand-written, in
   `FACTS`.
+- **The queue is drawn as a pipeline**, one column per stage: on the fork, in
+  review, approved, merged, closed. The columns are deliberately not balanced.
+  A first column five times the height of the rest is the whole point of
+  drawing it — the constraint is not how fast the work goes, it is how fast it
+  is asked for. Dashed arrows are the couplings in `QUEUE_DEPS`, the one
+  hand-written part, and both ends of each are checked to exist.
 - **The queue** is read from the working clones listed in `LOCAL`: every branch,
   how far ahead of upstream it is, whether it is pushed, and which pull request
   it matches by shared commits. A clone that is missing is skipped, and the
@@ -110,7 +116,7 @@ to pass:
 | `facts` | a finished, unsent branch has no evidence recorded |
 | `refs` | a hand-written `#1234` in the prose names something that does not exist |
 | `private` | an address, MAC, serial path or home directory reached the HTML |
-| `contrast` | a text-on-surface pair fell below 4.5:1 |
+| `contrast` | a text-on-surface pair fell below 4.5:1 — and a surface it *cannot read*, which is how most of this page went unchecked for a fortnight: `--panel:#fff` is three-digit hex, the parser wanted six, and every pair drawn on the panel was skipped in silence |
 | `blocks` | a hardware block or a driver module reached the tree and not the page. The quiet half: a module in neither table is simply absent from the grid, so a port could land and the page would go on reporting the old number |
 | `nav` | a rail link points at a section that is not there, or a section is missing from the rail. Invisible to everything else — the page builds and the link just does nothing |
 | `grid` | a coverage row carries the wrong number of cells. It does not look broken; it shifts every later cell one column left |
@@ -120,6 +126,7 @@ to pass:
 | `header` | the forty-pin table is internally consistent. A typo, not a pinout — nothing here can tell you the pinout is *right* |
 | `pinmaps` | the board tabs and the pin maps agree, and one map shows at rest |
 | `bits` | a register drawn as bits that does not add up to the register's width. The strips stretch to fill the row, so a mis-read field still looks like a register — only the sum shows it |
+| `queue` | the drawn queue and the written queue disagreeing: a stage heading counting something other than what is under it, a card matching nothing else on the page, or a `QUEUE_DEPS` end naming nothing so its arrow is silently not drawn |
 
 Run it before every push. Most failures are fixed by running `./build.py`.
 

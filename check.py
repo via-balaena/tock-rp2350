@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Check that the published page is still true, still current and still legible.
 
-Seventeen checks, and an eighteenth that runs when node and jsdom are there. Each one exists because it has already caught something, or because
+Eighteen checks, and a nineteenth that runs when node and jsdom are there. Each one exists because it has already caught something, or because
 it guards a mistake that was actually made here:
 
   drift       index.html is not what build.py would produce from data.json,
@@ -41,6 +41,10 @@ it guards a mistake that was actually made here:
   bits        a register drawn as bits that does not add up to the register's
               width. The strips stretch to fill the row, so a mis-read field
               still looks like a register -- only the sum shows it.
+  queue       the drawn queue and the written queue disagreeing: a stage
+              heading counting something other than what is under it, a card
+              matching nothing on the page, or a QUEUE_DEPS end that names
+              nothing so its arrow is silently not drawn.
   interactions  the page driven in a real DOM: every block opening its own
               trace, the keys, the search, the pull request filter. Optional,
               and skipped rather than failed when node or jsdom is missing.
@@ -75,6 +79,11 @@ PAIRS = [
     ("closed-ink", ["closed-bg"]),
     ("unfiled-ink", ["unfiled-bg"]),
     ("ink", ["draft-bg"]),          # the branch chip on defect rows
+    # Stage headings on the queue graph and lane headings on the stack graph,
+    # both drawn straight onto the panel the canvas sits on.
+    ("merged-ink", ["panel"]), ("review-ink", ["panel"]),
+    ("approved-ink", ["panel"]), ("draft-ink", ["panel"]),
+    ("closed-ink", ["panel"]),
     # The coverage grid's three cell states, drawn on the panel the grid sits on.
     ("driven", ["panel", "bg"]),
     ("undriven", ["panel", "bg"]),
@@ -125,7 +134,13 @@ def palettes(css):
     if len(blocks) < 2:
         return {}
     def parse(block):
-        return dict(re.findall(r"--([a-z-]+):(#[0-9a-fA-F]{6})", block))
+        found = {}
+        for name, value in re.findall(r"--([a-z-]+):(#[0-9a-fA-F]{3,6})\b", block):
+            if len(value) == 4:                 # #fff is #ffffff
+                value = "#" + "".join(ch * 2 for ch in value[1:])
+            if len(value) == 7:
+                found[name] = value
+        return found
     light = parse(blocks[0])
     dark = dict(light)
     dark.update(parse(blocks[1]))
@@ -144,6 +159,9 @@ def check_contrast(build, problems):
                 continue
             for surface in surfaces:
                 if surface not in colors:
+                    problems.append(
+                        f"contrast: {theme}, --{surface} could not be read out of "
+                        f"the palette, so --{ink} on it was never checked")
                     continue
                 ratio = contrast(colors[ink], colors[surface])
                 if ratio < MIN_RATIO:
@@ -299,7 +317,7 @@ RUNTIME_CLASSES = {"on", "here", "rel", "lit", "filtered", "kind"}
 
 # Grouping wrappers in the generated SVG. They organise the markup and are
 # deliberately not styling hooks, so they have no rules and are not dead.
-STRUCTURAL_CLASSES = {"lanes", "laneheads", "edges"}
+STRUCTURAL_CLASSES = {"lanes", "laneheads", "edges", "qheads", "qedges"}
 
 
 def check_styles(build, html, problems):
@@ -437,6 +455,43 @@ def check_bits(html, problems):
             problems.append(
                 f"bits: {ident} draws {drawn} bits of a {width.group(1)}-bit register")
 
+
+def check_queue(build, data, html, problems):
+    """The drawn queue and the written queue are the same queue.
+
+    Two ways they could stop being: a stage heading counting something other
+    than what is under it, and a card that names a branch or pull request the
+    page does not have anywhere else. Both would leave a picture that reads
+    perfectly well and is not true.
+    """
+    for name in sorted(build.dangling_queue_deps(data)):
+        problems.append(
+            f"queue: QUEUE_DEPS names {name!r}, which is nothing in the queue, "
+            f"so its arrow is silently not drawn")
+
+    in_review, ready, _ = build.queue_groups(build.queue_rows(data))
+    cards = build.queue_cards(data, ready, in_review)
+    drawn = dict((label, int(n)) for label, n in re.findall(
+        r'<text class="qhname[^>]*>([^<]+)</text>'
+        r'<text class="qhsub"[^>]*>(\d+) ', html))
+    for stage, label, _ in build.STAGES:
+        if drawn.get(label) != len(cards[stage]):
+            problems.append(
+                f"queue: the {label!r} column is headed {drawn.get(label)} and "
+                f"holds {len(cards[stage])} cards")
+
+    listed = set(re.findall(r'<li data-branch="([^"]+)"', html))
+    priced = set(re.findall(r'<article class="prcard" data-pr="(\d+)"', html))
+    for group in cards.values():
+        for card in group:
+            if card["pr"] and str(card["pr"]) not in priced:
+                problems.append(
+                    f"queue: card #{card['pr']} has no pull request card to match it")
+            elif not card["pr"] and card["branch"] not in listed:
+                problems.append(
+                    f"queue: card {card['branch']!r} is drawn and is not in the "
+                    f"list below it")
+
 def check_drift(build, data, html, problems):
     if build.render(data) != html:
         problems.append(
@@ -503,11 +558,12 @@ def main():
     check_header(build, problems)
     check_pinmaps(build, html, problems)
     check_bits(html, problems)
+    check_queue(build, data, html, problems)
     skipped = check_interactions(problems)
     if not args.offline:
         check_fresh(build, data, problems)
 
-    ran = (16 if args.offline else 17) + (0 if skipped else 1)
+    ran = (17 if args.offline else 18) + (0 if skipped else 1)
     if skipped:
         print(f"note: the interaction check did not run — {skipped}\n")
     if problems:

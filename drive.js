@@ -148,6 +148,27 @@ setTimeout(() => {
           rtabs.filter(t => t.getAttribute('aria-pressed') === 'true').length === 1);
   }
 
+  const qcards = [...doc.querySelectorAll('.qcard[data-card]')];
+  if (qcards.length) {
+    check('the queue is drawn', qcards.length > 5, qcards.length + ' cards');
+    check('the queue readout starts empty',
+          doc.getElementById('q-title').textContent === 'Nothing selected');
+    const waiting = qcards.find(c => c.querySelector('.qwait')) || qcards[0];
+    click(waiting);
+    check('clicking a queue card fills the readout',
+          doc.getElementById('q-title').textContent !== 'Nothing selected',
+          doc.getElementById('q-title').textContent);
+    check('clicking a queue card names what it is',
+          doc.getElementById('q-meta').textContent.length > 0);
+    check('only one queue card is marked',
+          doc.querySelectorAll('.qcard.sel').length === 1);
+    if (waiting.querySelector('.qwait')) {
+      check('a card marked waiting says what it waits for',
+            doc.getElementById('q-note').textContent.length > 40,
+            doc.getElementById('q-note').textContent.slice(0, 50));
+    }
+  }
+
   const node = doc.querySelector('#graph .node');
   if (node) {
     click(node);
