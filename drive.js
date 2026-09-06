@@ -108,6 +108,24 @@ setTimeout(() => {
           !doc.getElementById('graph').classList.contains('filtered'));
   }
 
+  const tabs = [...doc.querySelectorAll('.ptab[data-board]')];
+  const maps = () => [...doc.querySelectorAll('.pinmap')].filter(m => !m.hidden);
+  if (tabs.length) {
+    check('one pin map shows at rest', maps().length === 1, maps().length + ' showing');
+    check('the map showing is the tab marked selected',
+          maps()[0] && maps()[0].id === 'pm-' + tabs.find(t => t.classList.contains('sel')).dataset.board);
+    for (const tab of tabs) {
+      click(tab);
+      const open = maps();
+      check('the ' + tab.dataset.board + ' tab shows only its own map',
+            open.length === 1 && open[0].id === 'pm-' + tab.dataset.board,
+            open.map(m => m.id).join(','));
+      check('the ' + tab.dataset.board + ' tab reports itself pressed',
+            tab.getAttribute('aria-pressed') === 'true' &&
+            tabs.filter(t => t.getAttribute('aria-pressed') === 'true').length === 1);
+    }
+  }
+
   const node = doc.querySelector('#graph .node');
   if (node) {
     click(node);

@@ -58,6 +58,13 @@ sections are skipped and the rest of the page still builds.
   own `with_driver`, the kernel interface from what that capsule imports, the
   chip driver from the crate implementing it, the registers from its
   `register_structs!`.
+- **The forty pins** are read the same way. The header's shape is the board's
+  form factor and is written down; every role on it comes from that board's
+  own source — the binding beside the pin, or the component being built with
+  it. Recursion into a base board reads its `lib.rs` and never its `main.rs`:
+  `raspberry_pi_pico_2/lib.rs` is shared setup that the Pico 2 W runs, but
+  `raspberry_pi_pico_2/main.rs` is a *different binary* with its own userspace
+  GPIO table, and reading both put the standalone Pico 2's pins on the W.
 - **The capsule-to-chip join is on what a driver *implements*, not what it
   names.** `pio.rs` imports `hil::gpio` to configure pins; joining on names put
   the GPIO capsule above the PIO block, on the same page that lists a userspace
@@ -105,12 +112,15 @@ to pass:
 | `grid` | a coverage row carries the wrong number of cells. It does not look broken; it shifts every later cell one column left |
 | `trace` | a block has no trace panel, or more than one is visible at rest, which is what a reader with no JavaScript is shown |
 | `styles` | a class in the markup that no rule matches, or a rule no markup uses. Both have shipped here |
+| `pins` | a pin used for something `PIN_ROLE` cannot name, so the map would render a raw `into_cs`; or a name no board uses any more |
+| `header` | the forty-pin table is internally consistent. A typo, not a pinout — nothing here can tell you the pinout is *right* |
+| `pinmaps` | the board tabs and the pin maps agree, and one map shows at rest |
 
 Run it before every push. Most failures are fixed by running `./build.py`.
 
 ### Driving the page
 
-A fourteenth check runs the page in a real DOM and asserts its interactions,
+A final check runs the page in a real DOM and asserts its interactions,
 which is the closest thing here to looking at it. It needs node and jsdom, and
 is reported as skipped rather than failed without them:
 

@@ -1673,6 +1673,491 @@
         ]
       }
     },
+    "pins": {
+      "upstream/master": {
+        "raspberry_pi_pico_2": {
+          "0": [
+            {
+              "label": "gpio_tx",
+              "off": false,
+              "file": "io.rs"
+            },
+            {
+              "label": "gpio_tx",
+              "off": false,
+              "file": "main.rs"
+            },
+            {
+              "label": "userspace gpio 0",
+              "off": true,
+              "file": "main.rs"
+            }
+          ],
+          "1": [
+            {
+              "label": "gpio_rx",
+              "off": false,
+              "file": "io.rs"
+            },
+            {
+              "label": "gpio_rx",
+              "off": false,
+              "file": "main.rs"
+            },
+            {
+              "label": "userspace gpio 1",
+              "off": true,
+              "file": "main.rs"
+            }
+          ],
+          "25": [
+            {
+              "label": "led_kernel_pin",
+              "off": false,
+              "file": "io.rs"
+            },
+            {
+              "label": "userspace gpio 25",
+              "off": true,
+              "file": "main.rs"
+            },
+            {
+              "label": "LedsComponent",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "2": [
+            {
+              "label": "userspace gpio 2",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "3": [
+            {
+              "label": "userspace gpio 3",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "4": [
+            {
+              "label": "userspace gpio 4",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "5": [
+            {
+              "label": "userspace gpio 5",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "6": [
+            {
+              "label": "userspace gpio 6",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "7": [
+            {
+              "label": "userspace gpio 7",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "8": [
+            {
+              "label": "userspace gpio 8",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "9": [
+            {
+              "label": "userspace gpio 9",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "10": [
+            {
+              "label": "userspace gpio 10",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "11": [
+            {
+              "label": "userspace gpio 11",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "12": [
+            {
+              "label": "userspace gpio 12",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "13": [
+            {
+              "label": "userspace gpio 13",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "14": [
+            {
+              "label": "userspace gpio 14",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "15": [
+            {
+              "label": "userspace gpio 15",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "16": [
+            {
+              "label": "userspace gpio 16",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "17": [
+            {
+              "label": "userspace gpio 17",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "18": [
+            {
+              "label": "userspace gpio 18",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "19": [
+            {
+              "label": "userspace gpio 19",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "20": [
+            {
+              "label": "userspace gpio 20",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "21": [
+            {
+              "label": "userspace gpio 21",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "22": [
+            {
+              "label": "userspace gpio 22",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "23": [
+            {
+              "label": "userspace gpio 23",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "24": [
+            {
+              "label": "userspace gpio 24",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "26": [
+            {
+              "label": "userspace gpio 26",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "27": [
+            {
+              "label": "userspace gpio 27",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "28": [
+            {
+              "label": "userspace gpio 28",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "29": [
+            {
+              "label": "userspace gpio 29",
+              "off": false,
+              "file": "main.rs"
+            }
+          ]
+        }
+      },
+      "bench/stepper-pico2w": {
+        "raspberry_pi_pico_2_w": {
+          "0": [
+            {
+              "label": "gpio_tx",
+              "off": false,
+              "file": "io.rs"
+            },
+            {
+              "label": "gpio_tx",
+              "off": false,
+              "file": "lib.rs"
+            }
+          ],
+          "1": [
+            {
+              "label": "gpio_rx",
+              "off": false,
+              "file": "io.rs"
+            },
+            {
+              "label": "gpio_rx",
+              "off": false,
+              "file": "lib.rs"
+            }
+          ],
+          "4": [
+            {
+              "label": "userspace gpio 4",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "5": [
+            {
+              "label": "userspace gpio 5",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "6": [
+            {
+              "label": "userspace gpio 6",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "7": [
+            {
+              "label": "userspace gpio 7",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "8": [
+            {
+              "label": "userspace gpio 8",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "9": [
+            {
+              "label": "userspace gpio 9",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "10": [
+            {
+              "label": "userspace gpio 10",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "11": [
+            {
+              "label": "userspace gpio 11",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "12": [
+            {
+              "label": "userspace gpio 12",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "13": [
+            {
+              "label": "userspace gpio 13",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "14": [
+            {
+              "label": "userspace gpio 14",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "15": [
+            {
+              "label": "userspace gpio 15",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "16": [
+            {
+              "label": "userspace gpio 16",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "22": [
+            {
+              "label": "userspace gpio 22",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "26": [
+            {
+              "label": "userspace gpio 26",
+              "off": true,
+              "file": "main.rs"
+            },
+            {
+              "label": "pad setup",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "27": [
+            {
+              "label": "userspace gpio 27",
+              "off": true,
+              "file": "main.rs"
+            },
+            {
+              "label": "pad setup",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "28": [
+            {
+              "label": "userspace gpio 28",
+              "off": true,
+              "file": "main.rs"
+            },
+            {
+              "label": "pad setup",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "25": [
+            {
+              "label": "cs",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "29": [
+            {
+              "label": "PioGspiComponent",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "24": [
+            {
+              "label": "PioGspiComponent",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "23": [
+            {
+              "label": "pwr",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "18": [
+            {
+              "label": "Stepper",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "19": [
+            {
+              "label": "Stepper",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "20": [
+            {
+              "label": "Stepper",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "21": [
+            {
+              "label": "Stepper",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "2": [
+            {
+              "label": "spi_clk",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "3": [
+            {
+              "label": "spi_tx",
+              "off": false,
+              "file": "main.rs"
+            }
+          ],
+          "17": [
+            {
+              "label": "SpiSyscallComponent",
+              "off": false,
+              "file": "main.rs"
+            }
+          ]
+        }
+      }
+    },
     "chains": {
       "adc": {
         "rp2040": {

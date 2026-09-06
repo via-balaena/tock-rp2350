@@ -400,6 +400,57 @@ PLUMBING = {
     "xosc": "The crystal oscillator everything else is derived from.",
 }
 
+# The 40-pin header, which is the board's form factor rather than anything in
+# Tock's source. Physical pin order, 1 to 40; the right-hand column of a real
+# board runs 40 down to 21, and the page draws it that way.
+#
+# Only the shape is written here. Which pins do what is read from the board's
+# own source, below.
+HEADER = [
+    (1, "gpio", "GP0"), (2, "gpio", "GP1"), (3, "gnd", "GND"),
+    (4, "gpio", "GP2"), (5, "gpio", "GP3"), (6, "gpio", "GP4"),
+    (7, "gpio", "GP5"), (8, "gnd", "GND"), (9, "gpio", "GP6"),
+    (10, "gpio", "GP7"), (11, "gpio", "GP8"), (12, "gpio", "GP9"),
+    (13, "gnd", "GND"), (14, "gpio", "GP10"), (15, "gpio", "GP11"),
+    (16, "gpio", "GP12"), (17, "gpio", "GP13"), (18, "gnd", "GND"),
+    (19, "gpio", "GP14"), (20, "gpio", "GP15"),
+    (21, "gpio", "GP16"), (22, "gpio", "GP17"), (23, "gnd", "GND"),
+    (24, "gpio", "GP18"), (25, "gpio", "GP19"), (26, "gpio", "GP20"),
+    (27, "gpio", "GP21"), (28, "gnd", "GND"), (29, "gpio", "GP22"),
+    (30, "ctrl", "RUN"), (31, "gpio", "GP26"), (32, "gpio", "GP27"),
+    (33, "gnd", "AGND"), (34, "gpio", "GP28"), (35, "ctrl", "ADC_VREF"),
+    (36, "power", "3V3(OUT)"), (37, "ctrl", "3V3_EN"), (38, "gnd", "GND"),
+    (39, "power", "VSYS"), (40, "power", "VBUS"),
+]
+
+# GPIOs the chip has that the header does not carry. On a Pico 2 W these four
+# are the radio, which is why an application cannot have them.
+OFF_HEADER = [23, 24, 25, 29]
+
+# What an identifier found beside a pin means. Keyed by the name the board's
+# own source uses, so an unrecognised one renders raw and `pins` reports it
+# rather than the page quietly inventing a role.
+PIN_ROLE = {
+    "gpio_tx": ("UART0 TX, the console out", "kernel"),
+    "gpio_rx": ("UART0 RX, the console in", "kernel"),
+    "spi_clk": ("SPI0 SCK, the display's clock", "kernel"),
+    "spi_tx": ("SPI0 TX, the display's data", "kernel"),
+    "SpiSyscallComponent": ("SPI chip select", "kernel"),
+    "Stepper": ("stepper phase", "kernel"),
+    "led_kernel_pin": ("on-board LED", "kernel"),
+    "LedsComponent": ("on-board LED", "kernel"),
+    "cs": ("radio chip select", "radio"),
+    "pwr": ("radio power", "radio"),
+    "PioGspiComponent": ("radio gSPI, clocked by PIO", "radio"),
+    "pad setup": ("analogue pad, prepared for the ADC", "adc"),
+}
+
+# Which boards get a pin map, and at which ref.
+PIN_BOARDS = [
+    ("raspberry_pi_pico_2", "upstream", "Pico 2", "as it is upstream"),
+    ("raspberry_pi_pico_2_w", "fork", "Pico 2 W", "the bench kernel"),
+]
+
 # Which block a driver module covers. Kept separately from BLOCKS because the
 # relation is many-to-one: three PIO-backed bus drivers all cover the PIO
 # block. A module in any surveyed crate that appears in neither this table nor
@@ -724,6 +775,81 @@ def _board_drivers(repo, ref, board, seen=None):
     return found
 
 
+_PIN = re.compile(r"RPGpio::GPIO(\d+)")
+_HELPER = re.compile(r"^\s*(//\s*)?(\d+)\s*=>")
+_LET = re.compile(r"let\s+(?:mut\s+)?([a-z_][a-z_0-9]*)\s*=")
+_CTOR = re.compile(r"([A-Z][A-Za-z0-9]*)::new\s*\(")
+
+
+def _pin_label(lines, i, line):
+    """What this pin is being used for, from the code around it.
+
+    Deliberately shallow. It reads the userspace GPIO table's own arm number,
+    or the name of the binding or the component being built beside the pin,
+    and hands that to a table that says what such a name means. Anything it
+    cannot name renders raw rather than being guessed at.
+    """
+    helper = _HELPER.match(line)
+    if helper:
+        return "userspace gpio %s" % helper.group(2), bool(helper.group(1))
+    commented = line.lstrip().startswith("//")
+    here = _LET.search(line)
+    if here:
+        return here.group(1), commented
+    for back in range(1, 9):
+        if i - back < 0:
+            break
+        prev = lines[i - back]
+        ctor = _CTOR.search(prev)
+        if ctor:
+            return ctor.group(1), commented
+        binding = _LET.search(prev)
+        if binding:
+            return binding.group(1), commented
+        if "for pin in" in prev or "for pin in" in line:
+            return "pad setup", commented
+    return line.strip()[:40], commented
+
+
+def _board_pins(repo, ref, board, seen=None, shared_only=False):
+    """Every pin the board's source names, and what it names it for.
+
+    Recursion into a base board reads its `lib.rs` and not its `main.rs`. The
+    distinction is the whole correctness of this: `raspberry_pi_pico_2/lib.rs`
+    is shared platform setup that every board built on it runs, but
+    `raspberry_pi_pico_2/main.rs` is a *different binary* with its own
+    userspace GPIO table. Reading both put the standalone Pico 2's pin
+    assignments on the Pico 2 W, which passes its own table into the shared
+    setup and shares none of them.
+    """
+    seen = set() if seen is None else seen
+    if board in seen:
+        return {}
+    seen.add(board)
+    found, bases = {}, set()
+    for path in _tree(repo, ref, f"boards/{board}/src/"):
+        if shared_only and not path.endswith("/lib.rs"):
+            continue
+        src = _show(repo, ref, path)
+        if src is None:
+            continue
+        bases |= set(_BASE_PLATFORM.findall(src))
+        lines = src.splitlines()
+        for i, line in enumerate(lines):
+            for pin in _PIN.findall(line):
+                label, commented = _pin_label(lines, i, line)
+                entry = {"label": label, "off": commented,
+                         "file": path.rsplit("/", 1)[-1]}
+                bucket = found.setdefault(int(pin), [])
+                if entry not in bucket:
+                    bucket.append(entry)
+    for base in bases:
+        for pin, entries in _board_pins(repo, ref, base, seen, shared_only=True).items():
+            for entry in entries:
+                if entry not in found.setdefault(pin, []):
+                    found[pin].append(entry)
+    return found
+
 def _driver_nums(repo, ref):
     """Capsule name -> syscall driver number, from the one enum that assigns them."""
     src = _show(repo, ref, "capsules/core/src/driver.rs")
@@ -796,13 +922,21 @@ def survey_chip():
     refs = [r for r in refs if git(path, "rev-parse", "--verify", "-q", r) is not None]
 
     modules = {ref: _modules(path, ref) for ref in refs}
-    boards = {}
+    boards, pins = {}, {}
     for ref in (UPSTREAM_REF, FORK_REF):
         if ref not in refs:
             continue
         boards[ref] = {b: sorted(_board_drivers(path, ref, b))
                        for b in CHIP_BOARDS
                        if _tree(path, ref, f"boards/{b}/src/")}
+
+    # Pins are surveyed only for the boards that get a map. Surveying the
+    # others put identifiers on the checked list that nothing on the page
+    # would ever render, which is a gate reporting work that does not exist.
+    for board, which, _, _ in PIN_BOARDS:
+        ref = {"upstream": UPSTREAM_REF, "fork": FORK_REF}[which]
+        if ref in boards and board in boards[ref]:
+            pins.setdefault(ref, {})[board] = _board_pins(path, ref, board)
 
     capsules = {}
     for ref, per_board in boards.items():
@@ -847,6 +981,7 @@ def survey_chip():
         "resets": {c: _reset_bits(path, UPSTREAM_REF, c) for c in ("rp2040", "rp2350")},
         "modules": modules,
         "boards": boards,
+        "pins": pins,
         "chains": chains,
         "driver_nums": {**_driver_nums(path, UPSTREAM_REF), **_driver_nums(path, fork)},
         "capsules": capsules,
@@ -1572,6 +1707,50 @@ font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.69rem;color:v
 .reg b{color:var(--accent);font-size:.65rem;font-weight:600}
 .reg.more{justify-content:center;color:var(--ink-faint)}
 
+/* ---- the forty pins ---- */
+.ptabs{display:flex;gap:8px;margin:0 0 14px}
+.ptab{display:flex;flex-direction:column;gap:2px;align-items:flex-start;padding:8px 14px;
+border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);
+font:inherit;font-size:.88rem;cursor:pointer}
+.ptab em{font-style:normal;font-size:.74rem;color:var(--ink-faint)}
+.ptab:hover{border-color:var(--accent)}
+.ptab.sel{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.pinswatch{width:13px;height:13px;border-radius:3px;display:inline-block;flex:none}
+.pinmap{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px 20px}
+.header{display:grid;grid-template-columns:1fr 1fr;gap:0 30px}
+ol.hcol{list-style:none;margin:0;padding:0}
+.pin{display:flex;align-items:center;gap:10px;padding:4px 8px;border-radius:6px;
+font-size:.82rem;line-height:1.3;border-left:3px solid transparent}
+.pin.mirror{flex-direction:row-reverse;text-align:right;border-left:0;
+border-right:3px solid transparent}
+.pnum{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.7rem;
+color:var(--ink-faint);width:20px;flex:none;text-align:center}
+.pname{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:600;
+width:66px;flex:none;color:var(--ink)}
+.pin.mirror .pname{text-align:right}
+.prole{color:var(--ink-soft);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.p-user{background:color-mix(in srgb,var(--merged-bg) 60%,transparent);border-left-color:var(--driven)}
+.p-user.mirror{border-right-color:var(--driven)}
+.p-kernel{background:color-mix(in srgb,var(--review-bg) 55%,transparent);border-left-color:var(--review-line)}
+.p-kernel.mirror{border-right-color:var(--review-line)}
+.p-radio{background:color-mix(in srgb,var(--unfiled-bg) 60%,transparent);border-left-color:var(--undriven)}
+.p-radio.mirror{border-right-color:var(--undriven)}
+.p-adc{background:color-mix(in srgb,var(--approved-bg) 60%,transparent);border-left-color:var(--approved-line)}
+.p-adc.mirror{border-right-color:var(--approved-line)}
+.p-off{background:var(--bg);border-left-color:var(--line)}
+.p-off.mirror{border-right-color:var(--line)}
+.p-free{color:var(--ink-faint)}
+.p-gnd,.p-power,.p-ctrl{color:var(--ink-faint)}
+.p-gnd .pname{color:var(--ink-faint)}
+.p-power .pname{color:var(--closed-ink)}
+.p-ctrl .pname{color:var(--ink-soft)}
+h3.offh{margin:22px 0 4px;font-size:1rem}
+ul.offpins{list-style:none;margin:10px 0 0;padding:0;display:grid;
+grid-template-columns:repeat(4,1fr);gap:8px}
+ul.offpins .pin{border:1px solid var(--line);flex-direction:column;align-items:flex-start;gap:3px}
+ul.offpins .pname{width:auto}
+ul.offpins .prole{white-space:normal;font-size:.78rem}
+
 /* ---- what selecting a block lights up elsewhere ---- */
 .rel{box-shadow:inset 3px 0 0 var(--accent)}
 .chip.rel,.prcard.rel{box-shadow:0 0 0 1px var(--accent)}
@@ -1677,6 +1856,18 @@ function stepBlock(delta) {
   selectBlock(next.dataset.block);
   next.scrollIntoView({block: 'nearest'});
 }
+
+/* ---- the pin map: one board at a time ---- */
+const ptabs = [...document.querySelectorAll('.ptab[data-board]')];
+ptabs.forEach(tab => tab.addEventListener('click', () => {
+  ptabs.forEach(other => {
+    const on = other === tab;
+    other.classList.toggle('sel', on);
+    other.setAttribute('aria-pressed', String(on));
+  });
+  document.querySelectorAll('.pinmap').forEach(
+    map => { map.hidden = map.id !== 'pm-' + tab.dataset.board; });
+}));
 
 /* ---- which section the rail points at ----
    Feature-detected, and deliberately so: this is a nicety, and everything
@@ -2031,6 +2222,100 @@ def trace_html(cov, traces, opening):
     return "".join(out)
 
 
+def pin_state(entries):
+    """What one pin is doing on one board, from what its board's source says.
+
+    Order matters. A pin the kernel has taken for the console or the radio is
+    not free just because it also appears, commented out, in the userspace
+    table -- the comment is the board saying why the application cannot have
+    it.
+    """
+    if not entries:
+        return "free", "", []
+    labels = []
+    for entry in entries:
+        if entry["label"] not in [l for l, _ in labels]:
+            labels.append((entry["label"], entry["off"]))
+    taken = [(l, o) for l, o in labels if not l.startswith("userspace gpio")]
+    live = [(l, o) for l, o in taken if not o]
+    if live:
+        role, kind = PIN_ROLE.get(live[0][0], (live[0][0], "kernel"))
+        return kind, role, [l for l, _ in labels]
+    exposed = next((l for l, o in labels if l.startswith("userspace gpio") and not o), None)
+    if exposed:
+        return "user", "an app can drive it as " + exposed.replace("userspace ", ""), \
+               [l for l, _ in labels]
+    withheld = next((l for l, o in labels if o), None)
+    if withheld:
+        role, _ = PIN_ROLE.get(taken[0][0], ("", "")) if taken else ("", "")
+        note = role or "taken out of the app's GPIO table"
+        return "off", note, [l for l, _ in labels]
+    return "free", "", [l for l, _ in labels]
+
+
+PIN_KIND_WORD = {
+    "user": "an application can drive it",
+    "kernel": "the kernel has it",
+    "radio": "the radio has it",
+    "adc": "prepared as an analogue input",
+    "off": "named by the board, not offered to applications",
+    "free": "the board does not name it",
+    "gnd": "ground", "power": "power", "ctrl": "board control",
+}
+
+
+def pin_row(physical, kind, name, board_pins, mirror):
+    gp = int(name[2:]) if name.startswith("GP") else None
+    role, note, raw = "", "", []
+    if gp is None:
+        state = kind
+        note = PIN_KIND_WORD[kind]
+    else:
+        state, note, raw = pin_state(board_pins.get(str(gp)) or board_pins.get(gp) or [])
+        note = note or PIN_KIND_WORD[state]
+    return ('<li class="pin p-%s%s"><span class="pnum">%d</span>'
+            '<span class="pname">%s</span><span class="prole">%s</span></li>'
+            % (state, " mirror" if mirror else "", physical, e(name), e(note)))
+
+
+def pins_html(data, opening_board):
+    chip = data.get("chip") or {}
+    if not chip.get("ok") or not chip.get("pins"):
+        return "", ""
+    refs = {"upstream": chip["upstream_ref"], "fork": chip["fork_ref"]}
+    tabs, panels = [], []
+    for board, which, label, sub in PIN_BOARDS:
+        per_board = chip["pins"].get(refs[which], {})
+        if board not in per_board:
+            continue
+        board_pins = per_board[board]
+        left = "".join(pin_row(p, k, n, board_pins, False)
+                       for p, k, n in HEADER if p <= 20)
+        right = "".join(pin_row(p, k, n, board_pins, True)
+                        for p, k, n in sorted(HEADER, reverse=True) if p > 20)
+        off = []
+        for gp in OFF_HEADER:
+            state, note, _ = pin_state(board_pins.get(str(gp)) or board_pins.get(gp) or [])
+            off.append('<li class="pin p-%s"><span class="pname">GP%d</span>'
+                       '<span class="prole">%s</span></li>'
+                       % (state, gp, e(note or PIN_KIND_WORD[state])))
+        off = "".join(off)
+        on = board == opening_board
+        tabs.append('<button class="ptab%s" data-board="%s" aria-pressed="%s">'
+                    '%s<em>%s</em></button>'
+                    % (" sel" if on else "", e(board), "true" if on else "false",
+                       e(label), e(sub)))
+        panels.append(
+            '<div class="pinmap" id="pm-%s"%s>'
+            '<div class="header"><ol class="hcol">%s</ol><ol class="hcol">%s</ol></div>'
+            '<h3 class="offh">Not brought out to the header</h3>'
+            "<p class=\"lede\">Four of the chip's GPIOs are not on the forty pins. "
+            'On a Pico 2 W they are the radio, which is why an application cannot '
+            'have them and why the board has no fourth ADC channel.</p>'
+            '<ul class="offpins">%s</ul></div>'
+            % (e(board), "" if on else " hidden", left, right, off))
+    return "".join(tabs), "".join(panels)
+
 REACH_BOARDS = [
     ("raspberry_pi_pico_w", "upstream", "Pico W", "RP2040, upstream"),
     ("raspberry_pi_pico_2", "upstream", "Pico 2", "RP2350, upstream"),
@@ -2071,6 +2356,27 @@ def reach_html(data):
     return "".join(rows), counts
 
 
+
+
+
+def pin_labels(data):
+    """Every identifier the pin survey found beside a pin, across all boards."""
+    chip = data.get("chip") or {}
+    return {entry["label"]
+            for per_board in (chip.get("pins") or {}).values()
+            for entries in per_board.values()
+            for bucket in entries.values() for entry in bucket}
+
+
+def unnamed_pin_roles(data):
+    """Identifiers found beside a pin that PIN_ROLE does not translate.
+
+    A pin whose role is not in the table renders the raw identifier, which is
+    honest but ugly, and means a board started using a pin for something this
+    page cannot describe.
+    """
+    return {label for label in pin_labels(data)
+            if not label.startswith("userspace gpio") and label not in PIN_ROLE}
 
 
 def unannotated_blocks(data):
@@ -2219,6 +2525,16 @@ def render(data):
     if cov:
         t = cov["totals"]
         opening = first_block(cov)
+        ptabs, ppanels = pins_html(data, PIN_BOARDS[-1][0])
+        pin_key = "".join(
+            '<li><span class="pinswatch p-%s" aria-hidden="true"></span>%s</li>'
+            % (k, e(v)) for k, v in (
+                ("user", "an application can drive it"),
+                ("kernel", "the kernel has taken it"),
+                ("radio", "the radio has it"),
+                ("adc", "an analogue input"),
+                ("off", "named by the board, withheld from applications"),
+                ("free", "the board does not name it")))
         legend = "".join(
             '<li><span class="cell c-%s" aria-hidden="true"></span>%s</li>' % (k, e(v))
             for k, v in (("driven", "a driver module covers it"),
@@ -2273,6 +2589,19 @@ def render(data):
   <div class="traces">%(traces)s</div>
 </section>
 
+<section id="pins">
+  <h2>The board in your hand</h2>
+  <p class="lede">The forty pins, and what each one is doing on a kernel you
+  can actually flash. The header's shape is the board's form factor; every
+  role on it is read from that board's own source, so a pin the kernel has
+  taken shows as taken and a pin an application can drive shows the number it
+  drives it by. The Pico 2 W's map is the bench kernel: the display, the
+  stepper and the radio are all on it.</p>
+  <div class="ptabs">%(ptabs)s</div>
+  <ul class="plain cellkey">%(pinkey)s</ul>
+  %(ppanels)s
+</section>
+
 <section id="reach">
   <h2>What a process can actually call</h2>
   <p class="lede">Not what the kernel supports &mdash; what an application on
@@ -2295,13 +2624,15 @@ def render(data):
             "upref": e(cov["upstream_ref"]), "forkref": e(cov["fork_ref"]),
             "head": e(cov["head"]), "bcounts": board_counts,
             "rheads": reach_heads, "reach": reach_rows,
+            "ptabs": ptabs, "ppanels": ppanels, "pinkey": pin_key,
         }
         chip_nav = (
             '<li class="navgroup">The chip</li>'
             '<li><a href="#chip">Coverage<span class="rn">%d of %d</span></a></li>'
             '<li><a href="#trace">Syscall to register<span class="rn">%d</span></a></li>'
+            '<li><a href="#pins">The forty pins<span class="rn">%d</span></a></li>'
             '<li><a href="#reach">What a process calls<span class="rn">%d</span></a></li>'
-            % (t["fork2350"], t["blocks2350"], len(cov["rows"]),
+            % (t["fork2350"], t["blocks2350"], len(cov["rows"]), len(HEADER),
                max((n for _, _, n in reach_counts), default=0)))
 
     nav = chip_nav + (
@@ -2540,6 +2871,8 @@ def main():
         print("  no annotation in BLOCKS: " + name)
     for name in sorted(unplaced_modules(data)):
         print("  module in no block and no PLUMBING: " + name)
+    for name in sorted(unnamed_pin_roles(data)):
+        print("  no entry in PIN_ROLE, renders raw: " + name)
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Check that the published page is still true, still current and still legible.
 
-Thirteen checks, and a fourteenth that runs when node and jsdom are there. Each one exists because it has already caught something, or because
+Sixteen checks, and a seventeenth that runs when node and jsdom are there. Each one exists because it has already caught something, or because
 it guards a mistake that was actually made here:
 
   drift       index.html is not what build.py would produce from data.json,
@@ -34,6 +34,10 @@ it guards a mistake that was actually made here:
               uses. Both have shipped here: the first renders a page that is
               not the designed one, the second is a highlight that was never
               once drawn.
+  pins        a pin used for something PIN_ROLE cannot name, or a name no
+              board uses any more; and the tabs and maps agreeing.
+  header      the forty-pin table is internally consistent. A typo, not a
+              pinout: nothing here can tell you the pinout is right.
   interactions  the page driven in a real DOM: every block opening its own
               trace, the keys, the search, the pull request filter. Optional,
               and skipped rather than failed when node or jsdom is missing.
@@ -346,6 +350,69 @@ def check_interactions(problems):
             problems.append("interactions: the driver failed with no output")
     return None
 
+
+def check_pins(build, data, problems):
+    """Every role beside a pin has a name, and every name is used.
+
+    The pin map's labels come from the board's own source -- a binding name or
+    the component being built next to the pin -- and PIN_ROLE says what such a
+    name means. A board that starts using a pin for something new shows up here
+    as an identifier with no translation, rather than as a raw `into_cs` on the
+    page or, worse, as a pin that quietly looks unused.
+    """
+    for label in sorted(build.unnamed_pin_roles(data)):
+        problems.append(
+            f"pins: a pin is used by {label!r} and PIN_ROLE does not say what "
+            f"that is, so the map renders the identifier raw")
+    used = build.pin_labels(data)
+    if used:
+        for name in sorted(set(build.PIN_ROLE) - used):
+            problems.append(
+                f"pins: PIN_ROLE describes {name!r} and no board's source "
+                f"names it any more")
+
+
+def check_header(build, problems):
+    """The header table is internally consistent.
+
+    This checks a typo, not a pinout. The forty pins are the board's form
+    factor and are not derived from anything -- nothing here can tell you they
+    are right, only that they are not obviously wrong: forty entries numbered
+    once each, and every one of the chip's thirty GPIOs accounted for exactly
+    once between the header and the four that are not brought out.
+    """
+    header = build.HEADER
+    if len(header) != 40:
+        problems.append(f"header: {len(header)} pins, expected 40")
+    numbers = [p for p, _, _ in header]
+    if sorted(numbers) != list(range(1, 41)):
+        problems.append("header: the physical pin numbers are not 1 to 40 exactly once")
+    for _, kind, _ in header:
+        if kind not in ("gpio", "gnd", "power", "ctrl"):
+            problems.append(f"header: {kind!r} is not a kind of pin")
+    on = [int(name[2:]) for _, kind, name in header if kind == "gpio"]
+    if len(on) != len(set(on)):
+        problems.append("header: a GPIO appears on the header twice")
+    both = set(on) & set(build.OFF_HEADER)
+    if both:
+        problems.append(f"header: {sorted(both)} are both on the header and not")
+    missing = set(range(30)) - set(on) - set(build.OFF_HEADER)
+    if missing:
+        problems.append(f"header: GPIOs {sorted(missing)} are on neither list")
+
+
+def check_pinmaps(build, html, problems):
+    """One pin map showing at rest, and a tab for each."""
+    maps = dict(re.findall(r'<div class="pinmap" id="pm-([^"]+)"( hidden)?>', html))
+    tabs = set(re.findall(r'<button class="ptab[^"]*" data-board="([^"]+)"', html))
+    for name in sorted(set(maps) - tabs):
+        problems.append(f"pins: the map for {name!r} has no tab to reach it")
+    for name in sorted(tabs - set(maps)):
+        problems.append(f"pins: a tab points at {name!r}, which has no map")
+    shown = [n for n, hidden in maps.items() if not hidden]
+    if maps and len(shown) != 1:
+        problems.append(f"pins: {len(shown)} pin maps are visible at rest, expected 1")
+
 def check_drift(build, data, html, problems):
     if build.render(data) != html:
         problems.append(
@@ -408,11 +475,14 @@ def main():
     check_grid(build, html, problems)
     check_trace(build, html, problems)
     check_styles(build, html, problems)
+    check_pins(build, data, problems)
+    check_header(build, problems)
+    check_pinmaps(build, html, problems)
     skipped = check_interactions(problems)
     if not args.offline:
         check_fresh(build, data, problems)
 
-    ran = (12 if args.offline else 13) + (0 if skipped else 1)
+    ran = (15 if args.offline else 16) + (0 if skipped else 1)
     if skipped:
         print(f"note: the interaction check did not run — {skipped}\n")
     if problems:
