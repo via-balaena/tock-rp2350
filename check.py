@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Check that the published page is still true, still current and still legible.
 
-Eighteen checks, and a nineteenth that runs when node and jsdom are there. Each one exists because it has already caught something, or because
+Nineteen checks, and a twentieth that runs when node and jsdom are there. Each one exists because it has already caught something, or because
 it guards a mistake that was actually made here:
 
   drift       index.html is not what build.py would produce from data.json,
@@ -45,6 +45,8 @@ it guards a mistake that was actually made here:
               heading counting something other than what is under it, a card
               matching nothing on the page, or a QUEUE_DEPS end that names
               nothing so its arrow is silently not drawn.
+  learning    the served course under read/ is not what learn.py would write
+              from learning/. Nothing about a stale chapter looks stale.
   interactions  the page driven in a real DOM: every block opening its own
               trace, the keys, the search, the pull request filter. Optional,
               and skipped rather than failed when node or jsdom is missing.
@@ -492,6 +494,30 @@ def check_queue(build, data, html, problems):
                     f"queue: card {card['branch']!r} is drawn and is not in the "
                     f"list below it")
 
+
+def check_learning(problems):
+    """The served course is what the sources would produce.
+
+    `learning/` is the source the series' own gate reads; `read/` is what the
+    site serves, and the two are a rebuild apart. Forgetting the rebuild is the
+    exact failure `drift` exists for on the page itself, and it is worse here
+    because nothing about a stale chapter looks stale.
+    """
+    if not (ROOT / "learn.py").exists():
+        return
+    if not (ROOT / "learning").is_dir():
+        problems.append("learning: learning/ is missing, so read/ has no source")
+        return
+    run = subprocess.run([sys.executable, str(ROOT / "learn.py"), "--check"],
+                         capture_output=True, text=True, cwd=ROOT)
+    if run.returncode != 0:
+        for line in run.stdout.splitlines()[1:]:
+            problems.append("learning: %s is not what learn.py would write"
+                            % line.strip())
+        if not run.stdout.strip():
+            problems.append("learning: learn.py --check failed: "
+                            + run.stderr.strip()[:200])
+
 def check_drift(build, data, html, problems):
     if build.render(data) != html:
         problems.append(
@@ -559,11 +585,12 @@ def main():
     check_pinmaps(build, html, problems)
     check_bits(html, problems)
     check_queue(build, data, html, problems)
+    check_learning(problems)
     skipped = check_interactions(problems)
     if not args.offline:
         check_fresh(build, data, problems)
 
-    ran = (17 if args.offline else 18) + (0 if skipped else 1)
+    ran = (18 if args.offline else 19) + (0 if skipped else 1)
     if skipped:
         print(f"note: the interaction check did not run — {skipped}\n")
     if problems:

@@ -1,0 +1,22 @@
+This repository holds two kinds of thing, under two licences.
+
+  learning/   the nine chapters, the cover and their tooling
+  read/       the same chapters, wrapped for serving; a build product of
+              learning/ and covered by the same licence
+
+      Creative Commons Attribution-ShareAlike 4.0 International
+      SPDX-License-Identifier: CC-BY-SA-4.0
+      Copyright Jon Hillesheim 2026.
+      Full text in learning/LICENSE.
+
+  everything else   build.py, check.py, learn.py, drive.js and the page they
+                    generate
+
+      Apache License 2.0 or the MIT licence, at your option. This matches the
+      SPDX headers the series' own tooling already carries, and the licensing
+      of the Tock project this work is about.
+      SPDX-License-Identifier: Apache-2.0 OR MIT
+      Copyright Jon Hillesheim 2026.
+
+The material about Tock quotes and cites the Tock project, which is licensed
+Apache-2.0 OR MIT, copyright the Tock Project Developers.

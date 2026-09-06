@@ -1839,6 +1839,10 @@ fill:var(--ink-soft)}
 .qedge{fill:none;stroke:var(--accent);stroke-width:2;stroke-dasharray:5 4}
 .qhead{fill:var(--accent)}
 
+.bigref{display:inline-block;padding:9px 16px;border-radius:9px;border:1px solid var(--accent);
+color:var(--accent);text-decoration:none;font-weight:600;font-size:.92rem}
+.bigref:hover{background:var(--accent);color:var(--panel)}
+
 /* ---- what selecting a block lights up elsewhere ---- */
 .rel{box-shadow:inset 3px 0 0 var(--accent)}
 .qcard.rel rect{stroke:var(--accent);stroke-width:3}
@@ -3033,6 +3037,7 @@ def render(data):
         '<li><a href="#silicon">On silicon<span class="rn">%d</span></a></li>'
         '<li><a href="#plan">Test plan<span class="rn">%d</span></a></li>'
         '<li class="navgroup">Ahead</li>'
+        '<li><a href="#course">The course<span class="rn">9</span></a></li>'
         '<li><a href="#downstream">Downstream<span class="rn">%d</span></a></li>'
         '<li><a href="#notdone">Not done<span class="rn">%d</span></a></li>'
         % (len(order), len(ready), len(overlaps), len(data["prs"]), len(DEFECTS),
@@ -3167,6 +3172,19 @@ def render(data):
 <section id="plan">
   <h2>Test plan</h2>
   <ul class="plain">%(issues)s</ul>
+</section>
+
+<section id="course">
+  <h2>The course</h2>
+  <p class="lede">Nine chapters on how the kernel works, written while learning
+  it on this board and checked the same way this page is &mdash; every figure is
+  something to drive rather than a picture to read, and every claim about the
+  tree is verified against a commit the chapter names. It starts at what a
+  register is and ends at grants.</p>
+  <p><a class="bigref" href="read/">Read it &rarr;</a></p>
+  <p class="foot">Its own gate runs 35 assertions on the cover and a suite per
+  chapter. Sources are under <code>learning/</code>; <code>read/</code> is what
+  is served, and a check here fails if the two disagree.</p>
 </section>
 
 <section id="downstream">

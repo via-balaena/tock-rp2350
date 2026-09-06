@@ -150,6 +150,35 @@ grid's shape, its colour contrast and its class coverage are computed — but
 jsdom has no layout engine, so nothing here has ever measured a pixel. Spacing,
 wrapping and overlap remain unverified.
 
+## The course
+
+`learning/` is a nine-chapter series on how the kernel works, written while
+learning it on this board. It moved here from a branch of the Tock fork for one
+reason: there it had no URL at all, and it is a thing to be read.
+
+The chapters carry no doctype, no `<head>` and no `<meta charset>` — they were
+written as artifacts, where the host supplies that skeleton at publish time.
+Read straight off disk a browser falls into quirks mode. So:
+
+    ./learn.py            # wrap each page and write read/
+    ./learn.py --check    # report what a rebuild would change
+
+The skeleton is taken from `learning/tools/serve.py` rather than written a
+second time here, minus its live-reload script, so a local read and the
+published read are the same document. `learning/` stays the source that the
+series' own `check.py`, `mkbook.py` and `serve.py` read; `read/` is what the
+site serves, and the `learning` check fails if the two disagree.
+
+The series' own gate still runs, and still verifies every citation against the
+kernel tree — it just has to be told where that tree is now:
+
+    python3 learning/tools/check.py            # ~/forge/tock by default
+    TOCK_TREE=/path/to/tock python3 learning/tools/check.py
+
+Each chapter pins an explicit commit, and the citation checks already skip when
+that commit cannot be found, so a machine without the clone loses those checks
+and nothing else.
+
 ## Publishing
 
 The repository is set up to serve from its root:
