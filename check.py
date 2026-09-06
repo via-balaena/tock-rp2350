@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Check that the published page is still true, still current and still legible.
 
-Thirteen checks. Each one exists because it has already caught something, or because
+Thirteen checks, and a fourteenth that runs when node and jsdom are there. Each one exists because it has already caught something, or because
 it guards a mistake that was actually made here:
 
   drift       index.html is not what build.py would produce from data.json,
@@ -34,6 +34,9 @@ it guards a mistake that was actually made here:
               uses. Both have shipped here: the first renders a page that is
               not the designed one, the second is a highlight that was never
               once drawn.
+  interactions  the page driven in a real DOM: every block opening its own
+              trace, the keys, the search, the pull request filter. Optional,
+              and skipped rather than failed when node or jsdom is missing.
 
     ./check.py            # everything, including a live fetch
     ./check.py --offline  # skip the live fetch
@@ -46,6 +49,7 @@ import importlib.util
 import json
 import pathlib
 import re
+import subprocess
 import sys
 
 ROOT = pathlib.Path(__file__).parent
@@ -313,6 +317,35 @@ def check_styles(build, html, problems):
     for name in sorted(defined - used - RUNTIME_CLASSES - STRUCTURAL_CLASSES):
         problems.append(f"styles: the stylesheet has a rule for {name!r} and no markup uses it")
 
+
+def check_interactions(problems):
+    """Run the page in a DOM and assert its interactions actually work.
+
+    Everything else here reads the HTML as text. This runs the script the way
+    a browser would. It is optional because it needs node and jsdom, and it is
+    reported as skipped rather than failed when they are absent -- but it has
+    already caught what nothing else could: the scrollspy threw where
+    IntersectionObserver was missing, and because the page ships one script,
+    that one throw took the search, the key bindings and the palette with it.
+    """
+    driver = ROOT / "drive.js"
+    if not driver.exists():
+        return "interactions: drive.js is missing"
+    try:
+        run = subprocess.run(["node", str(driver), str(ROOT / "index.html")],
+                             capture_output=True, text=True, cwd=ROOT)
+    except FileNotFoundError:
+        return "node is not installed"
+    if run.returncode == 2:
+        return "jsdom is not installed (npm install jsdom)"
+    if run.returncode != 0:
+        for line in (run.stdout + run.stderr).splitlines():
+            if line.strip():
+                problems.append("interactions: " + line.strip())
+        if not run.stdout.strip():
+            problems.append("interactions: the driver failed with no output")
+    return None
+
 def check_drift(build, data, html, problems):
     if build.render(data) != html:
         problems.append(
@@ -375,10 +408,13 @@ def main():
     check_grid(build, html, problems)
     check_trace(build, html, problems)
     check_styles(build, html, problems)
+    skipped = check_interactions(problems)
     if not args.offline:
         check_fresh(build, data, problems)
 
-    ran = 12 if args.offline else 13
+    ran = (12 if args.offline else 13) + (0 if skipped else 1)
+    if skipped:
+        print(f"note: the interaction check did not run — {skipped}\n")
     if problems:
         print(f"{len(problems)} problem(s) across {ran} checks:\n")
         for p in problems:

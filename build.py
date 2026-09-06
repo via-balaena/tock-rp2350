@@ -1678,20 +1678,27 @@ function stepBlock(delta) {
   next.scrollIntoView({block: 'nearest'});
 }
 
-/* ---- which section the rail points at ---- */
+/* ---- which section the rail points at ----
+   Feature-detected, and deliberately so: this is a nicety, and everything
+   below it -- search, the keys, the whole palette -- is not. One script means
+   one throw takes out every feature after the throw, which is how a page keeps
+   working in the browser it was written in and quietly stops being useful in
+   an older one. */
 const links = new Map([...document.querySelectorAll('.rail a[href^="#"]')]
   .filter(a => a.getAttribute('href').length > 1)
   .map(a => [a.getAttribute('href').slice(1), a]));
-const spy = new IntersectionObserver(entries => {
-  entries.forEach(en => {
-    const a = links.get(en.target.id);
-    if (a && en.isIntersecting) {
-      links.forEach(l => l.classList.remove('here'));
-      a.classList.add('here');
-    }
-  });
-}, {rootMargin: '0px 0px -72% 0px'});
-links.forEach((a, id) => { const el = document.getElementById(id); if (el) spy.observe(el); });
+if (typeof IntersectionObserver === 'function') {
+  const spy = new IntersectionObserver(entries => {
+    entries.forEach(en => {
+      const a = links.get(en.target.id);
+      if (a && en.isIntersecting) {
+        links.forEach(l => l.classList.remove('here'));
+        a.classList.add('here');
+      }
+    });
+  }, {rootMargin: '0px 0px -72% 0px'});
+  links.forEach((a, id) => { const el = document.getElementById(id); if (el) spy.observe(el); });
+}
 
 /* ---- search: the index is the page, so it cannot drift from it ---- */
 const palette = document.getElementById('palette');

@@ -108,9 +108,25 @@ to pass:
 
 Run it before every push. Most failures are fixed by running `./build.py`.
 
-**What no check covers: nobody has looked at the page.** There is no browser on
-the machine it was built on, so every visual claim about it is computed rather
-than seen. Layout, overlap and spacing are unverified.
+### Driving the page
+
+A fourteenth check runs the page in a real DOM and asserts its interactions,
+which is the closest thing here to looking at it. It needs node and jsdom, and
+is reported as skipped rather than failed without them:
+
+    npm install jsdom
+    node drive.js index.html     # or just ./check.py, which runs it
+
+It earned its place immediately. The scrollspy threw on any browser without
+`IntersectionObserver`, and because the page ships one script, that single throw
+silently took the search, the key bindings and the whole palette down with it.
+Nothing that reads the markup as text could have seen that.
+
+**What no check covers: nobody has looked at the page.** There is still no
+browser on the machine it is built on. The interactions are now driven, and the
+grid's shape, its colour contrast and its class coverage are computed — but
+jsdom has no layout engine, so nothing here has ever measured a pixel. Spacing,
+wrapping and overlap remain unverified.
 
 ## Publishing
 
