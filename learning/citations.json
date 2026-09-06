@@ -1,0 +1,1295 @@
+{
+ "ch00-getting-it-running": {
+  "cites": [
+   {
+    "closes": "]",
+    "end": 15,
+    "opens": "channel = \"nightly-2026-07-21\"",
+    "path": "rust-toolchain.toml",
+    "start": 6
+   },
+   {
+    "opens": "target = \"thumbv8m.main-none-eabi\"",
+    "path": "boards/raspberry_pi_pico_2/.cargo/config.toml",
+    "start": 11
+   },
+   {
+    "opens": "# Default target for installing the kernel.",
+    "path": "boards/raspberry_pi_pico_2/Makefile",
+    "start": 23
+   },
+   {
+    "opens": ".PHONY: flash-openocd",
+    "path": "boards/raspberry_pi_pico_2/Makefile",
+    "start": 27
+   },
+   {
+    "opens": "flash: $(KERNEL)",
+    "path": "boards/raspberry_pi_pico_2/Makefile",
+    "start": 32
+   },
+   {
+    "opens": "arm-none-eabi-objcopy --update-section .apps=$(APP) $(KERNEL_WITH_APP)",
+    "path": "boards/raspberry_pi_pico_2/Makefile",
+    "start": 42
+   },
+   {
+    "closes": "source [find target/rp2350.cfg]",
+    "end": 6,
+    "opens": "source [find interface/cmsis-dap.cfg]",
+    "path": "boards/raspberry_pi_pico_2/openocd-picoprobe.cfg",
+    "start": 5
+   },
+   {
+    "closes": "gpio_tx.set_function(GpioFunction::UART);",
+    "end": 263,
+    "opens": "let gpio_tx = peripherals.pins.get_pin(RPGpio::GPIO0);",
+    "path": "boards/raspberry_pi_pico_2/src/lib.rs",
+    "start": 260
+   },
+   {
+    "opens": "kernel::debug!(\"Initialization complete. Enter main loop\");",
+    "path": "boards/raspberry_pi_pico_2/src/main.rs",
+    "start": 100
+   },
+   {
+    "opens": "let _ = self.write_bytes(b\"tock$ \");",
+    "path": "capsules/core/src/process_console.rs",
+    "start": 1036
+   },
+   {
+    "closes": "let _ = self.write_bytes(b\"Syscalls  Restarts  Grants  State\\r\\n\");",
+    "end": 898,
+    "opens": ".write_bytes(b\" PID    ShortID    Name                Quanta  \");",
+    "path": "capsules/core/src/process_console.rs",
+    "start": 897
+   }
+  ],
+  "pin": "83bad9388"
+ },
+ "ch04-what-a-driver-may-touch": {
+  "cites": [
+   {
+    "opens": "pub struct LedDriver<'a, L: led::Led, const NUM_LEDS: usize> {",
+    "path": "capsules/core/src/led.rs",
+    "start": 71
+   },
+   {
+    "opens": "if data >= NUM_LEDS {",
+    "path": "capsules/core/src/led.rs",
+    "start": 112
+   },
+   {
+    "closes": "fn read(&self) -> bool;",
+    "end": 32,
+    "opens": "fn init(&self);",
+    "path": "kernel/src/hil/led.rs",
+    "start": 19
+   },
+   {
+    "opens": "#![no_std]",
+    "path": "kernel/src/lib.rs",
+    "start": 93
+   },
+   {
+    "closes": "mux_alarm,",
+    "end": 380,
+    "opens": "let mux_alarm = components::alarm::AlarmMuxComponent::new(&peripherals.timer0)",
+    "path": "boards/raspberry_pi_pico_2/src/lib.rs",
+    "start": 292
+   },
+   {
+    "opens": "//! This allows multiple Tock capsules to use the same UART bus. This is likely",
+    "path": "capsules/core/src/virtualizers/virtual_uart.rs",
+    "start": 7
+   },
+   {
+    "opens": "#![forbid(unsafe_code)]",
+    "path": "capsules/core/src/lib.rs",
+    "start": 5
+   },
+   {
+    "closes": "",
+    "end": 95,
+    "opens": "impl<P: gpio::Pin> Led for LedHigh<'_, P> {",
+    "path": "kernel/src/hil/led.rs",
+    "start": 57
+   },
+   {
+    "closes": "fn set(&self);",
+    "end": 154,
+    "opens": "/// Set the GPIO pin high. If the pin is not an output or",
+    "path": "kernel/src/hil/gpio.rs",
+    "start": 152
+   },
+   {
+    "opens": "pub trait Output {",
+    "path": "kernel/src/hil/gpio.rs",
+    "start": 151
+   },
+   {
+    "closes": "}",
+    "end": 1523,
+    "opens": "impl hil::gpio::Output for RPGpioPin<'_> {",
+    "path": "chips/rp2350/src/gpio.rs",
+    "start": 1514
+   },
+   {
+    "closes": "}",
+    "end": 1337,
+    "opens": "pub fn set_function(&self, f: GpioFunction) {",
+    "path": "chips/rp2350/src/gpio.rs",
+    "start": 1329
+   },
+   {
+    "opens": "self.gpio_pad_registers.gpio_pad[self.pin].modify(GPIO_PAD::OD::CLEAR + GPIO_PAD::IE::SET)",
+    "path": "chips/rp2350/src/gpio.rs",
+    "start": 1353
+   },
+   {
+    "closes": "}",
+    "end": 1321,
+    "opens": "fn get_mode(&self) -> hil::gpio::Configuration {",
+    "path": "chips/rp2350/src/gpio.rs",
+    "start": 1310
+   },
+   {
+    "closes": "pub const unsafe fn new(ptr: *const T) -> StaticRef<T> {",
+    "end": 35,
+    "opens": "/// Create a new [`StaticRef`] from a raw pointer",
+    "path": "kernel/src/utilities/static_ref.rs",
+    "start": 29
+   },
+   {
+    "opens": "LedHigh::new(peripherals.pins.get_pin(RPGpio::GPIO25))",
+    "path": "boards/raspberry_pi_pico_2/src/main.rs",
+    "start": 95
+   },
+   {
+    "opens": "// 25 => peripherals.pins.get_pin(RPGpio::GPIO25),",
+    "path": "boards/raspberry_pi_pico_2/src/lib.rs",
+    "start": 347
+   },
+   {
+    "opens": "pub unsafe fn panic_fmt(pi: &PanicInfo) -> ! {",
+    "path": "boards/raspberry_pi_pico_2/src/io.rs",
+    "start": 89
+   },
+   {
+    "opens": "unsafe fn get_peripherals() -> (",
+    "path": "boards/raspberry_pi_pico_2/src/lib.rs",
+    "start": 201
+   },
+   {
+    "opens": "pub unsafe fn setup() -> (",
+    "path": "boards/raspberry_pi_pico_2/src/lib.rs",
+    "start": 226
+   },
+   {
+    "opens": "pub unsafe fn main() {",
+    "path": "boards/raspberry_pi_pico_2/src/main.rs",
+    "start": 87
+   },
+   {
+    "closes": "LedLow::new(&peripherals.e310x.gpio_port[21]), // Blue",
+    "end": 246,
+    "opens": "let led = components::led::LedsComponent::new().finalize(components::led_component_static!",
+    "path": "boards/hifive1/src/main.rs",
+    "start": 242
+   },
+   {
+    "opens": "Capsules are a mechanism to provide semi-trusted infrastructure to a Tock board,",
+    "path": "doc/ExternalDependencies.md",
+    "start": 161
+   },
+   {
+    "closes": "pub unsafe fn panic_fmt(pi: &PanicInfo) -> ! {",
+    "end": 89,
+    "opens": "#[panic_handler]",
+    "path": "boards/raspberry_pi_pico_2/src/io.rs",
+    "start": 88
+   },
+   {
+    "closes": "\"boards/esp32-c3-devkitM-1\",",
+    "end": 21,
+    "opens": "\"boards/arty_e21\",",
+    "path": "Cargo.toml",
+    "start": 19
+   },
+   {
+    "closes": "panic_blink_forever(leds)",
+    "end": 284,
+    "opens": "// The system is no longer in a well-defined state, we cannot",
+    "path": "kernel/src/debug.rs",
+    "start": 280
+   },
+   {
+    "opens": "pub fn panic_blink_forever<L: hil::led::Led>(leds: &mut [&L]) -> ! {",
+    "path": "kernel/src/debug.rs",
+    "start": 387
+   },
+   {
+    "closes": "",
+    "end": 96,
+    "opens": "// LED is connected to GPIO 25",
+    "path": "boards/raspberry_pi_pico_2/src/io.rs",
+    "start": 90
+   },
+   {
+    "closes": "/// as `do_process()` will check with the scheduler before re-executing the",
+    "end": 460,
+    "opens": "}",
+    "path": "kernel/src/kernel.rs",
+    "start": 450
+   }
+  ],
+  "pin": "83bad9388"
+ },
+ "ch05-what-a-process-is": {
+  "cites": [
+   {
+    "closes": "written in C (or even assembly) to safely run on Tock.  Applications invoke",
+    "end": 28,
+    "opens": "The Tock operating system can run multiple independent userspace applications.",
+    "path": "doc/reference/trd104-syscalls.md",
+    "start": 24
+   },
+   {
+    "closes": "}",
+    "end": 120,
+    "opens": "pub struct TbfHeaderV2Base {",
+    "path": "libraries/tock-tbf/src/types.rs",
+    "start": 114
+   },
+   {
+    "closes": "}",
+    "end": 56,
+    "opens": "let version = u16::from_le_bytes([app[0], app[1]]);",
+    "path": "libraries/tock-tbf/src/parse.rs",
+    "start": 36
+   },
+   {
+    "closes": "let tbf_size = u32::from_le_bytes([app[4], app[5], app[6], app[7]]);",
+    "end": 47,
+    "opens": "// The next 4 bytes are the size of the entire app's TBF space",
+    "path": "libraries/tock-tbf/src/parse.rs",
+    "start": 44
+   },
+   {
+    "closes": "}",
+    "end": 702,
+    "opens": "match *self {",
+    "path": "libraries/tock-tbf/src/types.rs",
+    "start": 698
+   },
+   {
+    "closes": "}",
+    "end": 95,
+    "opens": "// Calculate checksum. The checksum is the XOR of each 4 byte word",
+    "path": "libraries/tock-tbf/src/parse.rs",
+    "start": 81
+   },
+   {
+    "closes": "Ok((remaining_flash, pb))",
+    "end": 354,
+    "opens": "fn discover_process_binary(",
+    "path": "kernel/src/process_loading.rs",
+    "start": 295
+   },
+   {
+    "closes": "return Err((flash, ProcessBinaryError::TbfHeaderNotFound));",
+    "end": 333,
+    "opens": "// Since Tock apps use a linked list, it is very possible the",
+    "path": "kernel/src/process_loading.rs",
+    "start": 329
+   },
+   {
+    "closes": "),",
+    "end": 127,
+    "opens": "static _sapps: u8;",
+    "path": "boards/raspberry_pi_pico_2/src/main.rs",
+    "start": 108
+   },
+   {
+    "closes": "ram (rwx) : ORIGIN = 0x20000000, LENGTH = 520K",
+    "end": 17,
+    "opens": "bootloader (rx) : ORIGIN = 0x10000000, LENGTH = 1024",
+    "path": "boards/raspberry_pi_pico_2/layout.ld",
+    "start": 14
+   },
+   {
+    "closes": "_eapps = _sapps + LENGTH(prog);",
+    "end": 324,
+    "opens": ".apps (NOLOAD) :",
+    "path": "boards/build_scripts/tock_kernel_layout.ld",
+    "start": 304
+   },
+   {
+    "closes": "///  \u255a\u2550 \u2558\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 \u2190 memory_start            \u2550\u255d",
+    "end": 473,
+    "opens": "///     \u2552\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 \u2190 memory_start + memory_len",
+    "path": "kernel/src/process_standard.rs",
+    "start": 449
+   },
+   {
+    "closes": "// where the memory region starts at the worst possible address and we",
+    "end": 1829,
+    "opens": "// Initial size of the kernel-owned part of process memory can be",
+    "path": "kernel/src/process_standard.rs",
+    "start": 1824
+   },
+   {
+    "closes": "//      \u2506\u2190min_process_memory_size\u2192\u2506\u2190\u2500\u2500\u2500\u2500\u2192\u2506\u2190\u2500\u2500\u2500\u2500initial_kernel_memory_size\u2500\u2500\u2500\u2192\u2506",
+    "end": 2015,
+    "opens": "// With our MPU allocation, we can begin to divide up the",
+    "path": "kernel/src/process_standard.rs",
+    "start": 1995
+   },
+   {
+    "opens": "}",
+    "path": "kernel/src/process_standard.rs",
+    "start": 1729
+   },
+   {
+    "opens": "const SVC_FRAME_SIZE: usize = 32;",
+    "path": "arch/cortex-m/src/syscall.rs",
+    "start": 196
+   },
+   {
+    "closes": "}",
+    "end": 277,
+    "opens": "fn initial_process_app_brk_size(&self) -> usize {",
+    "path": "arch/cortex-m/src/syscall.rs",
+    "start": 273
+   },
+   {
+    "closes": "// slice's length, so we know that there is enough memory and that the",
+    "end": 2075,
+    "opens": "let allocated_memory_start = allocated_memory.cast();",
+    "path": "kernel/src/process_standard.rs",
+    "start": 2054
+   },
+   {
+    "closes": "process.tasks.map(|tasks| {",
+    "end": 2343,
+    "opens": "}",
+    "path": "kernel/src/process_standard.rs",
+    "start": 2303
+   },
+   {
+    "opens": "ptr::write(stack_bottom.add(6), callback.pc.addr() | 1); // -> PC",
+    "path": "arch/cortex-m/src/syscall.rs",
+    "start": 404
+   },
+   {
+    "closes": "stack_bottom.add(3).cast::<u32>(), // -> R3",
+    "end": 413,
+    "opens": "stack_bottom.add(0).cast::<u32>(), // -> R0",
+    "path": "arch/cortex-m/src/syscall.rs",
+    "start": 410
+   },
+   {
+    "opens": "unsafe fn set_process_function(",
+    "path": "arch/cortex-m/src/syscall.rs",
+    "start": 376
+   },
+   {
+    "closes": "}",
+    "end": 213,
+    "opens": "pub struct TbfHeaderV2FixedAddresses {",
+    "path": "libraries/tock-tbf/src/types.rs",
+    "start": 204
+   },
+   {
+    "closes": "",
+    "end": 58,
+    "opens": "MemoryAddressMismatch {",
+    "path": "kernel/src/process_loading.rs",
+    "start": 54
+   },
+   {
+    "closes": "}",
+    "end": 997,
+    "opens": "pub enum State {",
+    "path": "kernel/src/process.rs",
+    "start": 963
+   },
+   {
+    "closes": "#[derive(Copy, Clone, Debug, Eq, PartialEq)]",
+    "end": 962,
+    "opens": "/// When a process faults, it enters the `Faulted` state. To be restarted, it",
+    "path": "kernel/src/process.rs",
+    "start": 959
+   },
+   {
+    "closes": "",
+    "end": 992,
+    "opens": "/// faulted process to be made runnable, it must first be terminated (to",
+    "path": "kernel/src/process.rs",
+    "start": 989
+   },
+   {
+    "opens": "pub struct PanicFaultPolicy {}",
+    "path": "capsules/system/src/process_policies.rs",
+    "start": 16
+   },
+   {
+    "opens": "pub struct StopFaultPolicy {}",
+    "path": "capsules/system/src/process_policies.rs",
+    "start": 25
+   },
+   {
+    "opens": "pub struct StopWithDebugFaultPolicy {}",
+    "path": "capsules/system/src/process_policies.rs",
+    "start": 36
+   },
+   {
+    "opens": "pub struct RestartFaultPolicy {}",
+    "path": "capsules/system/src/process_policies.rs",
+    "start": 49
+   },
+   {
+    "opens": "pub struct RestartWithDebugFaultPolicy {}",
+    "path": "capsules/system/src/process_policies.rs",
+    "start": 58
+   },
+   {
+    "opens": "pub struct ThresholdRestartFaultPolicy {",
+    "path": "capsules/system/src/process_policies.rs",
+    "start": 75
+   },
+   {
+    "opens": "pub struct ThresholdRestartThenPanicFaultPolicy {",
+    "path": "capsules/system/src/process_policies.rs",
+    "start": 100
+   },
+   {
+    "opens": "const FAULT_RESPONSE: capsules_system::process_policies::PanicFaultPolicy =",
+    "path": "boards/raspberry_pi_pico_2/src/main.rs",
+    "start": 32
+   },
+   {
+    "opens": "const FAULT_RESPONSE: capsules_system::process_policies::StopFaultPolicy =",
+    "path": "boards/imix/src/main.rs",
+    "start": 95
+   },
+   {
+    "opens": "const NUM_PROCS: usize = 4;",
+    "path": "boards/raspberry_pi_pico_2/src/lib.rs",
+    "start": 63
+   },
+   {
+    "closes": "remaining_flash = new_flash;",
+    "end": 250,
+    "opens": "let mut remaining_memory = app_memory;",
+    "path": "kernel/src/process_loading.rs",
+    "start": 203
+   },
+   {
+    "closes": "pub trait Process {",
+    "end": 333,
+    "opens": "/// This trait represents a generic process that the Tock scheduler can",
+    "path": "kernel/src/process.rs",
+    "start": 331
+   },
+   {
+    "closes": "- [libtock-rs](https://github.com/tock/libtock-rs): Rust apps.",
+    "end": 247,
+    "opens": "- [libtock-c](https://github.com/tock/libtock-c): C and C++ apps.",
+    "path": "doc/Getting_Started.md",
+    "start": 246
+   },
+   {
+    "opens": "fn context_switch_hook(&self, process: &dyn process::Process);",
+    "path": "kernel/src/platform/platform.rs",
+    "start": 189
+   },
+   {
+    "closes": "fn context_switch_hook(&self, _process: &dyn process::Process) {}",
+    "end": 194,
+    "opens": "impl ContextSwitchCallback for () {",
+    "path": "kernel/src/platform/platform.rs",
+    "start": 193
+   },
+   {
+    "closes": "```",
+    "end": 51,
+    "opens": "## Flashing app",
+    "path": "boards/raspberry_pi_pico_2/README.md",
+    "start": 44
+   },
+   {
+    "closes": "$(error Please define the APP variable with the TBF file to flash an application)",
+    "end": 39,
+    "opens": "picotool uf2 convert $< $(TOCK_ROOT_DIRECTORY)target/$(TARGET)/release/$(PLATFORM).uf2",
+    "path": "boards/raspberry_pi_pico_2/Makefile",
+    "start": 33
+   },
+   {
+    "opens": "",
+    "path": "README.md",
+    "start": 50
+   },
+   {
+    "opens": "@echo \"You'll need to install a few requirements before we get going.\"",
+    "path": "Makefile",
+    "start": 33
+   },
+   {
+    "opens": ".PHONY: flash-app",
+    "path": "boards/apollo3/redboard_artemis_nano/Makefile",
+    "start": 36
+   },
+   {
+    "opens": "# First, need to fill out some variables that the Makefile will use",
+    "path": "Makefile",
+    "start": 13
+   },
+   {
+    "opens": "@echo \"$$(tput bold)Welcome to Tock!$$(tput sgr0)\"",
+    "path": "Makefile",
+    "start": 30
+   },
+   {
+    "opens": "@echo \"run 'make install' to load Tock onto hardware. Check out the README in\"",
+    "path": "Makefile",
+    "start": 40
+   },
+   {
+    "opens": "@echo \"your board's folder for more information.\"",
+    "path": "Makefile",
+    "start": 41
+   },
+   {
+    "closes": "@echo \"           audit: Audit Cargo dependencies for all kernel sources\"",
+    "end": 49,
+    "opens": "@echo \"There are a few helpful targets that can be run for individual boards. To\"",
+    "path": "Makefile",
+    "start": 43
+   },
+   {
+    "opens": "## Internal support that needs to run first",
+    "path": "Makefile",
+    "start": 10
+   },
+   {
+    "closes": "//! trying to write their own flash space, and not the TBF header either.",
+    "end": 8,
+    "opens": "//! This allows multiple apps to write their own flash region.",
+    "path": "capsules/extra/src/app_flash_driver.rs",
+    "start": 5
+   },
+   {
+    "opens": "let (app_flash_start, app_flash_end) = processid.get_editable_flash_range();",
+    "path": "capsules/extra/src/app_flash_driver.rs",
+    "start": 105
+   },
+   {
+    "opens": "pub fn get_editable_flash_range(&self) -> (usize, usize) {",
+    "path": "kernel/src/process.rs",
+    "start": 208
+   },
+   {
+    "closes": "// RISC-V ePMP, this will make all userspace-accessible",
+    "end": 562,
+    "opens": "if !continue_process {",
+    "path": "kernel/src/kernel.rs",
+    "start": 536
+   },
+   {
+    "opens": "systick: cortexm33::systick::SysTick::new_with_calibration(125_000_000),",
+    "path": "boards/raspberry_pi_pico_2/src/lib.rs",
+    "start": 404
+   }
+  ],
+  "pin": "83bad9388"
+ },
+ "ch06-the-memory-protection-unit": {
+  "cites": [
+   {
+    "closes": "unsafe { StaticRef::new(0xE000ED90 as *const crate::mpu_v8m::MpuRegisters) };",
+    "end": 21,
+    "opens": "const MPU_BASE_ADDRESS: StaticRef<crate::mpu_v8m::MpuRegisters> =",
+    "path": "arch/cortex-m33/src/lib.rs",
+    "start": 20
+   },
+   {
+    "closes": "}",
+    "end": 58,
+    "opens": "register_structs! {",
+    "path": "arch/cortex-m33/src/mpu_v8m.rs",
+    "start": 27
+   },
+   {
+    "closes": "}",
+    "end": 17,
+    "opens": "pub enum Permissions {",
+    "path": "kernel/src/platform/mpu.rs",
+    "start": 11
+   },
+   {
+    "end": 343,
+    "opens": null,
+    "path": "mpu_v8m.rs",
+    "start": 335
+   },
+   {
+    "closes": ".mpu()",
+    "end": 1794,
+    "opens": "let process_name = pb.header.get_package_name();",
+    "path": "kernel/src/process_standard.rs",
+    "start": 1783
+   },
+   {
+    "closes": "}",
+    "end": 277,
+    "opens": "fn initial_process_app_brk_size(&self) -> usize {",
+    "path": "arch/cortex-m/src/syscall.rs",
+    "start": 273
+   },
+   {
+    "opens": "const SVC_FRAME_SIZE: usize = 32;",
+    "path": "arch/cortex-m/src/syscall.rs",
+    "start": 196
+   },
+   {
+    "opens": null,
+    "path": "mpu_v8m.rs",
+    "start": 251
+   },
+   {
+    "opens": null,
+    "path": "mpu_v8m.rs",
+    "start": 583
+   },
+   {
+    "opens": null,
+    "path": "mpu_v8m.rs",
+    "start": 648
+   },
+   {
+    "end": 292,
+    "opens": null,
+    "path": "mpu_v8m.rs",
+    "start": 288
+   },
+   {
+    "opens": "mpu_regions: [Cell<Option<mpu::Region>>; 6],",
+    "path": "kernel/src/process_standard.rs",
+    "start": 548
+   },
+   {
+    "closes": "None",
+    "end": 935,
+    "opens": "for region in self.mpu_regions.iter() {",
+    "path": "kernel/src/process_standard.rs",
+    "start": 927
+   },
+   {
+    "opens": "}",
+    "path": "chips/rp2350/src/chip.rs",
+    "start": 27
+   },
+   {
+    "opens": "}",
+    "path": "chips/rp2350/src/chip.rs",
+    "start": 49
+   },
+   {
+    "opens": "// Note: Cortex-M33 supports up to 16 regions.",
+    "path": "arch/cortex-m33/src/lib.rs",
+    "start": 17
+   },
+   {
+    "opens": "fn number_total_regions(&self) -> usize;",
+    "path": "kernel/src/platform/mpu.rs",
+    "start": 136
+   },
+   {
+    "opens": null,
+    "path": "mpu_v8m.rs",
+    "start": 421
+   },
+   {
+    "opens": "fn number_total_regions(&self) -> usize {",
+    "path": "arch/cortex-m/src/mpu.rs",
+    "start": 405
+   },
+   {
+    "opens": "fn number_total_regions(&self) -> usize {",
+    "path": "arch/riscv/src/pmp.rs",
+    "start": 1058
+   },
+   {
+    "opens": "fn number_total_regions(&self) -> usize {",
+    "path": "arch/x86/src/mpu.rs",
+    "start": 308
+   },
+   {
+    "closes": "if size.count_ones() > 1 || !start.is_multiple_of(size) {",
+    "end": 471,
+    "opens": "// We can only create an MPU region if the size is a power of two and it divides",
+    "path": "arch/cortex-m/src/mpu.rs",
+    "start": 468
+   },
+   {
+    "opens": "}",
+    "path": "arch/cortex-m/src/mpu.rs",
+    "start": 534
+   },
+   {
+    "end": 413,
+    "opens": null,
+    "path": "mpu_v8m.rs",
+    "start": 407
+   },
+   {
+    "closes": "}",
+    "end": 397,
+    "opens": "fn enable_app_mpu(&self) {",
+    "path": "arch/cortex-m/src/mpu.rs",
+    "start": 391
+   },
+   {
+    "end": 419,
+    "opens": null,
+    "path": "mpu_v8m.rs",
+    "start": 415
+   },
+   {
+    "closes": "// stopped, for example.",
+    "end": 543,
+    "opens": "// try to run it. This case can happen if a process faults and is",
+    "path": "kernel/src/kernel.rs",
+    "start": 542
+   },
+   {
+    "closes": "// RISC-V ePMP, this will make all userspace-accessible",
+    "end": 562,
+    "opens": "// Configure the MPU for the process to run, and activate",
+    "path": "kernel/src/kernel.rs",
+    "start": 560
+   },
+   {
+    "end": 672,
+    "opens": null,
+    "path": "mpu_v8m.rs",
+    "start": 654
+   },
+   {
+    "opens": "MEMFAULTENA     OFFSET(16)  NUMBITS(1),",
+    "path": "arch/cortex-m/src/scb.rs",
+    "start": 193
+   },
+   {
+    "closes": "}",
+    "end": 397,
+    "opens": "/// Disable the MemFault exception.",
+    "path": "arch/cortex-m/src/scb.rs",
+    "start": 388
+   },
+   {
+    "closes": "// Linker script symbols are value-less entities, a concept that does not",
+    "end": 577,
+    "opens": "// These constants are defined in the linker script.",
+    "path": "arch/cortex-v7m/src/lib.rs",
+    "start": 573
+   },
+   {
+    "closes": "ldrb  r3, [r3]         // r3 = BFSR",
+    "end": 609,
+    "opens": "// fault. If so, then we cannot use this stack while handling this fault",
+    "path": "arch/cortex-v7m/src/lib.rs",
+    "start": 606
+   },
+   {
+    "opens": "pub static mut APP_HARD_FAULT: UnsafeCell<usize> = UnsafeCell::new(0);",
+    "path": "arch/cortex-m/src/syscall.rs",
+    "start": 39
+   },
+   {
+    "opens": "let app_fault = get_global_app_hard_fault();",
+    "path": "arch/cortex-m/src/syscall.rs",
+    "start": 443
+   },
+   {
+    "closes": "kernel::syscall::ContextSwitchReason::Fault",
+    "end": 453,
+    "opens": "let switch_reason = if app_fault == 1 || invalid_stack_pointer {",
+    "path": "arch/cortex-m/src/syscall.rs",
+    "start": 450
+   },
+   {
+    "closes": "pub unsafe trait MPU {",
+    "end": 89,
+    "opens": "/// # Safety",
+    "path": "kernel/src/platform/mpu.rs",
+    "start": 82
+   },
+   {
+    "opens": "fn scheduler(&self) -> &Self::Scheduler {",
+    "path": "boards/raspberry_pi_pico_2/src/main.rs",
+    "start": 71
+   }
+  ],
+  "pin": "83bad9388"
+ },
+ "ch07-asking-the-kernel": {
+  "cites": [
+   {
+    "closes": "}",
+    "end": 96,
+    "opens": "pub enum SyscallClass {",
+    "path": "kernel/src/syscall.rs",
+    "start": 87
+   },
+   {
+    "closes": "}",
+    "end": 116,
+    "opens": "impl TryFrom<u8> for SyscallClass {",
+    "path": "kernel/src/syscall.rs",
+    "start": 101
+   },
+   {
+    "closes": "}",
+    "end": 107,
+    "opens": "pub fn syscall_from_register_arguments_trd104(",
+    "path": "kernel/src/utilities/arch_helpers.rs",
+    "start": 42
+   },
+   {
+    "closes": "}",
+    "end": 512,
+    "opens": "match syscall {",
+    "path": "arch/cortex-m/src/syscall.rs",
+    "start": 509
+   },
+   {
+    "closes": "| Upcall Arguments       | r0-r3   | a0-a3  |",
+    "end": 108,
+    "opens": "|                        | CortexM | RISC-V |",
+    "path": "doc/reference/trd104-syscalls.md",
+    "start": 103
+   },
+   {
+    "closes": "// the frame pointer. However, in the process of restoring and saving the",
+    "end": 298,
+    "opens": "unsafe {",
+    "path": "arch/cortex-v7m/src/lib.rs",
+    "start": 293
+   },
+   {
+    "opens": "const SVC_HANDLER: unsafe extern \"C\" fn() = cortexv7m::svc_handler_arm_v7m;",
+    "path": "arch/cortex-m33/src/lib.rs",
+    "start": 47
+   },
+   {
+    "closes": "const SVC_FRAME_SIZE: usize = 32;",
+    "end": 196,
+    "opens": "// Space for 8 u32s: r0-r3, r12, lr, pc, and xPSR",
+    "path": "arch/cortex-m/src/syscall.rs",
+    "start": 195
+   },
+   {
+    "closes": ") {",
+    "end": 771,
+    "opens": "/// kernel system call filtering policy (if any). Handles `Yield` and",
+    "path": "kernel/src/kernel.rs",
+    "start": 761
+   },
+   {
+    "closes": "}",
+    "end": 49,
+    "opens": "match driver_num {",
+    "path": "boards/raspberry_pi_pico_2/src/main.rs",
+    "start": 46
+   },
+   {
+    "closes": "}",
+    "end": 103,
+    "opens": "match driver_num {",
+    "path": "boards/raspberry_pi_pico_2/src/lib.rs",
+    "start": 97
+   },
+   {
+    "closes": "//First check if `upcall_ptr` is null. A null",
+    "end": 911,
+    "opens": "// niche and allows NULL internally. Having a CHERI",
+    "path": "kernel/src/kernel.rs",
+    "start": 903
+   },
+   {
+    "closes": "})",
+    "end": 1422,
+    "opens": "// Only consider allocated grants.",
+    "path": "kernel/src/process_standard.rs",
+    "start": 1416
+   },
+   {
+    "opens": "",
+    "path": "kernel/src/kernel.rs",
+    "start": 936
+   },
+   {
+    "closes": "_ => {}",
+    "end": 1011,
+    "opens": "process.processid(), driver_number);",
+    "path": "kernel/src/kernel.rs",
+    "start": 1005
+   },
+   {
+    "closes": "fn allocate_grant(&self, process_id: ProcessId) -> Result<(), crate::process::Error>;",
+    "end": 390,
+    "opens": "pub trait SyscallDriver {",
+    "path": "kernel/src/syscall_driver.rs",
+    "start": 262
+   },
+   {
+    "opens": "fn command(",
+    "path": "kernel/src/syscall_driver.rs",
+    "start": 268
+   },
+   {
+    "opens": "fn allow_userspace_readable(",
+    "path": "kernel/src/syscall_driver.rs",
+    "start": 288
+   },
+   {
+    "opens": "fn allocate_grant(&self, process_id: ProcessId) -> Result<(), crate::process::Error>;",
+    "path": "kernel/src/syscall_driver.rs",
+    "start": 390
+   },
+   {
+    "closes": "}",
+    "end": 198,
+    "opens": "pub enum TRD104SyscallReturnVariant {",
+    "path": "kernel/src/utilities/arch_helpers.rs",
+    "start": 187
+   },
+   {
+    "opens": "argument3: self.appdata,",
+    "path": "kernel/src/upcall.rs",
+    "start": 188
+   },
+   {
+    "closes": ") -> Result<(), UpcallError> {",
+    "end": 614,
+    "opens": "pub fn schedule_upcall(",
+    "path": "kernel/src/grant.rs",
+    "start": 610
+   },
+   {
+    "closes": "}))",
+    "end": 190,
+    "opens": "process.enqueue_task(process::Task::FunctionCall(process::FunctionCall {",
+    "path": "kernel/src/upcall.rs",
+    "start": 183
+   },
+   {
+    "opens": "fn enqueue_task(&self, task: Task) -> Result<(), ErrorCode> {",
+    "path": "kernel/src/process_standard.rs",
+    "start": 598
+   },
+   {
+    "closes": "Err(ErrorCode::NOMEM)",
+    "end": 628,
+    "opens": "false => {",
+    "path": "kernel/src/process_standard.rs",
+    "start": 625
+   },
+   {
+    "closes": "// If the process is yielded or hasn't been started it is",
+    "end": 628,
+    "opens": "}",
+    "path": "kernel/src/kernel.rs",
+    "start": 602
+   },
+   {
+    "closes": "}",
+    "end": 1515,
+    "opens": "",
+    "path": "kernel/src/process_standard.rs",
+    "start": 1483
+   },
+   {
+    "opens": ")",
+    "path": "kernel/src/process_standard.rs",
+    "start": 1514
+   },
+   {
+    "closes": "}",
+    "end": 418,
+    "opens": "/// When the process calls `svc` to enter the kernel, the hardware",
+    "path": "arch/cortex-m/src/syscall.rs",
+    "start": 364
+   },
+   {
+    "opens": "/// In effect, this converts `svc` into `bl callback`.",
+    "path": "arch/cortex-m/src/syscall.rs",
+    "start": 375
+   },
+   {
+    "closes": "}",
+    "end": 418,
+    "opens": "ptr::write(stack_bottom.add(6), callback.pc.addr() | 1); // -> PC",
+    "path": "arch/cortex-m/src/syscall.rs",
+    "start": 404
+   },
+   {
+    "closes": "",
+    "end": 337,
+    "opens": "",
+    "path": "doc/reference/trd104-syscalls.md",
+    "start": 310
+   },
+   {
+    "closes": "// `ReadWriteProcessBuffer`.",
+    "end": 1113,
+    "opens": ")",
+    "path": "kernel/src/process_standard.rs",
+    "start": 1054
+   },
+   {
+    "opens": "// `in_app_owned_memory`) and respect alignment and other",
+    "path": "kernel/src/process_standard.rs",
+    "start": 1111
+   },
+   {
+    "closes": "}",
+    "end": 1408,
+    "opens": "",
+    "path": "kernel/src/kernel.rs",
+    "start": 1406
+   },
+   {
+    "closes": "Ok(fun(unsafe {",
+    "end": 456,
+    "opens": "// SAFETY: `kernel.process_map_or()` validates that",
+    "path": "kernel/src/processbuffer.rs",
+    "start": 440
+   },
+   {
+    "closes": "grant.rx_frames_dropped,",
+    "end": 492,
+    "opens": ".enter(process_id, |grant, _kernel_data| {",
+    "path": "capsules/extra/src/ethernet_tap.rs",
+    "start": 488
+   },
+   {
+    "closes": "}",
+    "end": 40,
+    "opens": "",
+    "path": "kernel/src/syscall_driver.rs",
+    "start": 36
+   },
+   {
+    "closes": "let command_return = CommandReturn::failure_u32(ErrorCode::OFF, 1002);",
+    "end": 424,
+    "opens": "fn failure_u32() {",
+    "path": "kernel/src/syscall_driver.rs",
+    "start": 423
+   },
+   {
+    "closes": "//!   |-------------------------|",
+    "end": 32,
+    "opens": "//! ```text",
+    "path": "capsules/extra/src/read_only_state.rs",
+    "start": 23
+   },
+   {
+    "closes": "}",
+    "end": 44,
+    "opens": "pub enum ErrorCode {",
+    "path": "kernel/src/errorcode.rs",
+    "start": 13
+   },
+   {
+    "opens": "fn allow_userspace_readable(",
+    "path": "capsules/extra/src/read_only_state.rs",
+    "start": 98
+   },
+   {
+    "closes": "///   app crashes.",
+    "end": 44,
+    "opens": "/// ### `memop_num`",
+    "path": "kernel/src/memop.rs",
+    "start": 14
+   },
+   {
+    "closes": "_ => SyscallReturn::Failure(ErrorCode::NOSUPPORT),",
+    "end": 160,
+    "opens": "0 => process",
+    "path": "kernel/src/memop.rs",
+    "start": 48
+   },
+   {
+    "opens": "pub const DRIVER_NUM: usize = driver::NUM::Led as usize;",
+    "path": "capsules/core/src/led.rs",
+    "start": 67
+   },
+   {
+    "closes": "}",
+    "end": 153,
+    "opens": "fn command(&self, command_num: usize, data: usize, _: usize, _: ProcessId) -> CommandRetur",
+    "path": "capsules/core/src/led.rs",
+    "start": 102
+   },
+   {
+    "closes": "Gpio                  = 0x00004,",
+    "end": 19,
+    "opens": "Alarm                 = 0x00000,",
+    "path": "capsules/core/src/driver.rs",
+    "start": 15
+   },
+   {
+    "opens": "led: &'static capsules_core::led::LedDriver<'static, LedHigh<'static, RPGpioPin<'static>>,",
+    "path": "boards/raspberry_pi_pico_2/src/main.rs",
+    "start": 38
+   },
+   {
+    "closes": "LedHigh::new(peripherals.pins.get_pin(RPGpio::GPIO25))",
+    "end": 95,
+    "opens": "let led = LedsComponent::new().finalize(components::led_component_static!(",
+    "path": "boards/raspberry_pi_pico_2/src/main.rs",
+    "start": 93
+   },
+   {
+    "closes": "//! devices (useful for things like the number of LEDs).",
+    "end": 41,
+    "opens": "//!",
+    "path": "kernel/src/syscall.rs",
+    "start": 34
+   },
+   {
+    "opens": "0 => CommandReturn::success_u32(NUM_LEDS as u32),",
+    "path": "capsules/core/src/led.rs",
+    "start": 108
+   }
+  ],
+  "pin": "83bad9388"
+ },
+ "ch08-grants": {
+  "cites": [
+   {
+    "opens": "#![no_std]",
+    "path": "kernel/src/lib.rs",
+    "start": 93
+   },
+   {
+    "closes": "//! additional memory from the process's grant region.",
+    "end": 40,
+    "opens": "//! Support for processes granting memory from their allocations to the kernel.",
+    "path": "kernel/src/grant.rs",
+    "start": 5
+   },
+   {
+    "opens": "#[repr(transparent)]",
+    "path": "kernel/src/utilities/machine_register.rs",
+    "start": 29
+   },
+   {
+    "opens": "#[repr(transparent)]",
+    "path": "kernel/src/utilities/capability_ptr.rs",
+    "start": 29
+   },
+   {
+    "closes": ">,",
+    "end": 109,
+    "opens": "apps: Grant<",
+    "path": "capsules/core/src/console.rs",
+    "start": 104
+   },
+   {
+    "closes": "grant_ptr: *mut u8,",
+    "end": 410,
+    "opens": "struct GrantPointerEntry {",
+    "path": "kernel/src/process_standard.rs",
+    "start": 400
+   },
+   {
+    "closes": "driver_num: usize,",
+    "end": 406,
+    "opens": "/// This defaults to 0 if the grant has not been allocated. Note, however,",
+    "path": "kernel/src/process_standard.rs",
+    "start": 403
+   },
+   {
+    "closes": "}",
+    "end": 276,
+    "opens": "pub(crate) fn get_grant_count_and_finalize(&self) -> usize {",
+    "path": "kernel/src/kernel.rs",
+    "start": 273
+   },
+   {
+    "opens": "pub fn create_grant<",
+    "path": "kernel/src/kernel.rs",
+    "start": 246
+   },
+   {
+    "closes": "grant_entry.grant_ptr = grant_ptr.as_ptr();",
+    "end": 1275,
+    "opens": "self.grant_pointers.map_or(None, |grant_pointers| {",
+    "path": "kernel/src/process_standard.rs",
+    "start": 1213
+   },
+   {
+    "opens": "});",
+    "path": "kernel/src/process_standard.rs",
+    "start": 1256
+   },
+   {
+    "closes": "// that is using the capsule, and sometimes it is intuitive to",
+    "end": 1400,
+    "opens": "/// grant memory.",
+    "path": "kernel/src/grant.rs",
+    "start": 1360
+   },
+   {
+    "closes": "self.app_break.set(app_brk);",
+    "end": 2463,
+    "opens": "Some((start, len)) => (start, len),",
+    "path": "kernel/src/process_standard.rs",
+    "start": 2447
+   },
+   {
+    "opens": "if let Ok(()) = self.reset() {",
+    "path": "kernel/src/process_standard.rs",
+    "start": 795
+   },
+   {
+    "closes": "}",
+    "end": 1408,
+    "opens": "",
+    "path": "kernel/src/kernel.rs",
+    "start": 1406
+   },
+   {
+    "closes": "install: flash",
+    "end": 25,
+    "opens": "# Default target for installing the kernel.",
+    "path": "boards/raspberry_pi_pico_2/Makefile",
+    "start": 23
+   },
+   {
+    "closes": "",
+    "end": 30,
+    "opens": ".PHONY: flash-openocd",
+    "path": "boards/raspberry_pi_pico_2/Makefile",
+    "start": 27
+   },
+   {
+    "opens": "OPENOCD=openocd",
+    "path": "boards/raspberry_pi_pico_2/Makefile",
+    "start": 13
+   },
+   {
+    "closes": "// Create the identifier that the caller will use to get access to",
+    "end": 1300,
+    "opens": "Ok(())",
+    "path": "kernel/src/process_standard.rs",
+    "start": 1278
+   }
+  ],
+  "pin": "83bad9388"
+ }
+}

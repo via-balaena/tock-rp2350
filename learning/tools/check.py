@@ -831,6 +831,55 @@ def figure_citation_checks(html):
     return problems
 
 
+
+# One parser for the sources lists, used by every check that reads them. There
+# were nearly two: the lockfile below needs exactly what `citation_chain_checks`
+# resolves, and a second copy of this token grammar would have drifted from it
+# the first time either changed. The same lesson as `page_bundle()`.
+CITATION_TOKEN = re.compile(
+    r"<code>([A-Za-z0-9_./-]+\.(?:rs|md|s|toml|cfg|ld|json)"
+    r"|(?:[A-Za-z0-9_./-]*/)?Makefile(?:\.common)?)</code>"
+    r"|:(\d+)(?:\s*(?:-|&ndash;|&#8211;|\u2013)\s*(\d+))?")
+
+
+def sources_pin(html):
+    """The commit a chapter's sources list names, or None."""
+    block = re.search(r'<section class="col sources">(.*?)</section>', html, re.S)
+    if not block:
+        return None, None
+    pin = re.search(r"commit <code>([0-9a-f]{7,40})</code>", block.group(1))
+    return (pin.group(1) if pin else None), block.group(1)
+
+
+def iter_citations(html):
+    """Every citation in a chapter's sources list, as (path, start, end).
+
+    A range is one citation, not two. Reading `:1054-1113` as two separate
+    line references makes the closing brace at 1113 look like a citation that
+    begins on a delimiter, which is how an audit of these produced sixteen
+    findings that were mostly not findings.
+
+    A bare basename resolves to the full path if this list gave it earlier,
+    which is the reader-followable abbreviation chapter 6 uses six times.
+    """
+    _, block = sources_pin(html)
+    if not block:
+        return
+    for item in re.findall(r"<li>(.*?)</li>", block, re.S):
+        current, seen = None, {}
+        for token in CITATION_TOKEN.finditer(item):
+            if token.group(1):
+                named = token.group(1)
+                current = seen.get(named, named)
+                if "/" in named:
+                    seen[named.rsplit("/", 1)[1]] = named
+                continue
+            if current is None:
+                continue
+            end = int(token.group(3)) if token.group(3) else None
+            yield current, int(token.group(2)), end
+
+
 def citation_chain_checks(html):
     """A citation whose line number is not in the file it resolves to.
 
@@ -3712,6 +3761,105 @@ def nav_checks(root, chapters):
     return problems
 
 
+
+CITATION_LOCK = os.path.join(ROOT, "citations.json")
+
+
+def citation_survey():
+    """What every citation in the series points at right now, per chapter.
+
+    Lives here rather than in `citations.py` so that the tool that writes the
+    lockfile and the check that verifies it cannot disagree about what a
+    citation is.
+    """
+    cache, out = {}, {}
+    for name in sorted(os.listdir(ROOT)):
+        page = os.path.join(ROOT, name, "index.html")
+        if not name.startswith("ch") or not os.path.exists(page):
+            continue
+        with open(page) as fh:
+            html = fh.read()
+        pin, _ = sources_pin(html)
+        cites = list(iter_citations(html))
+        if not pin or not cites:
+            continue
+        recorded = []
+        for path, start, end in cites:
+            key = (pin, path)
+            if key not in cache:
+                shown = subprocess.run(
+                    ["git", "-C", TOCK, "show", "%s:%s" % (pin, path)],
+                    capture_output=True, text=True)
+                cache[key] = shown.stdout.split("\n") if shown.returncode == 0 else None
+            lines = cache[key]
+            entry = {"path": path, "start": start}
+            if end:
+                entry["end"] = end
+            if lines is None:
+                entry["opens"] = None
+            else:
+                entry["opens"] = (lines[start - 1].strip()[:90]
+                                  if start <= len(lines) else None)
+                if end and end <= len(lines):
+                    entry["closes"] = lines[end - 1].strip()[:90]
+            recorded.append(entry)
+        out[name] = {"pin": pin, "cites": recorded}
+    return out
+
+
+def citation_lock_checks():
+    """Every citation still aims where the lockfile says it did.
+
+    The chain check asks whether a cited line exists. That passes for a
+    citation pointing at the wrong function, which is exactly what a re-pin
+    produces: a newer tree has the file, has the line, and has something else
+    on it. Two hundred citations can be re-aimed by one commit and nothing
+    would say so.
+
+    So the lockfile records what each one opens and closes on. It does not make
+    a citation right -- one that has always been off by one is recorded off by
+    one -- but a citation cannot silently *become* wrong. Regenerate with
+    `learning/tools/citations.py --write` and read the diff; that is the review
+    a re-pin has never had.
+
+    Skipped, like the rest, where the kernel tree or the pin is unavailable.
+    """
+    if subprocess.run(["git", "-C", TOCK, "rev-parse", "--git-dir"],
+                      capture_output=True).returncode != 0:
+        return []
+    now = citation_survey()
+    if not now:
+        return []
+    if not os.path.exists(CITATION_LOCK):
+        return ["no citations.json -- run learning/tools/citations.py --write"]
+    with open(CITATION_LOCK) as fh:
+        was = json.load(fh)
+    problems = []
+    for chapter, current in sorted(now.items()):
+        before = was.get(chapter)
+        if before is None:
+            problems.append("%s cites the tree and is not in citations.json"
+                            % chapter)
+            continue
+        if before["pin"] != current["pin"]:
+            problems.append(
+                "%s is pinned at %s and citations.json was written at %s -- "
+                "re-run citations.py --write and read the diff"
+                % (chapter, current["pin"], before["pin"]))
+            continue
+        if len(before["cites"]) != len(current["cites"]):
+            problems.append("%s has %d citations and citations.json has %d"
+                            % (chapter, len(current["cites"]), len(before["cites"])))
+            continue
+        for old, new in zip(before["cites"], current["cites"]):
+            if old != new:
+                problems.append(
+                    "%s: %s:%s opens on %r and citations.json recorded %r"
+                    % (chapter, new["path"], new["start"],
+                       new.get("opens"), old.get("opens")))
+    return problems
+
+
 def main():
     chapters = sorted(d for d in os.listdir(ROOT)
                       if d.startswith("ch")
@@ -3837,6 +3985,17 @@ def main():
         failures += 1
     for note in sorted(notes):
         print("  open  %s" % note)
+
+    # Across chapters and against the tree, so it runs once, at the end.
+    print("\ncitations")
+    print("-" * len("citations"))
+    problems = citation_lock_checks()
+    for problem in problems:
+        print("  FAIL  %s" % problem)
+    if problems:
+        failures += 1
+    else:
+        print("  pass  every citation still aims where it was recorded")
 
     print("\n%s" % ("all chapters passed" if not failures
                     else "%d chapter(s) with failures" % failures))
