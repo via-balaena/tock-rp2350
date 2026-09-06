@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Check that the published page is still true, still current and still legible.
 
-Eight checks. Each one exists because it has already caught something, or because
+Thirteen checks. Each one exists because it has already caught something, or because
 it guards a mistake that was actually made here:
 
   drift       index.html is not what build.py would produce from data.json,
@@ -19,6 +19,21 @@ it guards a mistake that was actually made here:
   private     an address, MAC, serial path or home directory reached the HTML.
   contrast    a text-on-surface pair fell below 4.5:1. Two colours have already
               shipped below it, both found this way and neither by looking.
+  blocks      a hardware block or a driver module reached the tree and did not
+              reach the page. The quiet half: a module in neither table is
+              simply absent from the coverage grid, so a port could land and
+              the page would go on reporting the old number.
+  nav         a rail link points at a section that is not there, or a section
+              is not in the rail. Invisible to everything else: the page still
+              builds and the link just does nothing.
+  grid        a coverage row carries the wrong number of cells. It does not
+              look broken; it shifts every later cell one column left.
+  trace       a block has no trace panel, or more than one is visible at rest,
+              which is what a reader with no JavaScript would be shown.
+  styles      a class in the markup that no rule matches, or a rule no markup
+              uses. Both have shipped here: the first renders a page that is
+              not the designed one, the second is a highlight that was never
+              once drawn.
 
     ./check.py            # everything, including a live fetch
     ./check.py --offline  # skip the live fetch
@@ -49,6 +64,10 @@ PAIRS = [
     ("closed-ink", ["closed-bg"]),
     ("unfiled-ink", ["unfiled-bg"]),
     ("ink", ["draft-bg"]),          # the branch chip on defect rows
+    # The coverage grid's three cell states, drawn on the panel the grid sits on.
+    ("driven", ["panel", "bg"]),
+    ("undriven", ["panel", "bg"]),
+    ("absent", ["panel", "bg"]),
     # Verification badges sit on whichever node fill the commit's state gives it.
     ("host", ["merged-bg", "review-bg", "approved-bg", "draft-bg", "closed-bg", "panel"]),
     ("silicon", ["merged-bg", "review-bg", "approved-bg", "draft-bg", "closed-bg", "panel"]),
@@ -136,6 +155,9 @@ def check_refs(build, data, problems):
     prose += [d[3] for d in build.DEFECTS] + [d[2] for d in build.DOWNSTREAM]
     prose += [n[1] for n in build.NOT_DONE] + [s[1] for s in build.SILICON]
     prose += [body for bullets in build.FACTS.values() for _, body in bullets]
+    prose += [text for text, _ in build.BLOCK_CAVEAT.values()]
+    prose += [ref for _, ref in build.BLOCK_CAVEAT.values() if isinstance(ref, int)]
+    prose += [what for _, _, _, what in build.BLOCKS.values()]
     for text in prose:
         for num in re.findall(r"#(\d{4,5})", str(text)):
             if int(num) not in known:
@@ -173,6 +195,123 @@ def check_facts(build, data, problems):
                 f"so its evidence dropdown would be empty"
             )
 
+
+
+def check_blocks(build, data, problems):
+    """Nothing in the chip crates may reach the tree without reaching the page.
+
+    Two ways it could: a reset controller naming a block this table has never
+    heard of, and a driver module belonging to no block and not listed as
+    plumbing. The second is the quiet one -- such a module is simply absent
+    from the coverage grid, so a port could land upstream and the page would go
+    on reporting the old number.
+    """
+    for name in sorted(build.unannotated_blocks(data)):
+        problems.append(
+            f"blocks: a reset controller names {name!r} and BLOCKS does not "
+            f"say what it is, so it renders unlabelled")
+    for name in sorted(build.unplaced_modules(data)):
+        problems.append(
+            f"blocks: the driver module {name!r} is in neither MODULE_BLOCK nor "
+            f"PLUMBING, so it appears nowhere on the page")
+
+
+def check_nav(build, html, problems):
+    """Every rail link lands somewhere, and every section is reachable from it.
+
+    A dead nav link is invisible to every other check here: the page builds,
+    the HTML is well formed, and the link simply does nothing.
+    """
+    ids = set(re.findall(r'id="([^"]+)"', html))
+    rail = re.search(r'<nav class="rail".*?</nav>', html, re.S)
+    if not rail:
+        problems.append("nav: the page has no rail")
+        return
+    targets = set(re.findall(r'href="#([^"]+)"', rail.group(0)))
+    for target in sorted(targets):
+        if target not in ids:
+            problems.append(f"nav: the rail links to #{target}, which is not on the page")
+    for section in sorted(re.findall(r'<section id="([^"]+)"', html)):
+        if section not in targets:
+            problems.append(f"nav: section #{section} is on the page and not in the rail")
+
+
+def check_grid(build, html, problems):
+    """The coverage grid's shape, which is the one thing here nobody can see.
+
+    Both grids are laid out by a CSS `grid-template-columns` with a fixed
+    number of tracks. A row carrying the wrong number of cells does not fail
+    to render -- it silently shifts every cell after it into the wrong column,
+    which is a page that lies rather than a page that looks broken.
+    """
+    heads = re.findall(r'<div class="covhead">(.*?)</div>', html, re.S)
+    if not heads:
+        problems.append("grid: no coverage grid on the page")
+        return
+    for i, head in enumerate(heads):
+        n = head.count('class="chead"')
+        if n != 3:
+            problems.append(f"grid: grid {i} has {n} column headings, expected 3")
+    # To the end of the list item, not to the first closing tag: a row's own
+    # spans are nested inside it, so a non-greedy match on </span> stops at the
+    # block name and reports every row as carrying no cells at all.
+    for row in re.findall(r'class="brow[^"]*"(.*?)</li>', html, re.S):
+        n = row.count('class="cell')
+        if n != 3:
+            problems.append(f"grid: a row carries {n} cells, expected 3")
+            break
+
+
+def check_trace(build, html, problems):
+    """Every block has a trace, and exactly one of them is showing.
+
+    The panels are rendered into the markup and hidden with the `hidden`
+    attribute, so with scripting off the page shows whichever is left visible.
+    Two visible is a stack of overlapping panels; none is a section that
+    silently renders empty for a reader with no JavaScript.
+    """
+    blocks = set(re.findall(r'data-block="([^"]+)"', html))
+    traces = dict(re.findall(r'<article class="trace" id="tr-([^"]+)"( hidden)?>', html))
+    for name in sorted(blocks - set(traces)):
+        problems.append(f"trace: block {name!r} has a row and no trace panel")
+    for name in sorted(set(traces) - blocks):
+        problems.append(f"trace: trace panel {name!r} has no row to open it")
+    shown = [n for n, h in traces.items() if not h]
+    if traces and len(shown) != 1:
+        problems.append(
+            f"trace: {len(shown)} trace panels are visible at rest, expected 1")
+
+
+# Classes the script adds or removes at runtime, so they are legitimately in
+# the stylesheet and absent from the built HTML.
+RUNTIME_CLASSES = {"on", "here", "rel", "lit", "filtered", "kind"}
+
+# Grouping wrappers in the generated SVG. They organise the markup and are
+# deliberately not styling hooks, so they have no rules and are not dead.
+STRUCTURAL_CLASSES = {"lanes", "laneheads", "edges"}
+
+
+def check_styles(build, html, problems):
+    """Every class in the markup has a rule, and every rule has markup.
+
+    Both halves have already shipped here. A class with no rule is invisible
+    to every other check -- the page renders, just not as designed. A rule with
+    no class is a figure that was meant to mark something and never did: the
+    race diagram carried a `.step.lost` rule for weeks and nothing ever set it,
+    so the failure it existed to show was never once drawn.
+    """
+    used = set()
+    for attr in re.findall(r'class="([^"]*)"', html):
+        used |= set(attr.split())
+    defined = set()
+    for selector in re.findall(r"([^{}]+)\{[^{}]*\}", build.CSS):
+        if selector.lstrip().startswith("@"):
+            continue
+        defined |= set(re.findall(r"\.(-?[A-Za-z_][\w-]*)", selector))
+    for name in sorted(used - defined - RUNTIME_CLASSES - STRUCTURAL_CLASSES):
+        problems.append(f"styles: the markup uses class {name!r} and no rule matches it")
+    for name in sorted(defined - used - RUNTIME_CLASSES - STRUCTURAL_CLASSES):
+        problems.append(f"styles: the stylesheet has a rule for {name!r} and no markup uses it")
 
 def check_drift(build, data, html, problems):
     if build.render(data) != html:
@@ -231,10 +370,15 @@ def main():
     check_refs(build, data, problems)
     check_private(html, problems)
     check_contrast(build, problems)
+    check_blocks(build, data, problems)
+    check_nav(build, html, problems)
+    check_grid(build, html, problems)
+    check_trace(build, html, problems)
+    check_styles(build, html, problems)
     if not args.offline:
         check_fresh(build, data, problems)
 
-    ran = 7 if args.offline else 8
+    ran = 12 if args.offline else 13
     if problems:
         print(f"{len(problems)} problem(s) across {ran} checks:\n")
         for p in problems:

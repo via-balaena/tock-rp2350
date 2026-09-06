@@ -1,13 +1,18 @@
 # tock-rp2350
 
-Source for a single page that draws the Tock/RP2350 work as a graph: one column
-per pull request, every commit as a node, arrows for what depends on what.
+Source for a single page about Tock on the Raspberry Pi Pico 2 and Pico 2 W. It
+has two subjects: **the chip** — what Tock can drive on an RP2350 and how a
+system call reaches a register — and **the work**, drawn as a graph with one
+column per pull request, every commit a node, arrows for what depends on what.
 
-It exists to answer a specific review comment on #5126 — *"I'm thoroughly
-confused... it doesn't seem like there is a clear testing/bring up strategy"* —
-and its two halves answer the two halves of that. The columns show which commits
-belong to which pull request, which GitHub cannot show when a stack lives in a
-fork. The badge on each node shows how that change is verified.
+The work half exists to answer a specific review comment on #5126 — *"I'm
+thoroughly confused... it doesn't seem like there is a clear testing/bring up
+strategy"* — and its two halves answer the two halves of that. The columns show
+which commits belong to which pull request, which GitHub cannot show when a
+stack lives in a fork. The badge on each node shows how that change is verified.
+
+The chip half exists because the same question has a version nobody had drawn
+either: what actually works on this board today, and what a process can call.
 
 ## How it works
 
@@ -34,6 +39,37 @@ derived rather than remembered, so:
   it matches by shared commits. A clone that is missing is skipped, and the
   survey is cached into `data.json` so `--offline` still renders.
 
+### The chip half
+
+Read from the Tock working clone at build time, at two refs — `upstream/master`
+and the bench branch that has everything merged. If the clone is missing, these
+sections are skipped and the rest of the page still builds.
+
+- **The list of hardware blocks is the chip's own.** Every chip crate has a
+  `resets.rs` with one bit per resettable block, so "how many blocks does an
+  RP2350 have" is a question Tock's source already answers — 23, against the
+  RP2040's 21. A cell is filled when a driver module for that block exists.
+- **What a process can call** is read from every `with_driver` arm on a board.
+  Boards delegate: `raspberry_pi_pico/src/main.rs` answers one driver number
+  and passes the rest to a base platform *in another crate*, so reading the one
+  file reports one driver on a board that exposes ten. Both hops are followed.
+- **The trace from a system call to a register** is derived rung by rung: the
+  driver number from the enum that assigns them, the capsule from the board's
+  own `with_driver`, the kernel interface from what that capsule imports, the
+  chip driver from the crate implementing it, the registers from its
+  `register_structs!`.
+- **The capsule-to-chip join is on what a driver *implements*, not what it
+  names.** `pio.rs` imports `hil::gpio` to configure pins; joining on names put
+  the GPIO capsule above the PIO block, on the same page that lists a userspace
+  PIO driver as not done.
+- **The two chips are kept apart.** Taking whichever file came first printed the
+  RP2040's ADC base under the RP2350's block — wrong in a way only somebody
+  with the datasheet open would catch. The RP2040's driver is still shown, as
+  the RP2040's, because for a block the RP2350 lacks it is what would be ported.
+
+Only what each block *is for* is hand-written, in `BLOCKS`, `PLUMBING` and
+`MODULE_BLOCK`. A block or a module missing from those fails a check.
+
 Only the short node labels, the verification badges and the prose are
 hand-written, in `WORK` and the dictionaries above it. A commit that is fetched
 but missing from `WORK` still renders, unlabelled, and the build prints its
@@ -51,8 +87,8 @@ Requires the `gh` CLI, authenticated.
     ./check.py            # everything, including a live fetch
     ./check.py --offline  # skip the live fetch
 
-Eight checks, each proven to fail when it should rather than only observed to
-pass:
+Thirteen checks, each proven to fail when it should rather than only observed
+to pass:
 
 | check | catches |
 |---|---|
@@ -64,6 +100,11 @@ pass:
 | `refs` | a hand-written `#1234` in the prose names something that does not exist |
 | `private` | an address, MAC, serial path or home directory reached the HTML |
 | `contrast` | a text-on-surface pair fell below 4.5:1 |
+| `blocks` | a hardware block or a driver module reached the tree and not the page. The quiet half: a module in neither table is simply absent from the grid, so a port could land and the page would go on reporting the old number |
+| `nav` | a rail link points at a section that is not there, or a section is missing from the rail. Invisible to everything else — the page builds and the link just does nothing |
+| `grid` | a coverage row carries the wrong number of cells. It does not look broken; it shifts every later cell one column left |
+| `trace` | a block has no trace panel, or more than one is visible at rest, which is what a reader with no JavaScript is shown |
+| `styles` | a class in the markup that no rule matches, or a rule no markup uses. Both have shipped here |
 
 Run it before every push. Most failures are fixed by running `./build.py`.
 

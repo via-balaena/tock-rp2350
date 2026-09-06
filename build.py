@@ -325,6 +325,106 @@ FACTS = {
 }
 
 # Real dependencies the API cannot see, because they cross pull requests.
+# Hardware blocks, keyed by the name the reset controller gives them with any
+# instance number stripped. The list itself is NOT written here -- it is read
+# from `chips/*/src/resets.rs`, one bit per resettable block, so the chip's own
+# source says how many blocks it has and which chip has which. This table only
+# says what each one is for, and which driver module covers it.
+#
+# A block the reset controller names with no entry here fails `blocks` in
+# check.py, so a chip crate gaining a peripheral cannot pass silently.
+BLOCKS = {
+    "ADC": ("Analogue", "Analogue in", "adc",
+            "Turns a voltage on a pin into a number. The joystick, the potentiometer and the on-chip temperature sensor all arrive through it."),
+    "BUSCTRL": ("Moving data", "Bus arbiter", None,
+                "Decides who wins when both cores and the DMA want the same bus in the same cycle."),
+    "DMA": ("Moving data", "Direct memory access", "dma",
+            "Moves bytes between memory and a peripheral without the processor being involved. The radio's firmware goes up this way."),
+    "HSTX": ("Buses", "High-speed transmit", None,
+             "A parallel-to-serial output built for driving displays."),
+    "I2C": ("Buses", "I2C bus", "i2c",
+            "Two wires, many sensors, each with an address."),
+    "IO_BANK0": ("Pins", "Pin function select", "gpio",
+                 "Which peripheral each pin is wired to. Set it wrong and a write to the pin goes nowhere, silently."),
+    "IO_QSPI": ("Pins", "Flash pin select", None,
+                "The same function select, for the six pins that talk to the flash chip."),
+    "JTAG": ("Chip services", "Debug port", None,
+             "Where the debug probe attaches."),
+    "PADS_BANK0": ("Pins", "Pin pad controls", "pads",
+                   "The analogue half of a pin: drive strength, pull-up, pull-down, input enable, schmitt trigger."),
+    "PADS_QSPI": ("Pins", "Flash pad controls", None,
+                  "The same pad controls, for the flash pins."),
+    "PIO": ("Buses", "Programmable IO", "pio",
+            "Small state machines running an instruction set of their own, so the chip can speak a bus it has no hardware for. On a Pico 2 W they clock the radio."),
+    "PLL_SYS": ("Clocks", "System PLL", "clocks",
+                "Multiplies the crystal up to the speed the processor runs at."),
+    "PLL_USB": ("Clocks", "USB PLL", "clocks",
+                "The second multiplier, for the 48 MHz USB needs."),
+    "PWM": ("Analogue", "Pulse width modulation", "pwm",
+            "A square wave with an adjustable duty cycle: motor speed, servo angle, LED brightness."),
+    "RTC": ("Time", "Real-time clock", "rtc",
+            "Wall-clock date and time, kept running across sleep."),
+    "SHA256": ("Chip services", "Hash accelerator", None,
+               "SHA-256 in hardware, for verifying a boot image."),
+    "SPI": ("Buses", "SPI bus", "spi",
+            "Four wires, one clock, a chip-select per device. The breadboard kit's display is on it."),
+    "SYSCFG": ("Chip services", "System config", None,
+               "Chip-level odds and ends: processor configuration, which pins the debug interface uses."),
+    "SYSINFO": ("Chip services", "Chip identity", "sysinfo",
+                "Chip id, revision and manufacturer, readable at runtime."),
+    "TBMAN": ("Chip services", "Testbench manager", None,
+              "Reports whether the code is running on real silicon or in simulation."),
+    "TIMER": ("Time", "Microsecond timer", "timer",
+              "A counter that ticks once a microsecond, with alarms that fire off it. Every sleep in the kernel rests here."),
+    "TRNG": ("Chip services", "Random numbers", None,
+             "A hardware entropy source."),
+    "UART": ("Buses", "Serial port", "uart",
+             "The console. The kernel's own output and an application's both arrive over one of these."),
+    "USBCTRL": ("Buses", "USB", "usb",
+                "Device or host USB, including the bootloader's drive."),
+}
+
+# Modules that are not one of the reset controller's blocks. The oscillator,
+# the always-on watchdog and the reset controller itself sit outside it, and
+# the rest are Tock's own scaffolding rather than hardware.
+PLUMBING = {
+    "chip": "Ties the peripherals to the interrupt table.",
+    "clocks": "Brings the PLLs and the clock tree up at boot.",
+    "deferred_calls": "Lets a driver finish work after returning.",
+    "interrupts": "Names every interrupt line the chip can raise.",
+    "lib": "The crate root.",
+    "mod": "A module index.",
+    "resets": "Holds each block in reset until it is asked for.",
+    "ticks": "The RP2350's tick generator, which feeds the timer.",
+    "watchdog": "Resets the chip if the kernel stops feeding it.",
+    "xosc": "The crystal oscillator everything else is derived from.",
+}
+
+# Which block a driver module covers. Kept separately from BLOCKS because the
+# relation is many-to-one: three PIO-backed bus drivers all cover the PIO
+# block. A module in any surveyed crate that appears in neither this table nor
+# PLUMBING fails `blocks`.
+MODULE_BLOCK = {
+    "adc": "ADC", "dma": "DMA", "gpio": "IO_BANK0", "i2c": "I2C",
+    "pads": "PADS_BANK0", "pio": "PIO", "pio_gspi": "PIO", "pio_pwm": "PIO",
+    "pio_spi": "PIO", "pwm": "PWM", "rtc": "RTC", "spi": "SPI",
+    "sysinfo": "SYSINFO", "timer": "TIMER", "uart": "UART", "usb": "USBCTRL",
+}
+
+# Where a block is covered but not well. Each names the defect or the branch
+# that answers it, and `refs` checks any "#1234" inside one resolves.
+BLOCK_CAVEAT = {
+    "IO_BANK0": ("Pins work; pin interrupts panic the kernel. IO_IRQ_BANK0 is "
+                 "defined on the RP2350 and routed nowhere, so a legal syscall "
+                 "brings the board down. Four lines on rp2350-gpio-irq.", "rp2350-gpio-irq"),
+    "PIO": ("Four defects found by the driver's first host tests, all with "
+            "fixes proposed in #5150.", 5150),
+    "UART": ("An aborted receive tears down every other receive on the same "
+             "multiplexer. Three defects, fix written on rp2-uart-abort-fix.",
+             "rp2-uart-abort-fix"),
+}
+
+
 EXTRA_DEPS = {
     "chips: rp2040: move the PIO driver into the shared rp2xxx crate": [
         "chips: rp2040: move the PL022 SPI driver into a shared rp2xxx crate",
@@ -502,6 +602,259 @@ def survey_local():
     return out
 
 
+# --------------------------------------------------------------------------
+# The chip survey: what Tock can actually drive on an RP2350, read from the
+# tree rather than written down.
+#
+# Every number in the coverage section comes from here. The denominator is the
+# reset controller's own bitfield -- `chips/rp2350/src/resets.rs` names one bit
+# per resettable hardware block, so "how many blocks does this chip have" is a
+# question Tock's source already answers. The numerator is which of those
+# blocks has a driver module. Both move on their own when the tree moves.
+# --------------------------------------------------------------------------
+
+CHIP_CRATES = ("rp2040", "rp2350", "rp2xxx")
+CHIP_BOARDS = ("raspberry_pi_pico", "raspberry_pi_pico_2",
+               "raspberry_pi_pico_2_w", "raspberry_pi_pico_w")
+UPSTREAM_REF = "upstream/master"
+FORK_REF = "bench/stepper-pico2w"          # the bench kernel: everything, merged
+
+_RESET_BIT = re.compile(r"^\s+([A-Za-z0-9_]+) OFFSET\((\d+)\)", re.M)
+_ARM = re.compile(r"((?:capsules_\w+|kernel)(?:::\w+)+)::DRIVER_NUM\s*=>")
+_BASE_PLATFORM = re.compile(r"base:\s*(\w+)::Platform")
+_WITH_DRIVER = re.compile(r"fn with_driver.*?\n    \}", re.S)
+_STATIC_REF = re.compile(r"StaticRef::new\((0x[0-9A-Fa-f_]+)")
+_REG_STRUCT = re.compile(r"register_structs!\s*\{(.*?)\n\}", re.S)
+_REG_NAME = re.compile(r"pub\s+(\w+)\s*\{")
+_REG_FIELD = re.compile(r"\((0x[0-9A-Fa-f]+)\s*=>\s*(\w+)")
+_HIL_PATH = re.compile(r"hil::([a-z_0-9]+)::([A-Z]\w+)")
+_HIL_MOD = re.compile(r"hil::([a-z_0-9]+)")
+_HIL_USE = re.compile(r"use\s+kernel::hil::([a-z_0-9]+)::(?:\{([^}]*)\}|(\w+))")
+_IMPL_QUALIFIED = re.compile(r"impl(?:<[^>]*>)?\s+(?:kernel::)?hil::([a-z_0-9]+)::(\w+)")
+_IMPL_SHORT = re.compile(r"impl(?:<[^>]*>)?\s+(?:([a-z_0-9]+)::)?(\w+)(?:<[^>]*>)?\s+for\s")
+
+
+def _implements(src):
+    """The HIL traits a chip driver actually implements.
+
+    Naming a HIL module is not the same as implementing one. `pio.rs` imports
+    `hil::gpio` to configure the pins its state machines drive, and joining on
+    names put the GPIO and LED capsules above the PIO block -- a page claiming
+    a system call reaches PIO, on the same page that lists a userspace PIO
+    driver as not done. Only an `impl ... for` counts, whether the trait is
+    written out in full or imported and used short.
+    """
+    trait_mod = {}
+    for mod, braced, single in _HIL_USE.findall(src):
+        for trait in ([t.strip() for t in braced.split(",")] if braced else [single]):
+            trait = trait.split(" as ")[0].strip()
+            if trait:
+                trait_mod[trait] = mod
+    found = {"%s::%s" % (mod, trait) for mod, trait in _IMPL_QUALIFIED.findall(src)}
+    for qualifier, trait in _IMPL_SHORT.findall(src):
+        mod = trait_mod.get(trait)
+        if mod and qualifier in ("", mod):
+            found.add("%s::%s" % (mod, trait))
+    return sorted(found)
+_NUM_ARM = re.compile(r"^\s+(\w+)\s*=\s*(0x[0-9A-Fa-f]+),?\s*$", re.M)
+
+
+def _show(repo, ref, path):
+    return git(repo, "show", f"{ref}:{path}")
+
+
+def _tree(repo, ref, *paths):
+    out = git(repo, "ls-tree", "--name-only", "-r", ref, *paths)
+    return [l for l in (out or "").splitlines() if l.endswith(".rs")]
+
+
+def _modules(repo, ref):
+    """{crate: {module: line count}} for the three RP2 chip crates at a ref."""
+    out = {}
+    for crate in CHIP_CRATES:
+        mods = {}
+        for path in _tree(repo, ref, f"chips/{crate}/src/"):
+            src = _show(repo, ref, path)
+            if src is None:
+                continue
+            mods[path.rsplit("/", 1)[-1][:-3]] = len(src.splitlines())
+        out[crate] = mods
+    return out
+
+
+def _reset_bits(repo, ref, crate):
+    """The hardware blocks a chip has, from its reset controller's bitfield.
+
+    One bit per resettable block, so this is the chip's own list rather than
+    one kept here. Names are upper-cased because the two crates disagree on
+    case for the same peripherals.
+    """
+    src = _show(repo, ref, f"chips/{crate}/src/resets.rs")
+    if src is None:
+        return {}
+    body = re.search(r"\n\s*RESET \[(.*?)\n\s*\]", src, re.S)
+    if not body:
+        return {}
+    return {name.upper(): int(off) for name, off in _RESET_BIT.findall(body.group(1))}
+
+
+def _board_drivers(repo, ref, board, seen=None):
+    """Every syscall driver a process on this board can reach.
+
+    Follows delegation. `raspberry_pi_pico/src/main.rs` answers four driver
+    numbers and passes everything else to `self.base.with_driver`, where the
+    base is a *different* board crate -- so reading main.rs alone reports one
+    driver on a board that exposes ten. Both hops are followed, and a board
+    seen twice terminates rather than recursing.
+    """
+    seen = set() if seen is None else seen
+    if board in seen:
+        return set()
+    seen.add(board)
+    found, bases = set(), set()
+    for path in _tree(repo, ref, f"boards/{board}/src/"):
+        src = _show(repo, ref, path)
+        if src is None:
+            continue
+        for match in _WITH_DRIVER.finditer(src):
+            found |= set(_ARM.findall(match.group(0)))
+        bases |= set(_BASE_PLATFORM.findall(src))
+    for base in bases:
+        found |= _board_drivers(repo, ref, base, seen)
+    return found
+
+
+def _driver_nums(repo, ref):
+    """Capsule name -> syscall driver number, from the one enum that assigns them."""
+    src = _show(repo, ref, "capsules/core/src/driver.rs")
+    if src is None:
+        return {}
+    return {name: num for name, num in _NUM_ARM.findall(src)}
+
+
+def _capsule_info(repo, ref, capsule):
+    """The middle rungs: which enum entry a capsule takes its driver number
+    from, and which HIL modules it names. Both read out of the capsule itself,
+    so `spi_controller` resolving to `Spi` is derived rather than guessed at
+    from the name."""
+    if capsule == "kernel::ipc":
+        return {"path": "kernel/src/ipc.rs", "num_name": "Ipc", "hil": []}
+    crate, _, name = capsule.rpartition("::")
+    folder = {"capsules_core": "core", "capsules_extra": "extra"}.get(crate)
+    if folder is None:
+        return None
+    # A capsule is either a file or a directory with a mod.rs. The wifi capsule
+    # is the second kind, so looking only for `wifi.rs` left the one driver the
+    # Pico 2 W exists for with no number beside it.
+    for candidate in (f"capsules/{folder}/src/{name}.rs",
+                      f"capsules/{folder}/src/{name}/mod.rs"):
+        src = _show(repo, ref, candidate)
+        if src is not None:
+            break
+    else:
+        return None
+    num = re.search(r"DRIVER_NUM[^=]*=\s*[\w:]*?NUM::(\w+)", src)
+    return {
+        "path": candidate,
+        "num_name": num.group(1) if num else "",
+        "hil": sorted(set(_HIL_MOD.findall(src))),
+    }
+
+
+def _chain(repo, ref, crate, module):
+    """The bottom rungs: the file, the HIL traits it names, its registers, its base."""
+    path = f"chips/{crate}/src/{module}.rs"
+    src = _show(repo, ref, path)
+    if src is None:
+        return None
+    regs, block = [], ""
+    for body in _REG_STRUCT.findall(src):
+        name = _REG_NAME.search(body)
+        if name and not block:
+            block = name.group(1)
+        regs += _REG_FIELD.findall(body)
+    return {
+        "path": path,
+        "lines": len(src.splitlines()),
+        "hil": sorted(set(_HIL_MOD.findall(src))),
+        "impls": _implements(src),
+        "regblock": block,
+        "regs": [[off, name] for off, name in regs if name != "@END"],
+        "bases": _STATIC_REF.findall(src),
+    }
+
+
+def survey_chip():
+    """Read the coverage story out of the Tock clone. Skipped if it is missing."""
+    path = LOCAL["tock"][0]
+    if not path.exists() or git(path, "rev-parse", "--verify", "-q", UPSTREAM_REF) is None:
+        return {"ok": False}
+
+    branches = [b.split(":", 1)[1] for b, (kind, _, _) in INTENT.items()
+                if b.startswith("tock:") and kind == "upstream"]
+    refs = [UPSTREAM_REF, FORK_REF] + sorted(branches)
+    refs = [r for r in refs if git(path, "rev-parse", "--verify", "-q", r) is not None]
+
+    modules = {ref: _modules(path, ref) for ref in refs}
+    boards = {}
+    for ref in (UPSTREAM_REF, FORK_REF):
+        if ref not in refs:
+            continue
+        boards[ref] = {b: sorted(_board_drivers(path, ref, b))
+                       for b in CHIP_BOARDS
+                       if _tree(path, ref, f"boards/{b}/src/")}
+
+    capsules = {}
+    for ref, per_board in boards.items():
+        for names in per_board.values():
+            for capsule in names:
+                if capsule not in capsules:
+                    info = _capsule_info(path, ref, capsule)
+                    if info:
+                        capsules[capsule] = info
+
+    fork = FORK_REF if FORK_REF in refs else UPSTREAM_REF
+    chains = {}
+    for crate in CHIP_CRATES:
+        for module in modules[fork][crate]:
+            chains.setdefault(module, {})[crate] = _chain(path, fork, crate, module)
+
+    # Which branch first carries a module that upstream does not have. Derived,
+    # so a module that moves between branches re-attributes itself.
+    up_mods = set(modules[UPSTREAM_REF]["rp2350"]) | set(modules[UPSTREAM_REF]["rp2xxx"])
+    added_by = {}
+    for branch in sorted(branches):
+        if branch not in modules:
+            continue
+        for crate in CHIP_CRATES:
+            if crate == "rp2040":
+                continue
+            for module in modules[branch][crate]:
+                if module not in up_mods:
+                    added_by.setdefault(module, branch)
+
+    touched = {}
+    for branch in sorted(set(branches) | {FORK_REF}):
+        out = git(path, "diff", "--name-only", f"{UPSTREAM_REF}...{branch}")
+        if out is not None:
+            touched[branch] = sorted(f for f in out.splitlines() if f)
+
+    return {
+        "ok": True,
+        "upstream_ref": UPSTREAM_REF,
+        "fork_ref": fork,
+        "head": git(path, "rev-parse", "--short", UPSTREAM_REF) or "",
+        "resets": {c: _reset_bits(path, UPSTREAM_REF, c) for c in ("rp2040", "rp2350")},
+        "modules": modules,
+        "boards": boards,
+        "chains": chains,
+        "driver_nums": {**_driver_nums(path, UPSTREAM_REF), **_driver_nums(path, fork)},
+        "capsules": capsules,
+        "added_by": added_by,
+        "touched": touched,
+    }
+
+
 def fetch():
     # Commits and files are fetched per pull request: asking for them across a
     # 100-item list exceeds GitHub's GraphQL node budget and the whole query is
@@ -527,6 +880,7 @@ def fetch():
         "prs": sorted(prs, key=lambda p: p["number"]),
         "issues": sorted(issues, key=lambda i: i["number"]),
         "local": survey_local(),
+        "chip": survey_chip(),
     }
 
 
@@ -599,6 +953,184 @@ def build_graph(data):
             if shared:
                 overlaps.append({"a": a["number"], "b": b["number"], "files": shared})
     return nodes, order, overlaps
+
+
+# --------------------------------------------------------------------------
+# Coverage, derived from the chip survey
+# --------------------------------------------------------------------------
+
+GROUP_ORDER = ["Pins", "Buses", "Analogue", "Time", "Moving data", "Clocks",
+               "Chip services", "Unannotated"]
+
+# Where a driver module can live, per chip. The shared crate counts for both,
+# which is the whole point of it.
+CRATES_FOR = {"rp2040": ("rp2040", "rp2xxx"), "rp2350": ("rp2350", "rp2xxx")}
+
+
+def block_names(resets):
+    """Map each reset bit to the block it is an instance of.
+
+    SPI0 and SPI1 are two instances of one block and the driver is not per
+    instance, so they collapse to SPI. But IO_BANK0 and PADS_BANK0 are single
+    blocks whose names happen to end in a digit -- stripping unconditionally
+    invented a block called PADS_BANK that no chip has. A name is only treated
+    as instanced when some chip really has two or more of it, which also keeps
+    the RP2040's lone TIMER and the RP2350's TIMER0/TIMER1 as one block.
+    """
+    counts = {}
+    for bits in resets.values():
+        for bit in bits:
+            counts.setdefault(re.sub(r"\d+$", "", bit), set()).add(bit)
+    return {bit: (stem if len(counts[stem]) > 1 else bit)
+            for bits in resets.values() for bit in bits
+            for stem in [re.sub(r"\d+$", "", bit)]}
+
+
+def coverage(data):
+    """One row per hardware block, with who has it and who drives it.
+
+    The row list is the union of the two reset controllers' bitfields, so this
+    cannot claim the chip has a block it does not, or miss one it does.
+    """
+    chip = data.get("chip") or {}
+    if not chip.get("ok"):
+        return None
+    mods, up, fork = chip["modules"], chip["upstream_ref"], chip["fork_ref"]
+
+    def crate_holding(ref, chipname, module):
+        if module is None or ref not in mods:
+            return None
+        for crate in CRATES_FOR[chipname]:
+            if module in mods[ref].get(crate, {}):
+                return crate
+        return None
+
+    canon = block_names(chip["resets"])
+    instances = {}
+    for chipname in ("rp2040", "rp2350"):
+        for bit, offset in chip["resets"].get(chipname, {}).items():
+            instances.setdefault(canon[bit], {}).setdefault(chipname, []).append(
+                (offset, bit))
+
+    rows = []
+    for name, per_chip in instances.items():
+        group, label, module, what = BLOCKS.get(name, (
+            "Unannotated", name, None,
+            "No entry in BLOCKS. This block is named by a reset controller in "
+            "the tree and nothing here says what it is."))
+        row = {
+            "name": name, "group": group, "label": label, "module": module,
+            "what": what,
+            "instances": {c: [b for _, b in sorted(v)] for c, v in per_chip.items()},
+            "on": {c: c in per_chip for c in ("rp2040", "rp2350")},
+            "rp2040_up": crate_holding(up, "rp2040", module),
+            "rp2350_up": crate_holding(up, "rp2350", module),
+            "rp2350_fork": crate_holding(fork, "rp2350", module),
+            "added_by": chip["added_by"].get(module),
+            "caveat": BLOCK_CAVEAT.get(name),
+        }
+        # The three states the grid draws, in the order a reader compares them.
+        # A known defect is deliberately NOT one of them: it belongs to the
+        # block, not to a column. Marking the fork's cell for the GPIO
+        # interrupt defect would have said the fork is the broken one, when
+        # the fork is where the fix is; marking upstream's would have been
+        # wrong for the UART, whose fix is unsent and so absent everywhere.
+        # The row carries a flag instead, and the detail says who has the fix.
+        for key, chipname, ref in (("a", "rp2040", "rp2040_up"),
+                                   ("b", "rp2350", "rp2350_up"),
+                                   ("c", "rp2350", "rp2350_fork")):
+            if not row["on"][chipname]:
+                state = "absent"          # the chip has no such block
+            elif row[ref]:
+                state = "driven"          # a driver module covers it
+            else:
+                state = "undriven"        # the block is there, nothing drives it
+            row[key] = state
+        row["flag"] = bool(row["caveat"])
+        rows.append(row)
+
+    rank = {"driven": 0, "undriven": 1, "absent": 2}
+    rows.sort(key=lambda r: (GROUP_ORDER.index(r["group"]), rank[r["c"]], r["label"]))
+
+    have = [r for r in rows if r["on"]["rp2350"]]
+    totals = {
+        "blocks2350": len(have),
+        "blocks2040": len([r for r in rows if r["on"]["rp2040"]]),
+        "up2350": len([r for r in have if r["rp2350_up"]]),
+        "fork2350": len([r for r in have if r["rp2350_fork"]]),
+        "up2040": len([r for r in rows if r["on"]["rp2040"] and r["rp2040_up"]]),
+    }
+
+    modules_seen = sorted({m for ref in (up, fork) if ref in mods
+                           for crate in CHIP_CRATES for m in mods[ref][crate]})
+    plumbing = [(m, PLUMBING[m]) for m in modules_seen if m in PLUMBING]
+    return {"rows": rows, "totals": totals, "plumbing": plumbing,
+            "upstream_ref": up, "fork_ref": fork, "head": chip["head"]}
+
+
+def traces(data, cov):
+    """The rungs from a system call down to a register, per block.
+
+    Every rung is read from the tree: the driver number from the enum that
+    assigns them, the capsule from the board's own `with_driver`, the HIL from
+    what that capsule imports, the chip driver from the crate implementing it,
+    and the registers from its `register_structs!`.
+
+    The RP2350's files and the RP2040's are kept apart on purpose. Taking
+    whichever file happened to come first put the RP2040's ADC base, 0x4004C000,
+    under a block whose RP2350 base is 0x400A0000 -- a page that is wrong in a
+    way only somebody with the datasheet open would catch. The RP2040's driver
+    is still worth showing, because for the blocks the RP2350 lacks it is the
+    thing that would be ported, but it is shown as what it is.
+    """
+    chip = data.get("chip") or {}
+    if not chip.get("ok") or not cov:
+        return {}
+    fork = chip["fork_ref"]
+    nums, capsules = chip["driver_nums"], chip["capsules"]
+
+    # Which capsule sits above which HIL module, so a block can be reached from
+    # below. `capsules_core::spi_controller` names hil::spi; the chip's spi.rs
+    # names it too, and that is the join.
+    by_hil = {}
+    for capsule, info in capsules.items():
+        for hil in info["hil"]:
+            by_hil.setdefault(hil, []).append(capsule)
+
+    boards = chip["boards"].get(fork, {})
+    out = {}
+    for row in cov["rows"]:
+        module = row["module"]
+        chain = (chip["chains"].get(module) or {}) if module else {}
+        here = [chain[c] for c in ("rp2350", "rp2xxx") if chain.get(c)]
+        older = [chain[c] for c in ("rp2040",) if chain.get(c)]
+        impls = sorted({i for c in (here or older) for i in c.get("impls", [])})
+        # The join is on what the chip driver implements, not what it mentions.
+        hil = sorted({i.split("::")[0] for i in impls})
+        regs = next((c for c in here if c["regs"]), None)
+        base = next((c for c in here if c["bases"]), None)
+        above = sorted({cap for h in hil for cap in by_hil.get(h, [])})
+        out[row["name"]] = {
+            "label": row["label"],
+            "capsules": [
+                {"path": capsules[c]["path"], "name": c,
+                 "num": nums.get(capsules[c]["num_name"], ""),
+                 "boards": sorted(b for b, ds in boards.items() if c in ds)}
+                for c in above],
+            "hil": hil,
+            "impls": impls,
+            "files": [{"path": c["path"], "lines": c["lines"]} for c in here],
+            "older": [{"path": c["path"], "lines": c["lines"]} for c in older],
+            "regblock": regs["regblock"] if regs else "",
+            # A reserved gap is a hole in the map, not a register.
+            "regs": [r for r in (regs["regs"] if regs else [])
+                     if not r[1].startswith("_")][:20],
+            "nregs": len([r for r in (regs["regs"] if regs else [])
+                          if not r[1].startswith("_")]),
+            "bases": base["bases"] if base else [],
+            "on2350": row["on"]["rp2350"],
+        }
+    return out
 
 
 def queue_rows(data):
@@ -805,7 +1337,8 @@ CSS = """
 --draft-bg:#eceae7;--draft-ink:#4e4f54;--draft-line:#a3a2a0;
 --closed-bg:#f6e3e3;--closed-ink:#86282a;--closed-line:#c08a8a;
 --unfiled-bg:#f8ecd8;--unfiled-ink:#744d0d;
---host:#1d4b7a;--silicon:#7a3b12;--sections:#46561f;--build:#5b5c62;--none:#636469;}
+--host:#1d4b7a;--silicon:#7a3b12;--sections:#46561f;--build:#5b5c62;--none:#636469;
+--driven:#1c5228;--undriven:#744d0d;--absent:#6f7278;}
 @media (prefers-color-scheme:dark){:root{
 --bg:#131316;--panel:#1b1c20;--ink:#edecea;--ink-soft:#b6b6ba;--ink-faint:#8e8f95;
 --line:#2c2d33;--accent:#d9a273;--edge:#42444c;
@@ -815,7 +1348,8 @@ CSS = """
 --draft-bg:#26272c;--draft-ink:#a9aab0;--draft-line:#5d5e65;
 --closed-bg:#3a2222;--closed-ink:#e29a9a;--closed-line:#8a5252;
 --unfiled-bg:#3a2f1a;--unfiled-ink:#e3bd7c;
---host:#8fbde8;--silicon:#e0a874;--sections:#b9cd88;--build:#a9aab0;--none:#9a9ba1;}}
+--host:#8fbde8;--silicon:#e0a874;--sections:#b9cd88;--build:#a9aab0;--none:#9a9ba1;
+--driven:#8fd3a0;--undriven:#e3bd7c;--absent:#8e8f95;}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);min-width:1040px;
 font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
@@ -942,6 +1476,133 @@ padding:3px 9px;border-radius:999px;white-space:nowrap}
 code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.82em}
 footer{margin-top:70px;padding-top:22px;border-top:1px solid var(--line);color:var(--ink-faint);font-size:.85rem}
 footer a{color:var(--accent)}
+/* ---- the shell: a rail that stays put, and a column that scrolls ---- */
+.skip{position:absolute;left:-9999px;top:0;background:var(--panel);color:var(--ink);
+padding:10px 14px;border:1px solid var(--accent);border-radius:0 0 8px 0;z-index:99}
+.skip:focus{left:0}
+.app{display:grid;grid-template-columns:238px minmax(0,1fr);align-items:start}
+.rail{position:sticky;top:0;height:100vh;overflow-y:auto;background:var(--panel);
+border-right:1px solid var(--line);padding:26px 14px 22px}
+.rail .mark{display:block;text-decoration:none;color:var(--ink);font-size:.95rem;
+padding:0 8px;margin:0 0 20px;letter-spacing:-.01em}
+.rail .mark b{color:var(--accent)}
+.rail ul{list-style:none;margin:0;padding:0}
+.rail .navgroup{font-size:.66rem;text-transform:uppercase;letter-spacing:.09em;
+color:var(--ink-faint);padding:0 8px;margin:20px 0 5px}
+.rail .navgroup:first-child{margin-top:0}
+.rail a{display:flex;justify-content:space-between;align-items:baseline;gap:10px;
+text-decoration:none;color:var(--ink-soft);font-size:.85rem;padding:5px 8px;border-radius:6px}
+.rail a:hover{background:var(--bg);color:var(--ink)}
+.rail a.here{background:var(--bg);color:var(--ink);box-shadow:inset 2px 0 0 var(--accent)}
+.rail .rn{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.71rem;
+color:var(--ink-faint);white-space:nowrap}
+.railkeys{margin:24px 8px 0;font-size:.72rem;color:var(--ink-faint)}
+kbd{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.72rem;
+border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:1px 5px;
+background:var(--bg);color:var(--ink-soft)}
+section{scroll-margin-top:18px}
+
+/* ---- the coverage grid ---- */
+ul.counts .k em{display:block;font-style:normal;text-transform:none;letter-spacing:0;
+font-size:.78rem;color:var(--ink-faint);margin-top:2px}
+ul.cellkey{display:flex;gap:26px;margin:0 0 14px}
+ul.cellkey li{display:flex;align-items:center;gap:9px;border-top:0;padding:0;
+font-size:.8rem;color:var(--ink-faint)}
+.covwrap{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+overflow:hidden}
+.covhead,.brow{display:grid;grid-template-columns:minmax(210px,1.5fr) repeat(3,62px) minmax(150px,.85fr);
+gap:10px;align-items:center}
+.covhead{padding:10px 16px;border-bottom:1px solid var(--line);font-size:.68rem;
+text-transform:uppercase;letter-spacing:.07em;color:var(--ink-faint)}
+.chead{text-align:center}
+.covhead .bby{text-align:right}
+ul.cov{list-style:none;margin:0;padding:0}
+ul.cov li{padding:0}
+ul.cov li.cgroup{padding:14px 16px 6px;border-top:1px solid var(--line);font-size:.68rem;
+text-transform:uppercase;letter-spacing:.08em;color:var(--ink-faint)}
+ul.cov li.cgroup:first-child{border-top:0}
+.brow{width:100%;text-align:left;background:none;border:0;font:inherit;color:var(--ink);
+padding:7px 16px;cursor:pointer}
+.brow:hover{background:var(--bg)}
+.brow.sel{background:var(--bg);box-shadow:inset 3px 0 0 var(--accent)}
+.brow.flat{cursor:default}
+.bname{font-size:.89rem;display:flex;align-items:center;gap:8px}
+.cell{width:15px;height:15px;border-radius:4px;justify-self:center;display:block;position:relative}
+.c-driven{background:var(--driven)}
+.c-undriven{box-shadow:inset 0 0 0 1.5px var(--undriven)}
+.c-absent::after{content:"";position:absolute;left:2px;right:2px;top:7px;height:1.5px;
+background:var(--absent)}
+.bby{font-size:.75rem;color:var(--ink-faint);text-align:right;overflow:hidden;
+text-overflow:ellipsis;white-space:nowrap}
+.bby .up{font-style:italic}
+.flag{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;
+border-radius:50%;background:var(--accent);color:var(--panel);font-size:.62rem;
+font-weight:700;flex:none}
+.foot{font-size:.78rem;color:var(--ink-faint);margin:12px 0 0;max-width:80ch}
+
+/* ---- the trace: a ladder from a system call to a register ---- */
+.traces{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px 22px}
+.trace h3{margin:0 0 5px;font-size:1.06rem;display:flex;gap:11px;align-items:baseline;flex-wrap:wrap}
+.binst{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.71rem;
+color:var(--ink-faint);font-weight:400}
+.trace .what{margin:0 0 15px;color:var(--ink-soft);font-size:.92rem;max-width:82ch}
+.tcaveat{margin:0 0 15px;padding:11px 14px;background:var(--unfiled-bg);color:var(--unfiled-ink);
+border-radius:8px;font-size:.86rem;max-width:82ch}
+.tcaveat strong{color:var(--unfiled-ink)}
+.tnote{margin:0 0 15px;font-size:.86rem;color:var(--ink-faint);max-width:82ch}
+ol.rungs{list-style:none;margin:0;padding:0;position:relative}
+ol.rungs::before{content:"";position:absolute;left:145px;top:16px;bottom:16px;width:1px;
+background:var(--line)}
+ol.rungs li{display:grid;grid-template-columns:130px minmax(0,1fr);gap:30px;
+padding:11px 0;border-top:1px solid var(--line);align-items:baseline;position:relative}
+ol.rungs li:first-child{border-top:0}
+ol.rungs li::after{content:"";position:absolute;left:142px;top:17px;width:7px;height:7px;
+border-radius:50%;background:var(--accent)}
+ol.rungs li.off::after{background:var(--line)}
+.rname{font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-faint)}
+.rval{font-size:.88rem;color:var(--ink-soft)}
+ol.rungs li.off .rval{color:var(--ink-faint);font-style:italic}
+.rval .dim{color:var(--ink-faint);font-size:.8rem}
+.num{color:var(--accent)}
+.regblock{display:block;margin-bottom:7px}
+.regs{display:flex;flex-wrap:wrap;gap:5px}
+.reg{display:inline-flex;flex-direction:column;gap:1px;border:1px solid var(--line);
+border-radius:5px;padding:3px 7px;background:var(--bg);
+font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.69rem;color:var(--ink-soft)}
+.reg b{color:var(--accent);font-size:.65rem;font-weight:600}
+.reg.more{justify-content:center;color:var(--ink-faint)}
+
+/* ---- what selecting a block lights up elsewhere ---- */
+.rel{box-shadow:inset 3px 0 0 var(--accent)}
+.chip.rel,.prcard.rel{box-shadow:0 0 0 1px var(--accent)}
+
+/* ---- search and the key sheet ---- */
+.sheet{position:fixed;inset:0;z-index:60;display:flex;justify-content:center;
+align-items:flex-start;padding-top:11vh;background:rgba(12,12,14,.45)}
+.sheet[hidden]{display:none}
+.sheetbox{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+width:min(660px,92vw);padding:18px;box-shadow:0 20px 64px rgba(0,0,0,.3)}
+.sheetbox h2{margin:0 0 12px}
+#q{width:100%;font:inherit;font-size:1rem;padding:11px 13px;border-radius:8px;
+border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+#q:focus{outline:2px solid var(--accent);outline-offset:1px}
+.phint{font-size:.76rem;color:var(--ink-faint);margin:9px 3px 0}
+#presults{list-style:none;margin:8px 0 0;padding:0;max-height:46vh;overflow-y:auto}
+#presults li{display:flex;justify-content:space-between;gap:14px;padding:8px 10px;
+border-radius:7px;font-size:.87rem;color:var(--ink-soft);cursor:pointer}
+#presults li.on{background:var(--bg);color:var(--ink)}
+#presults .kind{font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;
+color:var(--ink-faint);white-space:nowrap}
+dl.keys{display:grid;grid-template-columns:130px 1fr;gap:9px 16px;margin:0;
+font-size:.88rem;color:var(--ink-soft)}
+dl.keys dt,dl.keys dd{margin:0}
+
+@media (max-width:1100px){
+.app{grid-template-columns:minmax(0,1fr)}
+.rail{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line)}
+.rail ul{display:flex;flex-wrap:wrap;gap:3px}
+.rail .navgroup,.rail .rn{display:none}
+}
 """
 
 JS = """
@@ -987,6 +1648,163 @@ svg.querySelectorAll('.node').forEach(g => {
     if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); showDetail(g.dataset.id); }
   });
 });
+
+/* ---- hardware blocks: one selection drives the trace and lights the work ---- */
+const REL = __REL__;
+const brows = [...document.querySelectorAll('.brow[data-block]')];
+const traceEls = [...document.querySelectorAll('.trace')];
+let block = (brows.find(b => b.classList.contains('sel')) || brows[0] || {dataset: {}}).dataset.block;
+
+function selectBlock(name) {
+  if (!name) return;
+  block = name;
+  brows.forEach(b => b.classList.toggle('sel', b.dataset.block === name));
+  traceEls.forEach(t => { t.hidden = t.id !== 'tr-' + name; });
+  const r = REL[name] || {branches: [], prs: []};
+  document.querySelectorAll('[data-branch]').forEach(
+    el => el.classList.toggle('rel', r.branches.includes(el.dataset.branch)));
+  document.querySelectorAll('.prcard, .chip').forEach(
+    el => el.classList.toggle('rel', r.prs.includes(Number(el.dataset.pr))));
+}
+
+brows.forEach(b => b.addEventListener('click', () => selectBlock(b.dataset.block)));
+if (block) selectBlock(block);
+
+function stepBlock(delta) {
+  if (!brows.length) return;
+  const at = brows.findIndex(b => b.dataset.block === block);
+  const next = brows[(at + delta + brows.length) % brows.length];
+  selectBlock(next.dataset.block);
+  next.scrollIntoView({block: 'nearest'});
+}
+
+/* ---- which section the rail points at ---- */
+const links = new Map([...document.querySelectorAll('.rail a[href^="#"]')]
+  .filter(a => a.getAttribute('href').length > 1)
+  .map(a => [a.getAttribute('href').slice(1), a]));
+const spy = new IntersectionObserver(entries => {
+  entries.forEach(en => {
+    const a = links.get(en.target.id);
+    if (a && en.isIntersecting) {
+      links.forEach(l => l.classList.remove('here'));
+      a.classList.add('here');
+    }
+  });
+}, {rootMargin: '0px 0px -72% 0px'});
+links.forEach((a, id) => { const el = document.getElementById(id); if (el) spy.observe(el); });
+
+/* ---- search: the index is the page, so it cannot drift from it ---- */
+const palette = document.getElementById('palette');
+const keysheet = document.getElementById('keysheet');
+const qbox = document.getElementById('q');
+const presults = document.getElementById('presults');
+let hits = [], at = 0;
+
+function jumpTo(el, then) {
+  el.scrollIntoView({block: 'center', behavior: 'smooth'});
+  if (then) then();
+}
+
+function buildIndex() {
+  const items = [];
+  const add = (kind, text, act) => { if (text) items.push({kind, text: text.trim(), act}); };
+  brows.forEach(b => add('block', b.dataset.label,
+    () => { selectBlock(b.dataset.block); jumpTo(b); }));
+  document.querySelectorAll('.prcard').forEach(c => add(
+    'pull request', '#' + c.dataset.pr + ' ' + c.querySelector('h3').textContent,
+    () => jumpTo(c)));
+  document.querySelectorAll('#stack .node').forEach(g => add(
+    'commit', g.querySelector('.label').textContent,
+    () => { showDetail(g.dataset.id); jumpTo(document.getElementById('stack')); }));
+  document.querySelectorAll('[data-branch]').forEach(li => add(
+    'branch', li.dataset.branch, () => jumpTo(li)));
+  document.querySelectorAll('#defects li strong').forEach(el => add(
+    'defect', el.textContent, () => jumpTo(el.closest('li'))));
+  document.querySelectorAll('#silicon li strong').forEach(el => add(
+    'on silicon', el.textContent, () => jumpTo(el.closest('li'))));
+  document.querySelectorAll('.rail a[href^="#"]').forEach(a => {
+    const id = a.getAttribute('href').slice(1);
+    const el = id && document.getElementById(id);
+    if (el) add('section', a.firstChild.textContent, () => jumpTo(el));
+  });
+  return items;
+}
+const INDEX = brows.length || document.querySelector('.prcard') ? buildIndex() : [];
+
+function score(text, q) {
+  const t = text.toLowerCase();
+  const i = t.indexOf(q);
+  if (i === 0) return 0;
+  if (i > 0) return 1;
+  let at = 0;                       // every letter, in order, anywhere
+  for (const ch of q) { at = t.indexOf(ch, at) + 1; if (!at) return -1; }
+  return 2;
+}
+
+function runSearch() {
+  const q = qbox.value.trim().toLowerCase();
+  hits = !q ? INDEX.slice(0, 8)
+            : INDEX.map(it => [score(it.text, q), it]).filter(p => p[0] >= 0)
+                   .sort((a, b) => a[0] - b[0]).slice(0, 12).map(p => p[1]);
+  at = 0;
+  presults.replaceChildren(...hits.map((it, i) => {
+    const li = document.createElement('li');
+    li.setAttribute('role', 'option');
+    li.className = i === 0 ? 'on' : '';
+    const label = document.createElement('span');
+    label.textContent = it.text;
+    const kind = document.createElement('span');
+    kind.className = 'kind';
+    kind.textContent = it.kind;
+    li.append(label, kind);
+    li.addEventListener('click', () => { closeSheets(); it.act(); });
+    return li;
+  }));
+}
+
+function mark() {
+  [...presults.children].forEach((li, i) => li.classList.toggle('on', i === at));
+  const on = presults.children[at];
+  if (on) on.scrollIntoView({block: 'nearest'});
+}
+
+function openPalette() {
+  keysheet.hidden = true;
+  palette.hidden = false;
+  qbox.value = '';
+  runSearch();
+  qbox.focus();
+}
+
+function closeSheets() {
+  palette.hidden = true;
+  keysheet.hidden = true;
+}
+
+[palette, keysheet].forEach(sheet => sheet.addEventListener('click', ev => {
+  if (ev.target === sheet) closeSheets();
+}));
+
+qbox.addEventListener('input', runSearch);
+qbox.addEventListener('keydown', ev => {
+  if (ev.key === 'ArrowDown') { ev.preventDefault(); at = Math.min(at + 1, hits.length - 1); mark(); }
+  else if (ev.key === 'ArrowUp') { ev.preventDefault(); at = Math.max(at - 1, 0); mark(); }
+  else if (ev.key === 'Enter' && hits[at]) { ev.preventDefault(); const it = hits[at]; closeSheets(); it.act(); }
+});
+
+document.addEventListener('keydown', ev => {
+  const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(ev.target.tagName);
+  if (ev.key === 'Escape') {
+    if (!palette.hidden || !keysheet.hidden) closeSheets();
+    else if (active) applyFilter(null);
+    return;
+  }
+  if (typing || ev.metaKey || ev.ctrlKey || ev.altKey) return;
+  if (ev.key === '/') { ev.preventDefault(); openPalette(); }
+  else if (ev.key === '?') { ev.preventDefault(); palette.hidden = true; keysheet.hidden = !keysheet.hidden; }
+  else if (ev.key === 'j') { ev.preventDefault(); stepBlock(1); }
+  else if (ev.key === 'k') { ev.preventDefault(); stepBlock(-1); }
+});
 """
 
 
@@ -1028,9 +1846,9 @@ def queue_html(rows, with_facts=False):
         note = ('<span class="dd">%s</span>' % e(r["note"])) if r["note"] else (
             '<span class="dd blocked">No intent recorded for this branch.</span>')
         out.append(
-            '<li><div class="qhead"><code>%s</code><span class="ahead">%d commit%s</span>'
+            '<li data-branch="%s"><div class="qhead"><code>%s</code><span class="ahead">%d commit%s</span>'
             '%s%s%s</div>%s%s%s</li>'
-            % (e(r["repo"] + " · " + r["branch"]), r["ahead"],
+            % (e(r["branch"]), e(r["repo"] + " · " + r["branch"]), r["ahead"],
                "" if r["ahead"] == 1 else "s", pr, drift, where, note, blocked,
                facts_html(r) if with_facts else "")
         )
@@ -1067,6 +1885,233 @@ def facts_html(r):
         '%s<dl>%s</dl><h4>Commits</h4><ol class="commitlist">%s</ol></details>'
         % (r["ahead"], "" if r["ahead"] == 1 else "s", base, rows, commits)
     )
+
+
+CELL_WORD = {"driven": "a driver", "undriven": "no driver", "absent": "not on this chip"}
+
+# Which block the trace opens on. Sorted order puts a flash pad controller
+# first, which is a true row and a useless first impression -- the opening
+# trace should be one with every rung filled in.
+OPENS_ON = ("ADC", "SPI", "UART", "IO_BANK0")
+
+
+def first_block(cov):
+    names = [r["name"] for r in cov["rows"]]
+    return next((n for n in OPENS_ON if n in names), names[0] if names else None)
+COL_WORD = {"a": "RP2040", "b": "RP2350 upstream", "c": "RP2350 on this fork"}
+
+
+def cov_html(cov, opening):
+    """The coverage grid. One row per hardware block, three columns of state.
+
+    The row is the control and the cells are decoration: a screen reader gets
+    one sentence naming the block and all three states, rather than three
+    unlabelled marks it has to re-associate with a column header.
+    """
+    out, group = [], None
+    for r in cov["rows"]:
+        if r["group"] != group:
+            group = r["group"]
+            out.append('<li class="cgroup"><span>%s</span></li>' % e(group))
+        cells = "".join('<span class="cell c-%s" aria-hidden="true"></span>' % r[k]
+                        for k in ("a", "b", "c"))
+        says = "; ".join("%s %s" % (COL_WORD[k], CELL_WORD[r[k]]) for k in ("a", "b", "c"))
+        by = ""
+        if r["added_by"]:
+            by = '<code class="branch">%s</code>' % e(r["added_by"])
+        elif r["module"] and r["rp2350_fork"]:
+            by = '<span class="up">upstream</span>'
+        flag = '<span class="flag" aria-hidden="true">!</span>' if r["flag"] else ""
+        out.append(
+            '<li><button class="brow%s" data-block="%s" data-label="%s" aria-label="%s. %s.">'
+            '<span class="bname">%s%s</span>%s<span class="bby">%s</span>'
+            '</button></li>'
+            % (" sel" if r["name"] == opening else "", e(r["name"]), e(r["label"]),
+               e(r["label"]), e(says), e(r["label"]), flag, cells, by))
+    return "".join(out)
+
+
+def rung(name, value, empty=False):
+    return ('<li%s><span class="rname">%s</span><span class="rval">%s</span></li>'
+            % (' class="off"' if empty else "", e(name), value))
+
+
+def trace_html(cov, traces, opening):
+    """Every block's trace, in the markup, all but one hidden.
+
+    Rendered rather than assembled in the browser so that the page still says
+    what an ADC read touches with scripting off, and so that a browser's own
+    find-in-page reaches a register name.
+    """
+    out = []
+    for r in cov["rows"]:
+        t = traces.get(r["name"]) or {}
+        rows = []
+
+        caps = t.get("capsules") or []
+        for c in caps:
+            boards = (" &middot; reachable on " +
+                      ", ".join("<code>%s</code>" % e(b) for b in c["boards"])
+                      ) if c["boards"] else " &middot; on no RP2 board"
+            rows.append(rung("System call",
+                             '<code class="num">%s</code> <code>%s</code>%s'
+                             % (e(c["num"] or "?"), e(c["name"]), boards)))
+            rows.append(rung("Capsule", "<code>%s</code>" % e(c["path"])))
+        if not caps:
+            rows.append(rung("System call", "no capsule sits above this block", True))
+
+        impls = t.get("impls") or []
+        if impls:
+            rows.append(rung("Kernel interface",
+                             " ".join("<code>kernel::hil::%s</code>" % e(x)
+                                      for x in impls[:6])))
+        else:
+            rows.append(rung("Kernel interface",
+                             "the driver implements no HIL trait, so nothing in "
+                             "the kernel's device interface describes this block",
+                             True))
+
+        files = t.get("files") or []
+        for f in files:
+            rows.append(rung("Chip driver",
+                             '<code>%s</code> <span class="dim">%d lines</span>'
+                             % (e(f["path"]), f["lines"])))
+        if not files:
+            rows.append(rung("Chip driver",
+                             "nothing in the tree drives this block on an RP2350", True))
+
+        if t.get("bases"):
+            rows.append(rung("Peripheral base",
+                             " ".join('<code class="num">%s</code>' % e(b)
+                                      for b in t["bases"])))
+        regs = t.get("regs") or []
+        if regs:
+            strip = "".join('<span class="reg"><b>%s</b>%s</span>' % (e(off), e(name))
+                            for off, name in regs)
+            more = ('<span class="reg more">+%d</span>' % (t["nregs"] - len(regs))
+                    ) if t["nregs"] > len(regs) else ""
+            block = ('<span class="regblock"><code>%s</code></span>'
+                     % e(t["regblock"])) if t.get("regblock") else ""
+            rows.append(rung("Registers",
+                             '%s<span class="regs">%s%s</span>' % (block, strip, more)))
+        elif files:
+            rows.append(rung("Registers", "no register block in these files", True))
+
+        # The RP2040's driver, named as the RP2040's. For a block the RP2350
+        # has and nothing drives, this is what would be ported.
+        for f in t.get("older") or []:
+            rows.append(rung("On the RP2040",
+                             '<code>%s</code> <span class="dim">%d lines</span>'
+                             % (e(f["path"]), f["lines"])))
+
+        caveat = ""
+        if r["caveat"]:
+            caveat = ('<p class="tcaveat"><strong>Known defect.</strong> %s%s</p>'
+                      % (e(r["caveat"][0]), ref_html(r["caveat"][1])))
+        note = ""
+        if not r["on"]["rp2350"]:
+            note = ('<p class="tnote">The RP2350 does not have this block at all '
+                    '&mdash; its reset controller names no bit for one.</p>')
+        # The RP2350's names for it, or the RP2040's if only that chip has it.
+        # Merging both printed "TIMER TIMER0 TIMER1", which reads as three.
+        inst = " ".join(r["instances"].get("rp2350") or r["instances"].get("rp2040") or [])
+        out.append(
+            '<article class="trace" id="tr-%s"%s>'
+            '<h3>%s <span class="binst">%s</span></h3>'
+            '<p class="what">%s</p>%s%s<ol class="rungs">%s</ol></article>'
+            % (e(r["name"]), "" if r["name"] == opening else " hidden",
+               e(r["label"]), e(inst), e(r["what"]), note, caveat, "".join(rows)))
+    return "".join(out)
+
+
+REACH_BOARDS = [
+    ("raspberry_pi_pico_w", "upstream", "Pico W", "RP2040, upstream"),
+    ("raspberry_pi_pico_2", "upstream", "Pico 2", "RP2350, upstream"),
+    ("raspberry_pi_pico_2_w", "fork", "Pico 2 W", "RP2350, this fork"),
+]
+
+
+def reach_html(data):
+    """What a process can actually call, per board, read from `with_driver`."""
+    chip = data.get("chip") or {}
+    if not chip.get("ok"):
+        return "", []
+    refs = {"upstream": chip["upstream_ref"], "fork": chip["fork_ref"]}
+    per = {}
+    for board, which, _, _ in REACH_BOARDS:
+        per[board] = set(chip["boards"].get(refs[which], {}).get(board, []))
+    nums, capsules = chip["driver_nums"], chip["capsules"]
+
+    def num_of(cap):
+        info = capsules.get(cap) or {}
+        return nums.get(info.get("num_name", ""), "")
+
+    every = sorted({c for v in per.values() for c in v},
+                   key=lambda c: (num_of(c) or "zzz", c))
+    rows = []
+    for cap in every:
+        cells = "".join('<span class="cell c-%s" aria-hidden="true"></span>'
+                        % ("driven" if cap in per[b] else "undriven")
+                        for b, _, _, _ in REACH_BOARDS)
+        says = "; ".join("%s %s" % (label, "yes" if cap in per[b] else "no")
+                         for b, _, label, _ in REACH_BOARDS)
+        rows.append('<li><span class="brow flat" aria-label="%s: %s">'
+                    '<span class="bname"><code>%s</code></span>%s'
+                    '<span class="bby"><code class="num">%s</code></span></span></li>'
+                    % (e(cap.rpartition("::")[2]), e(says),
+                       e(cap.rpartition("::")[2]), cells, e(num_of(cap) or "?")))
+    counts = [(label, sub, len(per[b])) for b, _, label, sub in REACH_BOARDS]
+    return "".join(rows), counts
+
+
+
+
+def unannotated_blocks(data):
+    """Blocks a reset controller names that BLOCKS does not describe."""
+    chip = data.get("chip") or {}
+    if not chip.get("ok"):
+        return set()
+    canon = block_names(chip["resets"])
+    return {canon[bit] for bits in chip["resets"].values() for bit in bits
+            if canon[bit] not in BLOCKS}
+
+
+def unplaced_modules(data):
+    """Driver modules that are neither a block's driver nor known plumbing.
+
+    A module in neither table appears nowhere on the page. That is the failure
+    this catches: work landing in the tree and the coverage grid not moving.
+    """
+    chip = data.get("chip") or {}
+    if not chip.get("ok"):
+        return set()
+    return {m for per_crate in chip["modules"].values()
+            for mods in per_crate.values() for m in mods
+            if m not in MODULE_BLOCK and m not in PLUMBING}
+
+
+def relations(data, cov):
+    """Which branches and pull requests touch each hardware block.
+
+    Derived from the file lists that are already fetched: a branch relates to a
+    block when it changes one of that block's driver modules. So selecting the
+    ADC lights the branch that ports it without anyone recording that it does.
+    """
+    chip = data.get("chip") or {}
+    if not chip.get("ok") or not cov:
+        return {}
+    out = {}
+    for row in cov["rows"]:
+        mods = [m for m, blk in MODULE_BLOCK.items() if blk == row["name"]]
+        paths = {"chips/%s/src/%s.rs" % (crate, m)
+                 for crate in CHIP_CRATES for m in mods}
+        branches = sorted(br for br, files in chip["touched"].items()
+                          if paths & set(files))
+        prs = sorted(p["number"] for p in data["prs"]
+                     if paths & set(p.get("files") or []))
+        if branches or prs:
+            out[row["name"]] = {"branches": branches, "prs": prs}
+    return out
 
 
 def render(data):
@@ -1158,22 +2203,143 @@ def render(data):
         for n in nodes.values()
     })
 
+    cov = coverage(data)
+    tr = traces(data, cov) if cov else {}
+    rel_json = json.dumps(relations(data, cov))
+    reach_rows, reach_counts = reach_html(data)
+
+    chip_nav, chip_sections = "", ""
+    if cov:
+        t = cov["totals"]
+        opening = first_block(cov)
+        legend = "".join(
+            '<li><span class="cell c-%s" aria-hidden="true"></span>%s</li>' % (k, e(v))
+            for k, v in (("driven", "a driver module covers it"),
+                         ("undriven", "the block is there, nothing drives it"),
+                         ("absent", "this chip does not have the block")))
+        heads = "".join('<span class="chead">%s</span>' % e(h)
+                        for h in ("RP2040", "RP2350", "fork"))
+        plumb = ", ".join("<code>%s</code>" % e(m) for m, _ in cov["plumbing"])
+        board_counts = "".join(
+            '<li><span class="n">%d</span><span class="k">%s<em>%s</em></span></li>'
+            % (n, e(label), e(sub)) for label, sub, n in reach_counts)
+        reach_heads = "".join('<span class="chead">%s</span>' % e(label)
+                              for _, _, label, _ in REACH_BOARDS)
+        chip_sections = """
+<section id="chip">
+  <h2>What Tock can drive on this chip</h2>
+  <p class="lede">The list of blocks is not kept here. Every chip crate has a
+  <code>resets.rs</code> holding one bit per resettable hardware block, so the
+  chip's own source says what it has &mdash; %(nb2350)d blocks on the RP2350,
+  %(nb2040)d on the RP2040. A cell is filled when a driver module for that
+  block exists in the crate. That is presence, not completeness: it says a
+  driver is there, not that every feature of the block is reachable.</p>
+  <ul class="counts">
+    <li><span class="n">%(up2350)d</span><span class="k">driven upstream
+      <em>of %(nb2350)d RP2350 blocks</em></span></li>
+    <li><span class="n">%(fork2350)d</span><span class="k">driven on this fork
+      <em>the bench kernel, everything merged</em></span></li>
+    <li><span class="n">%(up2040)d</span><span class="k">driven on the RP2040
+      <em>the older chip, better covered</em></span></li>
+  </ul>
+  <ul class="plain cellkey">%(legend)s</ul>
+  <div class="covwrap">
+    <div class="covhead"><span class="bname">Hardware block</span>%(heads)s
+      <span class="bby">covered by</span></div>
+    <ul class="cov">%(cov)s</ul>
+  </div>
+  <p class="hint">Click a block to trace it down to its registers. The
+  <span class="flag" aria-hidden="true">!</span> marks a block with a defect
+  found here.</p>
+  <p class="foot">Read at <code>%(upref)s</code> (<code>%(head)s</code>) and
+  <code>%(forkref)s</code>. Not shown because they are not blocks the reset
+  controller names: %(plumb)s.</p>
+</section>
+
+<section id="trace">
+  <h2>From a system call to a register</h2>
+  <p class="lede">Every rung comes from the tree. The driver number from the one
+  enum that assigns them, the capsule from the board's own <code>with_driver</code>,
+  the kernel interface from what that capsule imports, the chip driver from the
+  crate implementing it, and the registers from its <code>register_structs!</code>.
+  A rung with no answer is a fact about the tree rather than a gap here.</p>
+  <div class="traces">%(traces)s</div>
+</section>
+
+<section id="reach">
+  <h2>What a process can actually call</h2>
+  <p class="lede">Not what the kernel supports &mdash; what an application on
+  each board can reach, read from every <code>with_driver</code> arm on it.
+  A board can answer some driver numbers in its own file and pass the rest to a
+  base platform in another crate, so both hops are followed &mdash; reading only
+  the first reports one driver on a board that exposes ten.</p>
+  <ul class="counts">%(bcounts)s</ul>
+  <div class="covwrap">
+    <div class="covhead"><span class="bname">Driver</span>%(rheads)s
+      <span class="bby">number</span></div>
+    <ul class="cov">%(reach)s</ul>
+  </div>
+</section>
+""" % {
+            "nb2350": t["blocks2350"], "nb2040": t["blocks2040"],
+            "up2350": t["up2350"], "fork2350": t["fork2350"], "up2040": t["up2040"],
+            "legend": legend, "heads": heads, "cov": cov_html(cov, opening),
+            "traces": trace_html(cov, tr, opening), "plumb": plumb,
+            "upref": e(cov["upstream_ref"]), "forkref": e(cov["fork_ref"]),
+            "head": e(cov["head"]), "bcounts": board_counts,
+            "rheads": reach_heads, "reach": reach_rows,
+        }
+        chip_nav = (
+            '<li class="navgroup">The chip</li>'
+            '<li><a href="#chip">Coverage<span class="rn">%d of %d</span></a></li>'
+            '<li><a href="#trace">Syscall to register<span class="rn">%d</span></a></li>'
+            '<li><a href="#reach">What a process calls<span class="rn">%d</span></a></li>'
+            % (t["fork2350"], t["blocks2350"], len(cov["rows"]),
+               max((n for _, _, n in reach_counts), default=0)))
+
+    nav = chip_nav + (
+        '<li class="navgroup">The work</li>'
+        '<li><a href="#stack">The stack<span class="rn">%d</span></a></li>'
+        '<li><a href="#queue">The queue<span class="rn">%d</span></a></li>'
+        '<li><a href="#collide">Collisions<span class="rn">%d</span></a></li>'
+        '<li><a href="#prs">Pull requests<span class="rn">%d</span></a></li>'
+        '<li class="navgroup">The evidence</li>'
+        '<li><a href="#defects">Defects<span class="rn">%d</span></a></li>'
+        '<li><a href="#silicon">On silicon<span class="rn">%d</span></a></li>'
+        '<li><a href="#plan">Test plan<span class="rn">%d</span></a></li>'
+        '<li class="navgroup">Ahead</li>'
+        '<li><a href="#downstream">Downstream<span class="rn">%d</span></a></li>'
+        '<li><a href="#notdone">Not done<span class="rn">%d</span></a></li>'
+        % (len(order), len(ready), len(overlaps), len(data["prs"]), len(DEFECTS),
+           len(SILICON), len(data["issues"]), len(DOWNSTREAM), len(NOT_DONE)))
+
     return """<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>%(title)s</title>
 <meta name="description" content="%(tagline)s">
 <style>%(css)s</style>
 </head>
 <body>
+<a class="skip" href="#main">Skip to the page</a>
+<div class="app">
+
+<nav class="rail" aria-label="Sections">
+  <a class="mark" href="#main"><b>Tock</b> on the RP2350</a>
+  <ul>%(nav)s</ul>
+  <p class="railkeys"><kbd>/</kbd> search &nbsp; <kbd>?</kbd> keys</p>
+</nav>
+
+<main id="main">
 <div class="wrap">
 
 <header>
   <h1>%(title)s</h1>
   <p class="tagline">%(tagline)s</p>
   <blockquote>%(quote)s
-    <cite>— %(who)s, reviewing <a href="%(qurl)s">%(where)s</a></cite>
+    <cite>&mdash; %(who)s, reviewing <a href="%(qurl)s">%(where)s</a></cite>
   </blockquote>
   %(answer)s
   <ul class="counts">
@@ -1185,13 +2351,13 @@ def render(data):
       <span class="k">defects with a fix written</span></a></li>
   </ul>
 </header>
-
-<section>
+%(chipsections)s
+<section id="stack">
   <h2>The stack</h2>
   <p class="lede">One column per pull request, %(nprs)d of them, holding all %(nnodes)d commits.
   Depth down a column is stack order: an arrow runs from each commit to the one that needs it
   first. A <strong>dashed box</strong> is a commit that belongs to two pull requests, and a
-  <strong>dashed orange arrow</strong> is a dependency that crosses between columns — together
+  <strong>dashed orange arrow</strong> is a dependency that crosses between columns &mdash; together
   those are the whole reason the same work appears twice on GitHub. The word at the bottom left
   of a box is how that change is verified.</p>
   <div class="chips">%(chips)s</div>
@@ -1217,24 +2383,24 @@ def render(data):
   <p class="lede">Read from the working clones, so it is what exists rather than what
   was last written down. A branch is matched to its pull request by which commits they
   share, not by name.</p>
-  <h3 class="qh">In review now — %(nreview)d</h3>
+  <h3 class="qh">In review now &mdash; %(nreview)d</h3>
   <ul class="plain queue">%(qreview)s</ul>
-  <h3 class="qh">Finished, not proposed yet — %(nready)d branches, %(readyc)d commits</h3>
+  <h3 class="qh">Finished, not proposed yet &mdash; %(nready)d branches, %(readyc)d commits</h3>
   <ul class="plain queue">%(qready)s</ul>
-  <h3 class="qh">Never going upstream — %(nnever)d</h3>
+  <h3 class="qh">Never going upstream &mdash; %(nnever)d</h3>
   <p class="lede">Bench harnesses and teaching material. Listed so that nobody browsing
   the fork has to guess which branches are waiting to be proposed.</p>
   <ul class="plain queue">%(qnever)s</ul>
 </section>
 
-<section>
+<section id="collide">
   <h2>Where the open branches collide</h2>
   <p class="lede">Derived by comparing the file list of every open pull request against
   every other, so it cannot drift from what the branches do.</p>
   <ul class="plain">%(overlaps)s</ul>
 </section>
 
-<section>
+<section id="prs">
   <h2>Pull requests</h2>
   <p class="lede">%(nmerged)d merged, %(nopen)d open.</p>
   <div class="prgrid">%(cards)s</div>
@@ -1242,7 +2408,7 @@ def render(data):
 
 <section id="defects">
   <h2>Defects found</h2>
-  <p class="lede">Each demonstrated before it was written down — by a test that fails
+  <p class="lede">Each demonstrated before it was written down &mdash; by a test that fails
   without the fix, or by an instrumented kernel on a board. The UART pair needs no board
   at all: <code>make qemu-example EXAMPLE=console_read_busy</code> against libtock-rs's
   own pinned kernel prints <code>read -&gt; 0 bytes, Err(BUSY)</code> on an affected build,
@@ -1250,45 +2416,76 @@ def render(data):
   <ul class="plain">%(defects)s</ul>
 </section>
 
-<section>
+<section id="silicon">
   <h2>Run on hardware</h2>
   <p class="lede">A Raspberry Pi flashes the board and holds its serial line, so the
   machine that builds never touches the hardware.</p>
   <ul class="plain">%(silicon)s</ul>
 </section>
 
-<section>
+<section id="plan">
   <h2>Test plan</h2>
   <ul class="plain">%(issues)s</ul>
 </section>
 
-<section>
+<section id="downstream">
   <h2>Downstream</h2>
   <ul class="plain">%(downstream)s</ul>
 </section>
 
-<section>
+<section id="notdone">
   <h2>Not done</h2>
   <ul class="plain">%(notdone)s</ul>
 </section>
 
 <footer>
   <p>Pull request state, sizes, dates, commit lists and file overlaps are read from the
-  GitHub API when this page is built — current as of %(fetched)s. The graph's edges come
-  from commit order inside each branch. Short labels and notes are written by hand.</p>
-  <p><a href="https://github.com/%(author)s">%(author)s</a> ·
-  <a href="https://github.com/%(repo)s">%(repo)s</a> ·
+  GitHub API when this page is built &mdash; current as of %(fetched)s. The graph's edges come
+  from commit order inside each branch. Coverage, driver numbers and every rung of the
+  trace are read from the Tock working clone at build time. Short labels and notes are
+  written by hand.</p>
+  <p><a href="https://github.com/%(author)s">%(author)s</a> &middot;
+  <a href="https://github.com/%(repo)s">%(repo)s</a> &middot;
   <a href="https://github.com/tock/libtock-rs">tock/libtock-rs</a></p>
 </footer>
 
 </div>
+</main>
+</div>
+
+<div class="sheet" id="keysheet" hidden role="dialog" aria-modal="true"
+     aria-labelledby="keystitle">
+  <div class="sheetbox">
+    <h2 id="keystitle">Keys</h2>
+    <dl class="keys">
+      <dt><kbd>/</kbd></dt><dd>Search everything on the page</dd>
+      <dt><kbd>?</kbd></dt><dd>This list</dd>
+      <dt><kbd>j</kbd> <kbd>k</kbd></dt><dd>Next and previous hardware block</dd>
+      <dt><kbd>Esc</kbd></dt><dd>Close, or clear the pull request filter</dd>
+    </dl>
+  </div>
+</div>
+
+<div class="sheet" id="palette" hidden role="dialog" aria-modal="true"
+     aria-label="Search the page">
+  <div class="sheetbox">
+    <input id="q" type="search" autocomplete="off" spellcheck="false"
+           placeholder="Blocks, pull requests, branches, commits, defects"
+           aria-controls="presults" aria-describedby="phint">
+    <p id="phint" class="phint">Type to search everything on this page. Enter jumps to it.</p>
+    <ul id="presults" role="listbox" aria-label="Results"></ul>
+  </div>
+</div>
+
 <script>%(js)s</script>
 </body>
 </html>
 """ % {
         "title": e(SITE["title"]), "tagline": e(SITE["tagline"]),
         # `</` inside the JSON would close the script element early.
-        "css": CSS, "js": JS.replace("__NODES__", node_json.replace("</", "<\\/")),
+        "css": CSS,
+        "js": (JS.replace("__NODES__", node_json.replace("</", "<\\/"))
+                 .replace("__REL__", rel_json.replace("</", "<\\/"))),
         "quote": e(PROVOCATION["quote"]), "who": e(PROVOCATION["who"]),
         "where": e(PROVOCATION["where"]), "qurl": e(PROVOCATION["url"]),
         "answer": para(PROVOCATION["answer"]),
@@ -1305,8 +2502,8 @@ def render(data):
         "qnever": queue_html(never),
         "downstream": downstream_rows, "notdone": not_done_rows,
         "fetched": e(data["fetched"]), "author": AUTHOR, "repo": REPO,
+        "nav": nav, "chipsections": chip_sections,
     }
-
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
@@ -1332,6 +2529,10 @@ def main():
         print("  no annotation in WORK (these still render, unlabelled):")
         for h in missing:
             print("    " + h)
+    for name in sorted(unannotated_blocks(data)):
+        print("  no annotation in BLOCKS: " + name)
+    for name in sorted(unplaced_modules(data)):
+        print("  module in no block and no PLUMBING: " + name)
 
 
 if __name__ == "__main__":

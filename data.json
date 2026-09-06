@@ -1,5 +1,5 @@
 {
-  "fetched": "2026-09-05",
+  "fetched": "2026-09-06",
   "prs": [
     {
       "additions": 1,
@@ -972,6 +972,3994 @@
         "on_remote": true,
         "unpushed": 0
       }
+    }
+  },
+  "chip": {
+    "ok": true,
+    "upstream_ref": "upstream/master",
+    "fork_ref": "bench/stepper-pico2w",
+    "head": "2a7a40450",
+    "resets": {
+      "rp2040": {
+        "USBCTRL": 24,
+        "UART1": 23,
+        "UART0": 22,
+        "TIMER": 21,
+        "TBMAN": 20,
+        "SYSINFO": 19,
+        "SYSCFG": 18,
+        "SPI1": 17,
+        "SPI0": 16,
+        "RTC": 15,
+        "PWM": 14,
+        "PLL_USB": 13,
+        "PLL_SYS": 12,
+        "PIO1": 11,
+        "PIO0": 10,
+        "PADS_QSPI": 9,
+        "PADS_BANK0": 8,
+        "JTAG": 7,
+        "IO_QSPI": 6,
+        "IO_BANK0": 5,
+        "I2C1": 4,
+        "I2C0": 3,
+        "DMA": 2,
+        "BUSCTRL": 1,
+        "ADC": 0
+      },
+      "rp2350": {
+        "USBCTRL": 28,
+        "UART1": 27,
+        "UART0": 26,
+        "TRNG": 25,
+        "TIMER1": 24,
+        "TIMER0": 23,
+        "TBMAN": 22,
+        "SYSINFO": 21,
+        "SYSCFG": 20,
+        "SPI1": 19,
+        "SPI0": 18,
+        "SHA256": 17,
+        "PWM": 16,
+        "PLL_USB": 15,
+        "PLL_SYS": 14,
+        "PIO2": 13,
+        "PIO1": 12,
+        "PIO0": 11,
+        "PADS_QSPI": 10,
+        "PADS_BANK0": 9,
+        "JTAG": 8,
+        "IO_QSPI": 7,
+        "IO_BANK0": 6,
+        "I2C1": 5,
+        "I2C0": 4,
+        "HSTX": 3,
+        "DMA": 2,
+        "BUSCTRL": 1,
+        "ADC": 0
+      }
+    },
+    "modules": {
+      "upstream/master": {
+        "rp2040": {
+          "adc": 240,
+          "chip": 246,
+          "clocks": 1419,
+          "deferred_calls": 33,
+          "dma": 606,
+          "gpio": 727,
+          "i2c": 729,
+          "interrupts": 30,
+          "lib": 109,
+          "mod": 5,
+          "pio": 1947,
+          "pio_gspi": 270,
+          "pio_pwm": 95,
+          "pio_spi": 572,
+          "pwm": 76,
+          "resets": 371,
+          "rtc": 448,
+          "spi": 36,
+          "sysinfo": 98,
+          "timer": 277,
+          "uart": 761,
+          "usb": 2484,
+          "watchdog": 129,
+          "xosc": 117
+        },
+        "rp2350": {
+          "chip": 175,
+          "clocks": 1530,
+          "gpio": 1555,
+          "interrupts": 56,
+          "lib": 118,
+          "resets": 400,
+          "spi": 36,
+          "ticks": 174,
+          "timer": 274,
+          "uart": 811,
+          "xosc": 125
+        },
+        "rp2xxx": {
+          "lib": 29,
+          "spi": 638
+        }
+      },
+      "bench/stepper-pico2w": {
+        "rp2040": {
+          "adc": 48,
+          "chip": 246,
+          "clocks": 1419,
+          "deferred_calls": 33,
+          "dma": 642,
+          "gpio": 765,
+          "i2c": 729,
+          "interrupts": 30,
+          "lib": 109,
+          "mod": 5,
+          "pio": 101,
+          "pio_gspi": 14,
+          "pio_pwm": 129,
+          "pio_spi": 618,
+          "pwm": 76,
+          "resets": 371,
+          "rtc": 448,
+          "spi": 36,
+          "sysinfo": 98,
+          "timer": 277,
+          "uart": 761,
+          "usb": 2484,
+          "watchdog": 129,
+          "xosc": 117
+        },
+        "rp2350": {
+          "adc": 57,
+          "chip": 214,
+          "clocks": 1530,
+          "dma": 661,
+          "gpio": 1631,
+          "interrupts": 56,
+          "lib": 122,
+          "pio": 113,
+          "pio_gspi": 14,
+          "resets": 400,
+          "spi": 36,
+          "ticks": 174,
+          "timer": 274,
+          "uart": 811,
+          "xosc": 125
+        },
+        "rp2xxx": {
+          "adc": 253,
+          "dma": 49,
+          "lib": 47,
+          "pads": 57,
+          "pio": 1710,
+          "pio_gspi": 322,
+          "spi": 638
+        }
+      },
+      "boards-fix-ram-layout": {
+        "rp2040": {
+          "adc": 240,
+          "chip": 246,
+          "clocks": 1411,
+          "deferred_calls": 33,
+          "dma": 606,
+          "gpio": 727,
+          "i2c": 729,
+          "interrupts": 30,
+          "lib": 109,
+          "mod": 5,
+          "pio": 1947,
+          "pio_gspi": 270,
+          "pio_pwm": 95,
+          "pio_spi": 572,
+          "pwm": 76,
+          "resets": 371,
+          "rtc": 448,
+          "spi": 652,
+          "sysinfo": 98,
+          "timer": 277,
+          "uart": 761,
+          "usb": 2484,
+          "watchdog": 129,
+          "xosc": 117
+        },
+        "rp2350": {
+          "chip": 168,
+          "clocks": 1522,
+          "gpio": 1555,
+          "interrupts": 56,
+          "lib": 117,
+          "resets": 400,
+          "ticks": 174,
+          "timer": 274,
+          "uart": 811,
+          "xosc": 125
+        },
+        "rp2xxx": {}
+      },
+      "boards-remove-dead-ram-layout": {
+        "rp2040": {
+          "adc": 240,
+          "chip": 246,
+          "clocks": 1411,
+          "deferred_calls": 33,
+          "dma": 606,
+          "gpio": 727,
+          "i2c": 729,
+          "interrupts": 30,
+          "lib": 109,
+          "mod": 5,
+          "pio": 1947,
+          "pio_gspi": 270,
+          "pio_pwm": 95,
+          "pio_spi": 572,
+          "pwm": 76,
+          "resets": 371,
+          "rtc": 448,
+          "spi": 652,
+          "sysinfo": 98,
+          "timer": 277,
+          "uart": 761,
+          "usb": 2484,
+          "watchdog": 129,
+          "xosc": 117
+        },
+        "rp2350": {
+          "chip": 168,
+          "clocks": 1522,
+          "gpio": 1555,
+          "interrupts": 56,
+          "lib": 117,
+          "resets": 400,
+          "ticks": 174,
+          "timer": 274,
+          "uart": 811,
+          "xosc": 125
+        },
+        "rp2xxx": {}
+      },
+      "pico2w-typed": {
+        "rp2040": {
+          "adc": 240,
+          "chip": 246,
+          "clocks": 1419,
+          "deferred_calls": 33,
+          "dma": 642,
+          "gpio": 765,
+          "i2c": 729,
+          "interrupts": 30,
+          "lib": 109,
+          "mod": 5,
+          "pio": 101,
+          "pio_gspi": 14,
+          "pio_pwm": 129,
+          "pio_spi": 618,
+          "pwm": 76,
+          "resets": 371,
+          "rtc": 448,
+          "spi": 36,
+          "sysinfo": 98,
+          "timer": 277,
+          "uart": 761,
+          "usb": 2484,
+          "watchdog": 129,
+          "xosc": 117
+        },
+        "rp2350": {
+          "chip": 204,
+          "clocks": 1530,
+          "dma": 661,
+          "gpio": 1631,
+          "interrupts": 56,
+          "lib": 121,
+          "pio": 113,
+          "pio_gspi": 14,
+          "resets": 400,
+          "spi": 36,
+          "ticks": 174,
+          "timer": 274,
+          "uart": 811,
+          "xosc": 125
+        },
+        "rp2xxx": {
+          "dma": 49,
+          "lib": 43,
+          "pads": 57,
+          "pio": 1710,
+          "pio_gspi": 322,
+          "spi": 638
+        }
+      },
+      "rp2-adc": {
+        "rp2040": {
+          "adc": 48,
+          "chip": 246,
+          "clocks": 1419,
+          "deferred_calls": 33,
+          "dma": 606,
+          "gpio": 727,
+          "i2c": 729,
+          "interrupts": 30,
+          "lib": 109,
+          "mod": 5,
+          "pio": 1947,
+          "pio_gspi": 270,
+          "pio_pwm": 95,
+          "pio_spi": 572,
+          "pwm": 76,
+          "resets": 371,
+          "rtc": 448,
+          "spi": 36,
+          "sysinfo": 98,
+          "timer": 277,
+          "uart": 761,
+          "usb": 2484,
+          "watchdog": 129,
+          "xosc": 117
+        },
+        "rp2350": {
+          "adc": 57,
+          "chip": 181,
+          "clocks": 1530,
+          "gpio": 1555,
+          "interrupts": 56,
+          "lib": 119,
+          "resets": 400,
+          "spi": 36,
+          "ticks": 174,
+          "timer": 274,
+          "uart": 811,
+          "xosc": 125
+        },
+        "rp2xxx": {
+          "adc": 253,
+          "lib": 36,
+          "spi": 638
+        }
+      },
+      "rp2-pad-controls": {
+        "rp2040": {
+          "adc": 240,
+          "chip": 246,
+          "clocks": 1419,
+          "deferred_calls": 33,
+          "dma": 606,
+          "gpio": 710,
+          "i2c": 729,
+          "interrupts": 30,
+          "lib": 109,
+          "mod": 5,
+          "pio": 1947,
+          "pio_gspi": 270,
+          "pio_pwm": 95,
+          "pio_spi": 572,
+          "pwm": 76,
+          "resets": 371,
+          "rtc": 448,
+          "spi": 36,
+          "sysinfo": 98,
+          "timer": 277,
+          "uart": 761,
+          "usb": 2484,
+          "watchdog": 129,
+          "xosc": 117
+        },
+        "rp2350": {
+          "chip": 175,
+          "clocks": 1530,
+          "gpio": 1572,
+          "interrupts": 56,
+          "lib": 118,
+          "resets": 400,
+          "spi": 36,
+          "ticks": 174,
+          "timer": 274,
+          "uart": 811,
+          "xosc": 125
+        },
+        "rp2xxx": {
+          "lib": 32,
+          "pads": 29,
+          "spi": 638
+        }
+      },
+      "rp2-pio-prep": {
+        "rp2040": {
+          "adc": 240,
+          "chip": 246,
+          "clocks": 1419,
+          "deferred_calls": 33,
+          "dma": 606,
+          "gpio": 727,
+          "i2c": 729,
+          "interrupts": 30,
+          "lib": 109,
+          "mod": 5,
+          "pio": 1675,
+          "pio_gspi": 322,
+          "pio_pwm": 128,
+          "pio_spi": 615,
+          "pwm": 76,
+          "resets": 371,
+          "rtc": 448,
+          "spi": 36,
+          "sysinfo": 98,
+          "timer": 277,
+          "uart": 761,
+          "usb": 2484,
+          "watchdog": 129,
+          "xosc": 117
+        },
+        "rp2350": {
+          "chip": 175,
+          "clocks": 1530,
+          "gpio": 1555,
+          "interrupts": 56,
+          "lib": 118,
+          "resets": 400,
+          "spi": 36,
+          "ticks": 174,
+          "timer": 274,
+          "uart": 811,
+          "xosc": 125
+        },
+        "rp2xxx": {
+          "lib": 29,
+          "spi": 638
+        }
+      },
+      "rp2-pio-tests": {
+        "rp2040": {
+          "adc": 240,
+          "chip": 258,
+          "clocks": 1419,
+          "deferred_calls": 33,
+          "dma": 606,
+          "gpio": 727,
+          "i2c": 729,
+          "interrupts": 30,
+          "lib": 109,
+          "mod": 5,
+          "pio": 2171,
+          "pio_gspi": 273,
+          "pio_pwm": 95,
+          "pio_spi": 572,
+          "pwm": 76,
+          "resets": 371,
+          "rtc": 448,
+          "spi": 36,
+          "sysinfo": 98,
+          "timer": 277,
+          "uart": 761,
+          "usb": 2484,
+          "watchdog": 129,
+          "xosc": 117
+        },
+        "rp2350": {
+          "chip": 175,
+          "clocks": 1530,
+          "gpio": 1555,
+          "interrupts": 56,
+          "lib": 118,
+          "resets": 400,
+          "spi": 36,
+          "ticks": 174,
+          "timer": 274,
+          "uart": 811,
+          "xosc": 125
+        },
+        "rp2xxx": {
+          "lib": 29,
+          "spi": 638
+        }
+      },
+      "rp2-uart-abort-fix": {
+        "rp2040": {
+          "adc": 240,
+          "chip": 246,
+          "clocks": 1419,
+          "deferred_calls": 33,
+          "dma": 606,
+          "gpio": 727,
+          "i2c": 729,
+          "interrupts": 30,
+          "lib": 109,
+          "mod": 5,
+          "pio": 1947,
+          "pio_gspi": 270,
+          "pio_pwm": 95,
+          "pio_spi": 572,
+          "pwm": 76,
+          "resets": 371,
+          "rtc": 448,
+          "spi": 36,
+          "sysinfo": 98,
+          "timer": 277,
+          "uart": 770,
+          "usb": 2484,
+          "watchdog": 129,
+          "xosc": 117
+        },
+        "rp2350": {
+          "chip": 175,
+          "clocks": 1530,
+          "gpio": 1555,
+          "interrupts": 56,
+          "lib": 118,
+          "resets": 400,
+          "spi": 36,
+          "ticks": 174,
+          "timer": 274,
+          "uart": 820,
+          "xosc": 125
+        },
+        "rp2xxx": {
+          "lib": 29,
+          "spi": 638
+        }
+      },
+      "rp2350-gpio-irq": {
+        "rp2040": {
+          "adc": 240,
+          "chip": 246,
+          "clocks": 1419,
+          "deferred_calls": 33,
+          "dma": 606,
+          "gpio": 727,
+          "i2c": 729,
+          "interrupts": 30,
+          "lib": 109,
+          "mod": 5,
+          "pio": 1947,
+          "pio_gspi": 270,
+          "pio_pwm": 95,
+          "pio_spi": 572,
+          "pwm": 76,
+          "resets": 371,
+          "rtc": 448,
+          "spi": 36,
+          "sysinfo": 98,
+          "timer": 277,
+          "uart": 761,
+          "usb": 2484,
+          "watchdog": 129,
+          "xosc": 117
+        },
+        "rp2350": {
+          "chip": 179,
+          "clocks": 1530,
+          "gpio": 1555,
+          "interrupts": 56,
+          "lib": 118,
+          "resets": 400,
+          "spi": 36,
+          "ticks": 174,
+          "timer": 274,
+          "uart": 811,
+          "xosc": 125
+        },
+        "rp2xxx": {
+          "lib": 29,
+          "spi": 638
+        }
+      },
+      "stepper-capsule": {
+        "rp2040": {
+          "adc": 240,
+          "chip": 246,
+          "clocks": 1419,
+          "deferred_calls": 33,
+          "dma": 606,
+          "gpio": 727,
+          "i2c": 729,
+          "interrupts": 30,
+          "lib": 109,
+          "mod": 5,
+          "pio": 1947,
+          "pio_gspi": 270,
+          "pio_pwm": 95,
+          "pio_spi": 572,
+          "pwm": 76,
+          "resets": 371,
+          "rtc": 448,
+          "spi": 36,
+          "sysinfo": 98,
+          "timer": 277,
+          "uart": 761,
+          "usb": 2484,
+          "watchdog": 129,
+          "xosc": 117
+        },
+        "rp2350": {
+          "chip": 175,
+          "clocks": 1530,
+          "gpio": 1555,
+          "interrupts": 56,
+          "lib": 118,
+          "resets": 400,
+          "spi": 36,
+          "ticks": 174,
+          "timer": 274,
+          "uart": 811,
+          "xosc": 125
+        },
+        "rp2xxx": {
+          "lib": 29,
+          "spi": 638
+        }
+      }
+    },
+    "boards": {
+      "upstream/master": {
+        "raspberry_pi_pico": [
+          "capsules_core::adc",
+          "capsules_core::alarm",
+          "capsules_core::console",
+          "capsules_core::gpio",
+          "capsules_core::i2c_master",
+          "capsules_core::led",
+          "capsules_core::spi_controller",
+          "capsules_extra::date_time",
+          "capsules_extra::temperature",
+          "kernel::ipc"
+        ],
+        "raspberry_pi_pico_2": [
+          "capsules_core::alarm",
+          "capsules_core::console",
+          "capsules_core::gpio",
+          "capsules_core::led",
+          "kernel::ipc"
+        ],
+        "raspberry_pi_pico_w": [
+          "capsules_core::adc",
+          "capsules_core::alarm",
+          "capsules_core::console",
+          "capsules_core::gpio",
+          "capsules_core::i2c_master",
+          "capsules_core::led",
+          "capsules_core::spi_controller",
+          "capsules_extra::date_time",
+          "capsules_extra::temperature",
+          "capsules_extra::wifi",
+          "kernel::ipc"
+        ]
+      },
+      "bench/stepper-pico2w": {
+        "raspberry_pi_pico": [
+          "capsules_core::adc",
+          "capsules_core::alarm",
+          "capsules_core::console",
+          "capsules_core::gpio",
+          "capsules_core::i2c_master",
+          "capsules_core::led",
+          "capsules_core::spi_controller",
+          "capsules_extra::date_time",
+          "capsules_extra::temperature",
+          "kernel::ipc"
+        ],
+        "raspberry_pi_pico_2": [
+          "capsules_core::alarm",
+          "capsules_core::console",
+          "capsules_core::gpio",
+          "capsules_core::led",
+          "kernel::ipc"
+        ],
+        "raspberry_pi_pico_2_w": [
+          "capsules_core::adc",
+          "capsules_core::alarm",
+          "capsules_core::console",
+          "capsules_core::gpio",
+          "capsules_core::led",
+          "capsules_core::spi_controller",
+          "capsules_extra::stepper",
+          "capsules_extra::wifi",
+          "kernel::ipc"
+        ],
+        "raspberry_pi_pico_w": [
+          "capsules_core::adc",
+          "capsules_core::alarm",
+          "capsules_core::console",
+          "capsules_core::gpio",
+          "capsules_core::i2c_master",
+          "capsules_core::led",
+          "capsules_core::spi_controller",
+          "capsules_extra::date_time",
+          "capsules_extra::temperature",
+          "capsules_extra::wifi",
+          "kernel::ipc"
+        ]
+      }
+    },
+    "chains": {
+      "adc": {
+        "rp2040": {
+          "path": "chips/rp2040/src/adc.rs",
+          "lines": 48,
+          "hil": [],
+          "impls": [],
+          "regblock": "",
+          "regs": [],
+          "bases": [
+            "0x4004C000"
+          ]
+        },
+        "rp2350": {
+          "path": "chips/rp2350/src/adc.rs",
+          "lines": 57,
+          "hil": [],
+          "impls": [],
+          "regblock": "",
+          "regs": [],
+          "bases": [
+            "0x400A0000"
+          ]
+        },
+        "rp2xxx": {
+          "path": "chips/rp2xxx/src/adc.rs",
+          "lines": 253,
+          "hil": [
+            "adc"
+          ],
+          "impls": [
+            "adc::Adc"
+          ],
+          "regblock": "AdcRegisters",
+          "regs": [
+            [
+              "0x000",
+              "cs"
+            ],
+            [
+              "0x004",
+              "result"
+            ],
+            [
+              "0x008",
+              "fcs"
+            ],
+            [
+              "0x00C",
+              "fifo"
+            ],
+            [
+              "0x010",
+              "div"
+            ],
+            [
+              "0x014",
+              "intr"
+            ],
+            [
+              "0x018",
+              "inte"
+            ],
+            [
+              "0x01C",
+              "intf"
+            ],
+            [
+              "0x020",
+              "ints"
+            ]
+          ],
+          "bases": []
+        }
+      },
+      "chip": {
+        "rp2040": {
+          "path": "chips/rp2040/src/chip.rs",
+          "lines": 246,
+          "hil": [],
+          "impls": [],
+          "regblock": "",
+          "regs": [],
+          "bases": []
+        },
+        "rp2350": {
+          "path": "chips/rp2350/src/chip.rs",
+          "lines": 214,
+          "hil": [],
+          "impls": [],
+          "regblock": "",
+          "regs": [],
+          "bases": []
+        }
+      },
+      "clocks": {
+        "rp2040": {
+          "path": "chips/rp2040/src/clocks.rs",
+          "lines": 1419,
+          "hil": [],
+          "impls": [],
+          "regblock": "",
+          "regs": [
+            [
+              "0x000",
+              "ctrl"
+            ],
+            [
+              "0x004",
+              "div"
+            ],
+            [
+              "0x008",
+              "selected"
+            ],
+            [
+              "0x000",
+              "clk_gpio"
+            ],
+            [
+              "0x030",
+              "clk_ref_ctrl"
+            ],
+            [
+              "0x034",
+              "clk_ref_div"
+            ],
+            [
+              "0x038",
+              "clk_ref_selected"
+            ],
+            [
+              "0x03C",
+              "clk_sys_ctrl"
+            ],
+            [
+              "0x040",
+              "clk_sys_div"
+            ],
+            [
+              "0x044",
+              "clk_sys_selected"
+            ],
+            [
+              "0x048",
+              "clk_peri_ctrl"
+            ],
+            [
+              "0x04C",
+              "_reserved0"
+            ],
+            [
+              "0x050",
+              "clk_peri_selected"
+            ],
+            [
+              "0x054",
+              "clk_usb_ctrl"
+            ],
+            [
+              "0x058",
+              "clk_usb_div"
+            ],
+            [
+              "0x05C",
+              "clk_usb_selected"
+            ],
+            [
+              "0x060",
+              "clk_adc_ctrl"
+            ],
+            [
+              "0x064",
+              "clk_adc_div"
+            ],
+            [
+              "0x068",
+              "clk_adc_selected"
+            ],
+            [
+              "0x06C",
+              "clk_rtc_ctrl"
+            ],
+            [
+              "0x070",
+              "clk_rtc_div"
+            ],
+            [
+              "0x074",
+              "clk_rtc_selected"
+            ],
+            [
+              "0x078",
+              "clk_sys_resus_ctrl"
+            ],
+            [
+              "0x07C",
+              "clk_sys_resus_status"
+            ],
+            [
+              "0x080",
+              "fc0_ref_khz"
+            ],
+            [
+              "0x084",
+              "fc0_min_khz"
+            ],
+            [
+              "0x088",
+              "fc0_max_khz"
+            ],
+            [
+              "0x08C",
+              "fc0_delay"
+            ],
+            [
+              "0x090",
+              "fc0_interval"
+            ],
+            [
+              "0x094",
+              "fc0_src"
+            ],
+            [
+              "0x098",
+              "fc0_status"
+            ],
+            [
+              "0x09C",
+              "fc0_result"
+            ],
+            [
+              "0x0A0",
+              "wake_en0"
+            ],
+            [
+              "0x0A4",
+              "wake_en1"
+            ],
+            [
+              "0x0A8",
+              "sleep_en0"
+            ],
+            [
+              "0x0AC",
+              "sleep_en1"
+            ],
+            [
+              "0x0B0",
+              "enabled0"
+            ],
+            [
+              "0x0B4",
+              "enabled1"
+            ],
+            [
+              "0x0B8",
+              "intr"
+            ],
+            [
+              "0x0BC",
+              "inte"
+            ],
+            [
+              "0x0C0",
+              "intf"
+            ],
+            [
+              "0x0C4",
+              "ints"
+            ],
+            [
+              "0x000",
+              "cs"
+            ],
+            [
+              "0x004",
+              "pwr"
+            ],
+            [
+              "0x008",
+              "fbdiv_int"
+            ],
+            [
+              "0x00C",
+              "prim"
+            ]
+          ],
+          "bases": [
+            "0x40028000",
+            "0x4002C000",
+            "0x40008000"
+          ]
+        },
+        "rp2350": {
+          "path": "chips/rp2350/src/clocks.rs",
+          "lines": 1530,
+          "hil": [],
+          "impls": [],
+          "regblock": "",
+          "regs": [
+            [
+              "0x000",
+              "ctrl"
+            ],
+            [
+              "0x004",
+              "div"
+            ],
+            [
+              "0x008",
+              "selected"
+            ],
+            [
+              "0x000",
+              "clk_gpio"
+            ],
+            [
+              "0x030",
+              "clk_ref_ctrl"
+            ],
+            [
+              "0x034",
+              "clk_ref_div"
+            ],
+            [
+              "0x038",
+              "clk_ref_selected"
+            ],
+            [
+              "0x03C",
+              "clk_sys_ctrl"
+            ],
+            [
+              "0x040",
+              "clk_sys_div"
+            ],
+            [
+              "0x044",
+              "clk_sys_selected"
+            ],
+            [
+              "0x048",
+              "clk_peri_ctrl"
+            ],
+            [
+              "0x04C",
+              "clk_peri_div"
+            ],
+            [
+              "0x050",
+              "clk_peri_selected"
+            ],
+            [
+              "0x054",
+              "clk_hstx_ctrl"
+            ],
+            [
+              "0x058",
+              "clk_hstx_div"
+            ],
+            [
+              "0x05C",
+              "clk_hstx_selected"
+            ],
+            [
+              "0x060",
+              "clk_usb_ctrl"
+            ],
+            [
+              "0x064",
+              "clk_usb_div"
+            ],
+            [
+              "0x068",
+              "clk_usb_selected"
+            ],
+            [
+              "0x06C",
+              "clk_adc_ctrl"
+            ],
+            [
+              "0x070",
+              "clk_adc_div"
+            ],
+            [
+              "0x074",
+              "clk_adc_selected"
+            ],
+            [
+              "0x078",
+              "dftclk_xosc_ctrl"
+            ],
+            [
+              "0x07C",
+              "dftclk_rosc_ctrl"
+            ],
+            [
+              "0x080",
+              "dftclk_lposc_ctrl"
+            ],
+            [
+              "0x084",
+              "clk_sys_resus_ctrl"
+            ],
+            [
+              "0x088",
+              "clk_sys_resus_status"
+            ],
+            [
+              "0x08C",
+              "fc0_ref_khz"
+            ],
+            [
+              "0x090",
+              "fc0_min_khz"
+            ],
+            [
+              "0x094",
+              "fc0_max_khz"
+            ],
+            [
+              "0x098",
+              "fc0_delay"
+            ],
+            [
+              "0x09C",
+              "fc0_interval"
+            ],
+            [
+              "0x0A0",
+              "fc0_src"
+            ],
+            [
+              "0x0A4",
+              "fc0_status"
+            ],
+            [
+              "0x0A8",
+              "fc0_result"
+            ],
+            [
+              "0x0AC",
+              "wake_en0"
+            ],
+            [
+              "0x0B0",
+              "wake_en1"
+            ],
+            [
+              "0x0B4",
+              "sleep_en0"
+            ],
+            [
+              "0x0B8",
+              "sleep_en1"
+            ],
+            [
+              "0x0BC",
+              "enabled0"
+            ],
+            [
+              "0x0C0",
+              "enabled1"
+            ],
+            [
+              "0x0C4",
+              "intr"
+            ],
+            [
+              "0x0C8",
+              "inte"
+            ],
+            [
+              "0x0CC",
+              "intf"
+            ],
+            [
+              "0x0D0",
+              "ints"
+            ],
+            [
+              "0x000",
+              "cs"
+            ],
+            [
+              "0x004",
+              "pwr"
+            ],
+            [
+              "0x008",
+              "fbdiv_int"
+            ],
+            [
+              "0x00C",
+              "prim"
+            ],
+            [
+              "0x010",
+              "intr"
+            ],
+            [
+              "0x014",
+              "inte"
+            ],
+            [
+              "0x018",
+              "intf"
+            ],
+            [
+              "0x01C",
+              "ints"
+            ]
+          ],
+          "bases": [
+            "0x40010000",
+            "0x40050000",
+            "0x40058000"
+          ]
+        }
+      },
+      "deferred_calls": {
+        "rp2040": {
+          "path": "chips/rp2040/src/deferred_calls.rs",
+          "lines": 33,
+          "hil": [],
+          "impls": [],
+          "regblock": "",
+          "regs": [],
+          "bases": []
+        }
+      },
+      "dma": {
+        "rp2040": {
+          "path": "chips/rp2040/src/dma.rs",
+          "lines": 642,
+          "hil": [],
+          "impls": [],
+          "regblock": "ChannelRegisters",
+          "regs": [
+            [
+              "0x000",
+              "read_addr"
+            ],
+            [
+              "0x004",
+              "write_addr"
+            ],
+            [
+              "0x008",
+              "trans_count"
+            ],
+            [
+              "0x00C",
+              "ctrl_trig"
+            ],
+            [
+              "0x010",
+              "_reserved0"
+            ],
+            [
+              "0x000",
+              "channels"
+            ],
+            [
+              "0x300",
+              "_reserved"
+            ],
+            [
+              "0x400",
+              "intr"
+            ],
+            [
+              "0x404",
+              "inte0"
+            ],
+            [
+              "0x408",
+              "intf0"
+            ],
+            [
+              "0x40C",
+              "ints0"
+            ],
+            [
+              "0x410",
+              "_reserved1"
+            ],
+            [
+              "0x414",
+              "inte1"
+            ],
+            [
+              "0x418",
+              "intf1"
+            ],
+            [
+              "0x41C",
+              "ints1"
+            ],
+            [
+              "0x420",
+              "timer0"
+            ],
+            [
+              "0x424",
+              "timer1"
+            ],
+            [
+              "0x428",
+              "timer2"
+            ],
+            [
+              "0x42C",
+              "timer3"
+            ],
+            [
+              "0x430",
+              "multi_chan_trigger"
+            ],
+            [
+              "0x434",
+              "sniff_ctrl"
+            ],
+            [
+              "0x438",
+              "sniff_data"
+            ],
+            [
+              "0x43C",
+              "_reserved13"
+            ],
+            [
+              "0x440",
+              "fifo_levels"
+            ],
+            [
+              "0x444",
+              "chan_abort"
+            ],
+            [
+              "0x448",
+              "n_channels"
+            ],
+            [
+              "0x44C",
+              "_reserved14"
+            ],
+            [
+              "0x800",
+              "ch0_dbg_ctdreq"
+            ],
+            [
+              "0x804",
+              "ch0_dbg_tcr"
+            ],
+            [
+              "0x808",
+              "_reserved15"
+            ],
+            [
+              "0x840",
+              "ch1_dbg_ctdreq"
+            ],
+            [
+              "0x844",
+              "ch1_dbg_tcr"
+            ],
+            [
+              "0x848",
+              "_reserved16"
+            ],
+            [
+              "0x880",
+              "ch2_dbg_ctdreq"
+            ],
+            [
+              "0x884",
+              "ch2_dbg_tcr"
+            ],
+            [
+              "0x888",
+              "_reserved17"
+            ],
+            [
+              "0x8C0",
+              "ch3_dbg_ctdreq"
+            ],
+            [
+              "0x8C4",
+              "ch3_dbg_tcr"
+            ],
+            [
+              "0x8C8",
+              "_reserved18"
+            ],
+            [
+              "0x900",
+              "ch4_dbg_ctdreq"
+            ],
+            [
+              "0x904",
+              "ch4_dbg_tcr"
+            ],
+            [
+              "0x908",
+              "_reserved19"
+            ],
+            [
+              "0x940",
+              "ch5_dbg_ctdreq"
+            ],
+            [
+              "0x944",
+              "ch5_dbg_tcr"
+            ],
+            [
+              "0x948",
+              "_reserved20"
+            ],
+            [
+              "0x980",
+              "ch6_dbg_ctdreq"
+            ],
+            [
+              "0x984",
+              "ch6_dbg_tcr"
+            ],
+            [
+              "0x988",
+              "_reserved21"
+            ],
+            [
+              "0x9C0",
+              "ch7_dbg_ctdreq"
+            ],
+            [
+              "0x9C4",
+              "ch7_dbg_tcr"
+            ],
+            [
+              "0x9C8",
+              "_reserved22"
+            ],
+            [
+              "0xA00",
+              "ch8_dbg_ctdreq"
+            ],
+            [
+              "0xA04",
+              "ch8_dbg_tcr"
+            ],
+            [
+              "0xA08",
+              "_reserved23"
+            ],
+            [
+              "0xA40",
+              "ch9_dbg_ctdreq"
+            ],
+            [
+              "0xA44",
+              "ch9_dbg_tcr"
+            ],
+            [
+              "0xA48",
+              "_reserved24"
+            ],
+            [
+              "0xA80",
+              "ch10_dbg_ctdreq"
+            ],
+            [
+              "0xA84",
+              "ch10_dbg_tcr"
+            ],
+            [
+              "0xA88",
+              "_reserved25"
+            ],
+            [
+              "0xAC0",
+              "ch11_dbg_ctdreq"
+            ],
+            [
+              "0xAC4",
+              "ch11_dbg_tcr"
+            ]
+          ],
+          "bases": [
+            "0x50000000"
+          ]
+        },
+        "rp2350": {
+          "path": "chips/rp2350/src/dma.rs",
+          "lines": 661,
+          "hil": [],
+          "impls": [],
+          "regblock": "ChannelRegisters",
+          "regs": [
+            [
+              "0x000",
+              "read_addr"
+            ],
+            [
+              "0x004",
+              "write_addr"
+            ],
+            [
+              "0x008",
+              "trans_count"
+            ],
+            [
+              "0x00C",
+              "ctrl_trig"
+            ],
+            [
+              "0x010",
+              "_reserved0"
+            ],
+            [
+              "0x000",
+              "channels"
+            ],
+            [
+              "0x400",
+              "intr"
+            ],
+            [
+              "0x404",
+              "inte0"
+            ],
+            [
+              "0x408",
+              "intf0"
+            ],
+            [
+              "0x40C",
+              "ints0"
+            ],
+            [
+              "0x410",
+              "_reserved0"
+            ],
+            [
+              "0x414",
+              "inte1"
+            ],
+            [
+              "0x418",
+              "intf1"
+            ],
+            [
+              "0x41C",
+              "ints1"
+            ],
+            [
+              "0x420",
+              "_reserved1"
+            ],
+            [
+              "0x424",
+              "inte2"
+            ],
+            [
+              "0x428",
+              "intf2"
+            ],
+            [
+              "0x42C",
+              "ints2"
+            ],
+            [
+              "0x430",
+              "_reserved2"
+            ],
+            [
+              "0x434",
+              "inte3"
+            ],
+            [
+              "0x438",
+              "intf3"
+            ],
+            [
+              "0x43C",
+              "ints3"
+            ]
+          ],
+          "bases": [
+            "0x50000000"
+          ]
+        },
+        "rp2xxx": {
+          "path": "chips/rp2xxx/src/dma.rs",
+          "lines": 49,
+          "hil": [],
+          "impls": [],
+          "regblock": "",
+          "regs": [],
+          "bases": []
+        }
+      },
+      "gpio": {
+        "rp2040": {
+          "path": "chips/rp2040/src/gpio.rs",
+          "lines": 765,
+          "hil": [
+            "gpio"
+          ],
+          "impls": [
+            "gpio::Configure",
+            "gpio::Input",
+            "gpio::Interrupt",
+            "gpio::Output"
+          ],
+          "regblock": "",
+          "regs": [
+            [
+              "0x000",
+              "pin"
+            ],
+            [
+              "0x0f0",
+              "intr"
+            ],
+            [
+              "0x100",
+              "interrupt_proc"
+            ],
+            [
+              "0x160",
+              "wake"
+            ],
+            [
+              "0x00",
+              "voltage"
+            ],
+            [
+              "0x04",
+              "gpio_pad"
+            ],
+            [
+              "0x000",
+              "cpuid"
+            ],
+            [
+              "0x004",
+              "gpio_in"
+            ],
+            [
+              "0x008",
+              "_reserved1"
+            ],
+            [
+              "0x010",
+              "gpio_out"
+            ],
+            [
+              "0x014",
+              "gpio_out_set"
+            ],
+            [
+              "0x018",
+              "gpio_out_clr"
+            ],
+            [
+              "0x01c",
+              "gpio_out_xor"
+            ],
+            [
+              "0x020",
+              "gpio_oe"
+            ],
+            [
+              "0x024",
+              "gpio_oe_set"
+            ],
+            [
+              "0x028",
+              "gpio_oe_clr"
+            ],
+            [
+              "0x02C",
+              "_reserved2"
+            ],
+            [
+              "0x050",
+              "fifo_st"
+            ],
+            [
+              "0x054",
+              "fifo_wr"
+            ],
+            [
+              "0x058",
+              "fifo_rd"
+            ]
+          ],
+          "bases": []
+        },
+        "rp2350": {
+          "path": "chips/rp2350/src/gpio.rs",
+          "lines": 1631,
+          "hil": [
+            "gpio"
+          ],
+          "impls": [
+            "gpio::Configure",
+            "gpio::Input",
+            "gpio::Interrupt",
+            "gpio::Output"
+          ],
+          "regblock": "",
+          "regs": [
+            [
+              "0x000",
+              "pin"
+            ],
+            [
+              "0x180",
+              "_reserved0"
+            ],
+            [
+              "0x200",
+              "irqsummary_proc0_secure0"
+            ],
+            [
+              "0x204",
+              "irqsummary_proc0_secure1"
+            ],
+            [
+              "0x208",
+              "irqsummary_proc0_nonsecure0"
+            ],
+            [
+              "0x20C",
+              "irqsummary_proc0_nonsecure1"
+            ],
+            [
+              "0x210",
+              "irqsummary_proc1_secure0"
+            ],
+            [
+              "0x214",
+              "irqsummary_proc1_secure1"
+            ],
+            [
+              "0x218",
+              "irqsummary_proc1_nonsecure0"
+            ],
+            [
+              "0x21C",
+              "irqsummary_proc1_nonsecure1"
+            ],
+            [
+              "0x220",
+              "irqsummary_dormant_wake_secure0"
+            ],
+            [
+              "0x224",
+              "irqsummary_dormant_wake_secure1"
+            ],
+            [
+              "0x228",
+              "irqsummary_dormant_wake_nonsecure0"
+            ],
+            [
+              "0x22C",
+              "irqsummary_dormant_wake_nonsecure1"
+            ],
+            [
+              "0x230",
+              "intr"
+            ],
+            [
+              "0x248",
+              "interrupt_proc"
+            ],
+            [
+              "0x2D8",
+              "dormant_wake_inte"
+            ],
+            [
+              "0x000",
+              "voltage_select"
+            ],
+            [
+              "0x004",
+              "gpio_pad"
+            ],
+            [
+              "0x0C4",
+              "swclk"
+            ],
+            [
+              "0x0C8",
+              "swd"
+            ],
+            [
+              "0x000",
+              "cpuid"
+            ],
+            [
+              "0x004",
+              "gpio_in"
+            ],
+            [
+              "0x008",
+              "gpio_hi_in"
+            ],
+            [
+              "0x00C",
+              "_reserved0"
+            ],
+            [
+              "0x010",
+              "gpio_out"
+            ],
+            [
+              "0x014",
+              "gpio_hi_out"
+            ],
+            [
+              "0x018",
+              "gpio_out_set"
+            ],
+            [
+              "0x01C",
+              "gpio_hi_out_set"
+            ],
+            [
+              "0x020",
+              "gpio_out_clr"
+            ],
+            [
+              "0x024",
+              "gpio_hi_out_clr"
+            ],
+            [
+              "0x028",
+              "gpio_out_xor"
+            ],
+            [
+              "0x02C",
+              "gpio_hi_out_xor"
+            ],
+            [
+              "0x030",
+              "gpio_oe"
+            ],
+            [
+              "0x034",
+              "gpio_hi_oe"
+            ],
+            [
+              "0x038",
+              "gpio_oe_set"
+            ],
+            [
+              "0x03C",
+              "gpio_hi_oe_set"
+            ],
+            [
+              "0x040",
+              "gpio_oe_clr"
+            ],
+            [
+              "0x044",
+              "gpio_hi_oe_clr"
+            ],
+            [
+              "0x048",
+              "gpio_oe_xor"
+            ],
+            [
+              "0x04C",
+              "gpio_hi_oe_xor"
+            ],
+            [
+              "0x050",
+              "fifo_st"
+            ],
+            [
+              "0x054",
+              "fifo_wr"
+            ],
+            [
+              "0x058",
+              "fifo_rd"
+            ],
+            [
+              "0x05C",
+              "spinlock_st"
+            ],
+            [
+              "0x060",
+              "_reserved1"
+            ],
+            [
+              "0x080",
+              "interp0_accum0"
+            ],
+            [
+              "0x084",
+              "interp0_accum1"
+            ],
+            [
+              "0x088",
+              "interp0_base0"
+            ],
+            [
+              "0x08C",
+              "interp0_base1"
+            ],
+            [
+              "0x090",
+              "interp0_base2"
+            ],
+            [
+              "0x094",
+              "interp0_pop_lane0"
+            ],
+            [
+              "0x098",
+              "interp0_pop_lane1"
+            ],
+            [
+              "0x09C",
+              "interp0_pop_full"
+            ],
+            [
+              "0x0A0",
+              "interp0_peek_lane0"
+            ],
+            [
+              "0x0A4",
+              "interp0_peek_lane1"
+            ],
+            [
+              "0x0A8",
+              "interp0_peek_full"
+            ],
+            [
+              "0x0AC",
+              "interp0_ctrl_lane0"
+            ],
+            [
+              "0x0B0",
+              "interp0_ctrl_lane1"
+            ],
+            [
+              "0x0B4",
+              "interp0_accum0_add"
+            ],
+            [
+              "0x0B8",
+              "interp0_accum1_add"
+            ],
+            [
+              "0x0BC",
+              "interp0_base_1and0"
+            ],
+            [
+              "0x0C0",
+              "interp1_accum0"
+            ],
+            [
+              "0x0C4",
+              "interp1_accum1"
+            ],
+            [
+              "0x0C8",
+              "interp1_base0"
+            ],
+            [
+              "0x0CC",
+              "interp1_base1"
+            ],
+            [
+              "0x0D0",
+              "interp1_base2"
+            ],
+            [
+              "0x0D4",
+              "interp1_pop_lane0"
+            ],
+            [
+              "0x0D8",
+              "interp1_pop_lane1"
+            ],
+            [
+              "0x0DC",
+              "interp1_pop_full"
+            ],
+            [
+              "0x0E0",
+              "interp1_peek_lane0"
+            ],
+            [
+              "0x0E4",
+              "interp1_peek_lane1"
+            ],
+            [
+              "0x0E8",
+              "interp1_peek_full"
+            ],
+            [
+              "0x0EC",
+              "interp1_ctrl_lane0"
+            ],
+            [
+              "0x0F0",
+              "interp1_ctrl_lane1"
+            ],
+            [
+              "0x0F4",
+              "interp1_accum0_add"
+            ],
+            [
+              "0x0F8",
+              "interp1_accum1_add"
+            ],
+            [
+              "0x0FC",
+              "interp1_base_1and0"
+            ],
+            [
+              "0x100",
+              "spinlock"
+            ],
+            [
+              "0x180",
+              "doorbell_out_set"
+            ],
+            [
+              "0x184",
+              "doorbell_out_clr"
+            ],
+            [
+              "0x188",
+              "doorbell_in_set"
+            ],
+            [
+              "0x18C",
+              "doorbell_in_clr"
+            ],
+            [
+              "0x190",
+              "peri_nonsec"
+            ],
+            [
+              "0x194",
+              "_reserved2"
+            ],
+            [
+              "0x1A0",
+              "riscv_softirq"
+            ],
+            [
+              "0x1A4",
+              "mtime_ctrl"
+            ],
+            [
+              "0x1A8",
+              "_reserved3"
+            ],
+            [
+              "0x1B0",
+              "mtime"
+            ],
+            [
+              "0x1B4",
+              "mtimeh"
+            ],
+            [
+              "0x1B8",
+              "mtimecmp"
+            ],
+            [
+              "0x1BC",
+              "mtimecmph"
+            ],
+            [
+              "0x1C0",
+              "tmds_ctrl"
+            ],
+            [
+              "0x1C4",
+              "tmds_wdata"
+            ],
+            [
+              "0x1C8",
+              "tmds_peek_single"
+            ],
+            [
+              "0x1CC",
+              "tmds_pop_single"
+            ],
+            [
+              "0x1D0",
+              "tmds_peek_double_l0"
+            ],
+            [
+              "0x1D4",
+              "tmds_pop_double_l0"
+            ],
+            [
+              "0x1D8",
+              "tmds_peek_double_l1"
+            ],
+            [
+              "0x1DC",
+              "tmds_pop_double_l1"
+            ],
+            [
+              "0x1E0",
+              "tmds_peek_double_l2"
+            ],
+            [
+              "0x1E4",
+              "tmds_pop_double_l2"
+            ]
+          ],
+          "bases": [
+            "0x40028000",
+            "0x40038000",
+            "0xD0000000"
+          ]
+        }
+      },
+      "i2c": {
+        "rp2040": {
+          "path": "chips/rp2040/src/i2c.rs",
+          "lines": 729,
+          "hil": [
+            "i2c"
+          ],
+          "impls": [
+            "i2c::I2CMaster"
+          ],
+          "regblock": "",
+          "regs": [
+            [
+              "0x00",
+              "ic_con"
+            ],
+            [
+              "0x04",
+              "ic_tar"
+            ],
+            [
+              "0x08",
+              "ic_sar"
+            ],
+            [
+              "0x0c",
+              "_reserved0"
+            ],
+            [
+              "0x10",
+              "ic_data_cmd"
+            ],
+            [
+              "0x14",
+              "ic_ss_scl_hcnt"
+            ],
+            [
+              "0x18",
+              "ic_ss_scl_lcnt"
+            ],
+            [
+              "0x1c",
+              "ic_fs_scl_hcnt"
+            ],
+            [
+              "0x20",
+              "ic_fs_scl_lcnt"
+            ],
+            [
+              "0x24",
+              "_reserved1"
+            ],
+            [
+              "0x2c",
+              "ic_intr_stat"
+            ],
+            [
+              "0x30",
+              "ic_intr_mask"
+            ],
+            [
+              "0x34",
+              "ic_raw_intr_stat"
+            ],
+            [
+              "0x38",
+              "ic_rx_tl"
+            ],
+            [
+              "0x3c",
+              "ic_tx_tl"
+            ],
+            [
+              "0x40",
+              "ic_clr_intr"
+            ],
+            [
+              "0x44",
+              "_reserved2"
+            ],
+            [
+              "0x54",
+              "ic_clr_tx_abrt"
+            ],
+            [
+              "0x58",
+              "_reserved3"
+            ],
+            [
+              "0x60",
+              "ic_clr_stop_det"
+            ],
+            [
+              "0x64",
+              "_reserved4"
+            ],
+            [
+              "0x6c",
+              "ic_enable"
+            ],
+            [
+              "0x70",
+              "_reserved5"
+            ],
+            [
+              "0x7c",
+              "ic_sda_hold"
+            ],
+            [
+              "0x80",
+              "ic_tx_abrt_source"
+            ],
+            [
+              "0x84",
+              "_reserved6"
+            ],
+            [
+              "0x88",
+              "ic_dma_cr"
+            ],
+            [
+              "0x8c",
+              "_reserved7"
+            ],
+            [
+              "0xa0",
+              "ic_fs_spklen"
+            ]
+          ],
+          "bases": [
+            "0x40044000",
+            "0x40048000"
+          ]
+        }
+      },
+      "interrupts": {
+        "rp2040": {
+          "path": "chips/rp2040/src/interrupts.rs",
+          "lines": 30,
+          "hil": [],
+          "impls": [],
+          "regblock": "",
+          "regs": [],
+          "bases": []
+        },
+        "rp2350": {
+          "path": "chips/rp2350/src/interrupts.rs",
+          "lines": 56,
+          "hil": [],
+          "impls": [],
+          "regblock": "",
+          "regs": [],
+          "bases": []
+        }
+      },
+      "lib": {
+        "rp2040": {
+          "path": "chips/rp2040/src/lib.rs",
+          "lines": 109,
+          "hil": [],
+          "impls": [],
+          "regblock": "",
+          "regs": [],
+          "bases": []
+        },
+        "rp2350": {
+          "path": "chips/rp2350/src/lib.rs",
+          "lines": 122,
+          "hil": [],
+          "impls": [],
+          "regblock": "",
+          "regs": [],
+          "bases": []
+        },
+        "rp2xxx": {
+          "path": "chips/rp2xxx/src/lib.rs",
+          "lines": 47,
+          "hil": [],
+          "impls": [],
+          "regblock": "",
+          "regs": [],
+          "bases": []
+        }
+      },
+      "mod": {
+        "rp2040": {
+          "path": "chips/rp2040/src/mod.rs",
+          "lines": 5,
+          "hil": [],
+          "impls": [],
+          "regblock": "",
+          "regs": [],
+          "bases": []
+        }
+      },
+      "pio": {
+        "rp2040": {
+          "path": "chips/rp2040/src/pio.rs",
+          "lines": 101,
+          "hil": [],
+          "impls": [],
+          "regblock": "",
+          "regs": [],
+          "bases": []
+        },
+        "rp2350": {
+          "path": "chips/rp2350/src/pio.rs",
+          "lines": 113,
+          "hil": [],
+          "impls": [],
+          "regblock": "",
+          "regs": [],
+          "bases": []
+        },
+        "rp2xxx": {
+          "path": "chips/rp2xxx/src/pio.rs",
+          "lines": 1710,
+          "hil": [
+            "gpio"
+          ],
+          "impls": [],
+          "regblock": "PioRegisters",
+          "regs": [
+            [
+              "0x000",
+              "ctrl"
+            ],
+            [
+              "0x004",
+              "fstat"
+            ],
+            [
+              "0x008",
+              "fdebug"
+            ],
+            [
+              "0x00C",
+              "flevel"
+            ],
+            [
+              "0x010",
+              "txf"
+            ],
+            [
+              "0x020",
+              "rxf"
+            ],
+            [
+              "0x030",
+              "irq"
+            ],
+            [
+              "0x034",
+              "irq_force"
+            ],
+            [
+              "0x038",
+              "input_sync_bypass"
+            ],
+            [
+              "0x03C",
+              "dbg_padout"
+            ],
+            [
+              "0x040",
+              "dbg_padoe"
+            ],
+            [
+              "0x044",
+              "dbg_cfginfo"
+            ],
+            [
+              "0x048",
+              "instr_mem"
+            ],
+            [
+              "0x0c8",
+              "sm"
+            ],
+            [
+              "0x000",
+              "intr"
+            ],
+            [
+              "0x004",
+              "irq0_inte"
+            ],
+            [
+              "0x008",
+              "irq0_intf"
+            ],
+            [
+              "0x00C",
+              "irq0_ints"
+            ],
+            [
+              "0x010",
+              "irq1_inte"
+            ],
+            [
+              "0x014",
+              "irq1_intf"
+            ],
+            [
+              "0x018",
+              "irq1_ints"
+            ]
+          ],
+          "bases": []
+        }
+      },
+      "pio_gspi": {
+        "rp2040": {
+          "path": "chips/rp2040/src/pio_gspi.rs",
+          "lines": 14,
+          "hil": [],
+          "impls": [],
+          "regblock": "",
+          "regs": [],
+          "bases": []
+        },
+        "rp2350": {
+          "path": "chips/rp2350/src/pio_gspi.rs",
+          "lines": 14,
+          "hil": [],
+          "impls": [],
+          "regblock": "",
+          "regs": [],
+          "bases": []
+        },
+        "rp2xxx": {
+          "path": "chips/rp2xxx/src/pio_gspi.rs",
+          "lines": 322,
+          "hil": [
+            "gpio",
+            "spi"
+          ],
+          "impls": [],
+          "regblock": "",
+          "regs": [],
+          "bases": []
+        }
+      },
+      "pio_pwm": {
+        "rp2040": {
+          "path": "chips/rp2040/src/pio_pwm.rs",
+          "lines": 129,
+          "hil": [
+            "pwm"
+          ],
+          "impls": [
+            "pwm::Pwm"
+          ],
+          "regblock": "",
+          "regs": [],
+          "bases": []
+        }
+      },
+      "pio_spi": {
+        "rp2040": {
+          "path": "chips/rp2040/src/pio_spi.rs",
+          "lines": 618,
+          "hil": [
+            "spi"
+          ],
+          "impls": [
+            "spi::SpiMaster"
+          ],
+          "regblock": "",
+          "regs": [],
+          "bases": []
+        }
+      },
+      "pwm": {
+        "rp2040": {
+          "path": "chips/rp2040/src/pwm.rs",
+          "lines": 1286,
+          "hil": [
+            "pwm"
+          ],
+          "impls": [
+            "pwm::Pwm",
+            "pwm::PwmPin"
+          ],
+          "regblock": "",
+          "regs": [
+            [
+              "0x0000",
+              "ch"
+            ],
+            [
+              "0x00A0",
+              "en"
+            ],
+            [
+              "0x00A4",
+              "intr"
+            ],
+            [
+              "0x00A8",
+              "inte"
+            ],
+            [
+              "0x00AC",
+              "intf"
+            ],
+            [
+              "0x00B0",
+              "ints"
+            ]
+          ],
+          "bases": [
+            "0x40050000"
+          ]
+        }
+      },
+      "resets": {
+        "rp2040": {
+          "path": "chips/rp2040/src/resets.rs",
+          "lines": 371,
+          "hil": [],
+          "impls": [],
+          "regblock": "",
+          "regs": [
+            [
+              "0x000",
+              "reset"
+            ],
+            [
+              "0x004",
+              "wdsel"
+            ],
+            [
+              "0x008",
+              "reset_done"
+            ]
+          ],
+          "bases": [
+            "0x4000C000"
+          ]
+        },
+        "rp2350": {
+          "path": "chips/rp2350/src/resets.rs",
+          "lines": 400,
+          "hil": [],
+          "impls": [],
+          "regblock": "",
+          "regs": [
+            [
+              "0x000",
+              "reset"
+            ],
+            [
+              "0x004",
+              "wdsel"
+            ],
+            [
+              "0x008",
+              "reset_done"
+            ]
+          ],
+          "bases": [
+            "0x40020000"
+          ]
+        }
+      },
+      "rtc": {
+        "rp2040": {
+          "path": "chips/rp2040/src/rtc.rs",
+          "lines": 448,
+          "hil": [
+            "date_time"
+          ],
+          "impls": [],
+          "regblock": "",
+          "regs": [
+            [
+              "0x000",
+              "clkdiv_m1"
+            ],
+            [
+              "0x004",
+              "setup_0"
+            ],
+            [
+              "0x008",
+              "setup_1"
+            ],
+            [
+              "0x00C",
+              "ctrl"
+            ],
+            [
+              "0x010",
+              "irq_setup_0"
+            ],
+            [
+              "0x014",
+              "irq_setup_1"
+            ],
+            [
+              "0x018",
+              "rtc_1"
+            ],
+            [
+              "0x01C",
+              "rtc_0"
+            ],
+            [
+              "0x020",
+              "intr"
+            ],
+            [
+              "0x024",
+              "inte"
+            ],
+            [
+              "0x028",
+              "intf"
+            ],
+            [
+              "0x02C",
+              "ints"
+            ]
+          ],
+          "bases": [
+            "0x4005C000"
+          ]
+        }
+      },
+      "spi": {
+        "rp2040": {
+          "path": "chips/rp2040/src/spi.rs",
+          "lines": 36,
+          "hil": [],
+          "impls": [],
+          "regblock": "",
+          "regs": [],
+          "bases": [
+            "0x4003C000",
+            "0x40040000"
+          ]
+        },
+        "rp2350": {
+          "path": "chips/rp2350/src/spi.rs",
+          "lines": 36,
+          "hil": [],
+          "impls": [],
+          "regblock": "",
+          "regs": [],
+          "bases": [
+            "0x40080000",
+            "0x40088000"
+          ]
+        },
+        "rp2xxx": {
+          "path": "chips/rp2xxx/src/spi.rs",
+          "lines": 638,
+          "hil": [
+            "gpio",
+            "spi"
+          ],
+          "impls": [
+            "spi::SpiMaster"
+          ],
+          "regblock": "SpiRegisters",
+          "regs": [
+            [
+              "0x000",
+              "sspcr0"
+            ],
+            [
+              "0x004",
+              "sspcr1"
+            ],
+            [
+              "0x008",
+              "sspdr"
+            ],
+            [
+              "0x00C",
+              "sspsr"
+            ],
+            [
+              "0x010",
+              "sspcpsr"
+            ],
+            [
+              "0x014",
+              "sspimsc"
+            ],
+            [
+              "0x018",
+              "sspris"
+            ],
+            [
+              "0x01C",
+              "sspmis"
+            ],
+            [
+              "0x020",
+              "sspicr"
+            ],
+            [
+              "0x024",
+              "sspdmacr"
+            ],
+            [
+              "0x028",
+              "_reserved0"
+            ],
+            [
+              "0xFE0",
+              "sspperiphid0"
+            ],
+            [
+              "0xFE4",
+              "sspperiphid1"
+            ],
+            [
+              "0xFE8",
+              "sspperiphid2"
+            ],
+            [
+              "0xFEC",
+              "sspperiphid3"
+            ],
+            [
+              "0xFF0",
+              "ssppcellid0"
+            ],
+            [
+              "0xFF4",
+              "ssppcellid1"
+            ],
+            [
+              "0xFF8",
+              "ssppcellid2"
+            ],
+            [
+              "0xFFC",
+              "ssppcellid3"
+            ]
+          ],
+          "bases": []
+        }
+      },
+      "sysinfo": {
+        "rp2040": {
+          "path": "chips/rp2040/src/sysinfo.rs",
+          "lines": 98,
+          "hil": [],
+          "impls": [],
+          "regblock": "",
+          "regs": [
+            [
+              "0x000",
+              "chip_id"
+            ],
+            [
+              "0x004",
+              "platform"
+            ],
+            [
+              "0x008",
+              "_reserved1"
+            ],
+            [
+              "0x040",
+              "gitref_rp2040"
+            ]
+          ],
+          "bases": [
+            "0x40000000"
+          ]
+        }
+      },
+      "timer": {
+        "rp2040": {
+          "path": "chips/rp2040/src/timer.rs",
+          "lines": 277,
+          "hil": [
+            "time"
+          ],
+          "impls": [
+            "time::Alarm",
+            "time::Time"
+          ],
+          "regblock": "",
+          "regs": [
+            [
+              "0x000",
+              "timehw"
+            ],
+            [
+              "0x004",
+              "timelw"
+            ],
+            [
+              "0x008",
+              "timehr"
+            ],
+            [
+              "0x00C",
+              "timelr"
+            ],
+            [
+              "0x010",
+              "alarm0"
+            ],
+            [
+              "0x014",
+              "alarm1"
+            ],
+            [
+              "0x018",
+              "alarm2"
+            ],
+            [
+              "0x01C",
+              "alarm3"
+            ],
+            [
+              "0x020",
+              "armed"
+            ],
+            [
+              "0x024",
+              "timerawh"
+            ],
+            [
+              "0x028",
+              "timerawl"
+            ],
+            [
+              "0x02C",
+              "dbgpause"
+            ],
+            [
+              "0x030",
+              "pause"
+            ],
+            [
+              "0x034",
+              "intr"
+            ],
+            [
+              "0x038",
+              "inte"
+            ],
+            [
+              "0x03C",
+              "intf"
+            ],
+            [
+              "0x040",
+              "ints"
+            ]
+          ],
+          "bases": [
+            "0x40054000"
+          ]
+        },
+        "rp2350": {
+          "path": "chips/rp2350/src/timer.rs",
+          "lines": 274,
+          "hil": [
+            "time"
+          ],
+          "impls": [
+            "time::Alarm",
+            "time::Time"
+          ],
+          "regblock": "",
+          "regs": [
+            [
+              "0x000",
+              "timehw"
+            ],
+            [
+              "0x004",
+              "timelw"
+            ],
+            [
+              "0x008",
+              "timehr"
+            ],
+            [
+              "0x00C",
+              "timelr"
+            ],
+            [
+              "0x010",
+              "alarm0"
+            ],
+            [
+              "0x014",
+              "alarm1"
+            ],
+            [
+              "0x018",
+              "alarm2"
+            ],
+            [
+              "0x01C",
+              "alarm3"
+            ],
+            [
+              "0x020",
+              "armed"
+            ],
+            [
+              "0x024",
+              "timerawh"
+            ],
+            [
+              "0x028",
+              "timerawl"
+            ],
+            [
+              "0x02C",
+              "dbgpause"
+            ],
+            [
+              "0x030",
+              "pause"
+            ],
+            [
+              "0x034",
+              "locked"
+            ],
+            [
+              "0x038",
+              "source"
+            ],
+            [
+              "0x03C",
+              "intr"
+            ],
+            [
+              "0x040",
+              "inte"
+            ],
+            [
+              "0x044",
+              "intf"
+            ],
+            [
+              "0x048",
+              "ints"
+            ]
+          ],
+          "bases": [
+            "0x400B0000"
+          ]
+        }
+      },
+      "uart": {
+        "rp2040": {
+          "path": "chips/rp2040/src/uart.rs",
+          "lines": 761,
+          "hil": [
+            "uart"
+          ],
+          "impls": [
+            "uart::Configure",
+            "uart::Receive",
+            "uart::Transmit"
+          ],
+          "regblock": "",
+          "regs": [
+            [
+              "0x000",
+              "uartdr"
+            ],
+            [
+              "0x004",
+              "uartrsr"
+            ],
+            [
+              "0x008",
+              "_reserved0"
+            ],
+            [
+              "0x018",
+              "uartfr"
+            ],
+            [
+              "0x01c",
+              "_reserved1"
+            ],
+            [
+              "0x020",
+              "uartilpr"
+            ],
+            [
+              "0x024",
+              "uartibrd"
+            ],
+            [
+              "0x028",
+              "uartfbrd"
+            ],
+            [
+              "0x02c",
+              "uartlcr_h"
+            ],
+            [
+              "0x030",
+              "uartcr"
+            ],
+            [
+              "0x034",
+              "uartifls"
+            ],
+            [
+              "0x038",
+              "uartimsc"
+            ],
+            [
+              "0x03c",
+              "uartris"
+            ],
+            [
+              "0x040",
+              "uartmis"
+            ],
+            [
+              "0x044",
+              "uarticr"
+            ],
+            [
+              "0x048",
+              "uartdmacr"
+            ],
+            [
+              "0x04c",
+              "_reserved2"
+            ],
+            [
+              "0xfe0",
+              "uartperiphid0"
+            ],
+            [
+              "0xfe4",
+              "uartperiphid1"
+            ],
+            [
+              "0xfe8",
+              "uartperiphid2"
+            ],
+            [
+              "0xfec",
+              "uartperiphid3"
+            ],
+            [
+              "0xff0",
+              "uartpcellid0"
+            ],
+            [
+              "0xff4",
+              "uartpcellid1"
+            ],
+            [
+              "0xff8",
+              "uartpcellid2"
+            ],
+            [
+              "0xffc",
+              "uartpcellid3"
+            ]
+          ],
+          "bases": [
+            "0x40034000",
+            "0x40038000"
+          ]
+        },
+        "rp2350": {
+          "path": "chips/rp2350/src/uart.rs",
+          "lines": 811,
+          "hil": [
+            "uart"
+          ],
+          "impls": [
+            "uart::Configure",
+            "uart::Receive",
+            "uart::Transmit"
+          ],
+          "regblock": "",
+          "regs": [
+            [
+              "0x000",
+              "uartdr"
+            ],
+            [
+              "0x004",
+              "uartrsr"
+            ],
+            [
+              "0x008",
+              "_reserved0"
+            ],
+            [
+              "0x018",
+              "uartfr"
+            ],
+            [
+              "0x01C",
+              "_reserved1"
+            ],
+            [
+              "0x020",
+              "uartilpr"
+            ],
+            [
+              "0x024",
+              "uartibrd"
+            ],
+            [
+              "0x028",
+              "uartfbrd"
+            ],
+            [
+              "0x02C",
+              "uartlcr_h"
+            ],
+            [
+              "0x030",
+              "uartcr"
+            ],
+            [
+              "0x034",
+              "uartifls"
+            ],
+            [
+              "0x038",
+              "uartimsc"
+            ],
+            [
+              "0x03C",
+              "uartris"
+            ],
+            [
+              "0x040",
+              "uartmis"
+            ],
+            [
+              "0x044",
+              "uarticr"
+            ],
+            [
+              "0x048",
+              "uartdmacr"
+            ],
+            [
+              "0x04C",
+              "_reserved2"
+            ],
+            [
+              "0xFE0",
+              "uartperiphid0"
+            ],
+            [
+              "0xFE4",
+              "uartperiphid1"
+            ],
+            [
+              "0xFE8",
+              "uartperiphid2"
+            ],
+            [
+              "0xFEC",
+              "uartperiphid3"
+            ],
+            [
+              "0xFF0",
+              "uartpcellid0"
+            ],
+            [
+              "0xFF4",
+              "uartpcellid1"
+            ],
+            [
+              "0xFF8",
+              "uartpcellid2"
+            ],
+            [
+              "0xFFC",
+              "uartpcellid3"
+            ]
+          ],
+          "bases": [
+            "0x40070000",
+            "0x40078000"
+          ]
+        }
+      },
+      "usb": {
+        "rp2040": {
+          "path": "chips/rp2040/src/usb.rs",
+          "lines": 2484,
+          "hil": [
+            "usb"
+          ],
+          "impls": [
+            "usb::UsbController"
+          ],
+          "regblock": "",
+          "regs": [
+            [
+              "0x00",
+              "ep_in_ctrl"
+            ],
+            [
+              "0x04",
+              "ep_out_ctrl"
+            ],
+            [
+              "0x00",
+              "ep_in_buf_ctrl"
+            ],
+            [
+              "0x04",
+              "ep_out_buf_ctrl"
+            ],
+            [
+              "0x00",
+              "setup_h"
+            ],
+            [
+              "0x04",
+              "setup_l"
+            ],
+            [
+              "0x08",
+              "ep_ctrl"
+            ],
+            [
+              "0x80",
+              "ep_buf_ctrl"
+            ],
+            [
+              "0x100",
+              "ep0_buffer0"
+            ],
+            [
+              "0x140",
+              "optional_ep0_buffer0"
+            ],
+            [
+              "0x180",
+              "buffers"
+            ],
+            [
+              "0x000",
+              "addr_endp"
+            ],
+            [
+              "0x004",
+              "addr_endp1"
+            ],
+            [
+              "0x008",
+              "addr_endp2"
+            ],
+            [
+              "0x00C",
+              "addr_endp3"
+            ],
+            [
+              "0x010",
+              "addr_endp4"
+            ],
+            [
+              "0x014",
+              "addr_endp5"
+            ],
+            [
+              "0x018",
+              "addr_endp6"
+            ],
+            [
+              "0x01C",
+              "addr_endp7"
+            ],
+            [
+              "0x020",
+              "addr_endp8"
+            ],
+            [
+              "0x024",
+              "addr_endp9"
+            ],
+            [
+              "0x028",
+              "addr_endp10"
+            ],
+            [
+              "0x02C",
+              "addr_endp11"
+            ],
+            [
+              "0x030",
+              "addr_endp12"
+            ],
+            [
+              "0x034",
+              "addr_endp13"
+            ],
+            [
+              "0x038",
+              "addr_endp14"
+            ],
+            [
+              "0x03C",
+              "addr_endp15"
+            ],
+            [
+              "0x040",
+              "main_ctrl"
+            ],
+            [
+              "0x044",
+              "sof_wr"
+            ],
+            [
+              "0x048",
+              "sof_rd"
+            ],
+            [
+              "0x04C",
+              "sie_ctrl"
+            ],
+            [
+              "0x050",
+              "sie_status"
+            ],
+            [
+              "0x054",
+              "int_ep_ctrl"
+            ],
+            [
+              "0x058",
+              "buff_status"
+            ],
+            [
+              "0x05C",
+              "buff_cpu_should_handle"
+            ],
+            [
+              "0x060",
+              "ep_abort"
+            ],
+            [
+              "0x064",
+              "ep_abort_done"
+            ],
+            [
+              "0x068",
+              "ep_stall_arm"
+            ],
+            [
+              "0x06C",
+              "nak_poll"
+            ],
+            [
+              "0x070",
+              "ep_status_stall_nak"
+            ],
+            [
+              "0x074",
+              "usb_muxing"
+            ],
+            [
+              "0x078",
+              "usb_pwr"
+            ],
+            [
+              "0x07C",
+              "usbphy_direct"
+            ],
+            [
+              "0x080",
+              "usbphy_direct_override"
+            ],
+            [
+              "0x084",
+              "usbphy_trim"
+            ],
+            [
+              "0x088",
+              "_reserved0"
+            ],
+            [
+              "0x08C",
+              "intr"
+            ],
+            [
+              "0x090",
+              "inte"
+            ],
+            [
+              "0x094",
+              "intf"
+            ],
+            [
+              "0x098",
+              "ints"
+            ]
+          ],
+          "bases": [
+            "0x50100000",
+            "0x50110000"
+          ]
+        }
+      },
+      "watchdog": {
+        "rp2040": {
+          "path": "chips/rp2040/src/watchdog.rs",
+          "lines": 129,
+          "hil": [],
+          "impls": [],
+          "regblock": "",
+          "regs": [
+            [
+              "0x000",
+              "ctrl"
+            ],
+            [
+              "0x004",
+              "load"
+            ],
+            [
+              "0x008",
+              "reason"
+            ],
+            [
+              "0x00C",
+              "scratch0"
+            ],
+            [
+              "0x010",
+              "scratch1"
+            ],
+            [
+              "0x014",
+              "scratch2"
+            ],
+            [
+              "0x018",
+              "scratch3"
+            ],
+            [
+              "0x01C",
+              "scratch4"
+            ],
+            [
+              "0x020",
+              "scratch5"
+            ],
+            [
+              "0x024",
+              "scratch6"
+            ],
+            [
+              "0x028",
+              "scratch7"
+            ],
+            [
+              "0x02C",
+              "tick"
+            ]
+          ],
+          "bases": [
+            "0x40058000"
+          ]
+        }
+      },
+      "xosc": {
+        "rp2040": {
+          "path": "chips/rp2040/src/xosc.rs",
+          "lines": 117,
+          "hil": [],
+          "impls": [],
+          "regblock": "",
+          "regs": [
+            [
+              "0x000",
+              "ctrl"
+            ],
+            [
+              "0x004",
+              "status"
+            ],
+            [
+              "0x008",
+              "dormant"
+            ],
+            [
+              "0x00C",
+              "startup"
+            ],
+            [
+              "0x010",
+              "_reserved0"
+            ],
+            [
+              "0x01C",
+              "count"
+            ]
+          ],
+          "bases": [
+            "0x40024000"
+          ]
+        },
+        "rp2350": {
+          "path": "chips/rp2350/src/xosc.rs",
+          "lines": 125,
+          "hil": [],
+          "impls": [],
+          "regblock": "",
+          "regs": [
+            [
+              "0x000",
+              "ctrl"
+            ],
+            [
+              "0x004",
+              "status"
+            ],
+            [
+              "0x008",
+              "dormant"
+            ],
+            [
+              "0x00C",
+              "startup"
+            ],
+            [
+              "0x010",
+              "count"
+            ]
+          ],
+          "bases": [
+            "0x40048000"
+          ]
+        }
+      },
+      "ticks": {
+        "rp2350": {
+          "path": "chips/rp2350/src/ticks.rs",
+          "lines": 174,
+          "hil": [],
+          "impls": [],
+          "regblock": "",
+          "regs": [
+            [
+              "0x000",
+              "proc0_ctrl"
+            ],
+            [
+              "0x004",
+              "proc0_cycles"
+            ],
+            [
+              "0x008",
+              "proc0_count"
+            ],
+            [
+              "0x00C",
+              "proc1_ctrl"
+            ],
+            [
+              "0x010",
+              "proc1_cycles"
+            ],
+            [
+              "0x014",
+              "proc1_count"
+            ],
+            [
+              "0x018",
+              "timer0_ctrl"
+            ],
+            [
+              "0x01C",
+              "timer0_cycles"
+            ],
+            [
+              "0x020",
+              "timer0_count"
+            ],
+            [
+              "0x024",
+              "timer1_ctrl"
+            ],
+            [
+              "0x028",
+              "timer1_cycles"
+            ],
+            [
+              "0x02C",
+              "timer1_count"
+            ],
+            [
+              "0x030",
+              "watchdog_ctrl"
+            ],
+            [
+              "0x034",
+              "watchdog_cycles"
+            ],
+            [
+              "0x038",
+              "watchdog_count"
+            ],
+            [
+              "0x03C",
+              "riscv_ctrl"
+            ],
+            [
+              "0x040",
+              "riscv_cycles"
+            ],
+            [
+              "0x044",
+              "riscv_count"
+            ]
+          ],
+          "bases": [
+            "0x40108000"
+          ]
+        }
+      },
+      "pads": {
+        "rp2xxx": {
+          "path": "chips/rp2xxx/src/pads.rs",
+          "lines": 57,
+          "hil": [
+            "gpio"
+          ],
+          "impls": [],
+          "regblock": "",
+          "regs": [],
+          "bases": []
+        }
+      }
+    },
+    "driver_nums": {
+      "Alarm": "0x00000",
+      "Console": "0x00001",
+      "Led": "0x00002",
+      "Button": "0x00003",
+      "Gpio": "0x00004",
+      "Adc": "0x00005",
+      "Dac": "0x00006",
+      "AnalogComparator": "0x00007",
+      "LowLevelDebug": "0x00008",
+      "ReadOnlyState": "0x00009",
+      "Pwm": "0x00010",
+      "Ipc": "0x10000",
+      "AppLoader": "0x10001",
+      "ProcessInfo": "0x10002",
+      "Spi": "0x20001",
+      "SpiPeripheral": "0x20002",
+      "I2cMaster": "0x20003",
+      "UsbUser": "0x20005",
+      "I2cMasterSlave": "0x20006",
+      "Can": "0x20007",
+      "BleAdvertising": "0x30000",
+      "Ieee802154": "0x30001",
+      "Udp": "0x30002",
+      "LoRaPhySPI": "0x30003",
+      "LoRaPhyGPIO": "0x30004",
+      "Thread": "0x30005",
+      "Eui64": "0x30006",
+      "EthernetTap": "0x30007",
+      "Wifi": "0x30008",
+      "Rng": "0x40001",
+      "Crc": "0x40002",
+      "Hmac": "0x40003",
+      "CtapHid": "0x40004",
+      "Sha": "0x40005",
+      "Aes": "0x40006",
+      "AppFlash": "0x50000",
+      "NvmStorage": "0x50001",
+      "SdCard": "0x50002",
+      "Kv": "0x50003",
+      "IsolatedNvmStorage": "0x50004",
+      "Temperature": "0x60000",
+      "Humidity": "0x60001",
+      "AmbientLight": "0x60002",
+      "NINEDOF": "0x60004",
+      "Proximity": "0x60005",
+      "SoundPressure": "0x60006",
+      "AirQuality": "0x60007",
+      "Pressure": "0x60008",
+      "Distance": "0x60009",
+      "Moisture": "0x6000A",
+      "RainFall": "0x6000B",
+      "Tsl2561": "0x70000",
+      "Tmp006": "0x70001",
+      "Lps25hb": "0x70004",
+      "L3gd20": "0x70005",
+      "Lsm303dlch": "0x70006",
+      "Mlx90614": "0x70007",
+      "Lsm6dsoxtr": "0x70008",
+      "Ltc294x": "0x80000",
+      "Max17205": "0x80001",
+      "Pca9544a": "0x80002",
+      "GpioAsync": "0x80003",
+      "Nrf51822Serialization": "0x80004",
+      "Buzzer": "0x90000",
+      "Screen": "0x90001",
+      "Touch": "0x90002",
+      "TextScreen": "0x90003",
+      "SevenSegment": "0x90004",
+      "KeyboardHid": "0x90005",
+      "DateTime": "0x90007",
+      "CycleCount": "0x90008",
+      "Servo": "0x90009",
+      "SyscallReturnTest": "0xB0000",
+      "Stepper": "0x00011"
+    },
+    "capsules": {
+      "capsules_core::adc": {
+        "path": "capsules/core/src/adc.rs",
+        "num_name": "Adc",
+        "hil": [
+          "adc"
+        ]
+      },
+      "capsules_core::alarm": {
+        "path": "capsules/core/src/alarm.rs",
+        "num_name": "Alarm",
+        "hil": [
+          "time"
+        ]
+      },
+      "capsules_core::console": {
+        "path": "capsules/core/src/console.rs",
+        "num_name": "Console",
+        "hil": [
+          "uart"
+        ]
+      },
+      "capsules_core::gpio": {
+        "path": "capsules/core/src/gpio.rs",
+        "num_name": "Gpio",
+        "hil": [
+          "gpio"
+        ]
+      },
+      "capsules_core::i2c_master": {
+        "path": "capsules/core/src/i2c_master.rs",
+        "num_name": "I2cMaster",
+        "hil": [
+          "i2c"
+        ]
+      },
+      "capsules_core::led": {
+        "path": "capsules/core/src/led.rs",
+        "num_name": "Led",
+        "hil": [
+          "gpio",
+          "led"
+        ]
+      },
+      "capsules_core::spi_controller": {
+        "path": "capsules/core/src/spi_controller.rs",
+        "num_name": "Spi",
+        "hil": [
+          "spi"
+        ]
+      },
+      "capsules_extra::date_time": {
+        "path": "capsules/extra/src/date_time.rs",
+        "num_name": "DateTime",
+        "hil": [
+          "date_time"
+        ]
+      },
+      "capsules_extra::temperature": {
+        "path": "capsules/extra/src/temperature.rs",
+        "num_name": "Temperature",
+        "hil": [
+          "sensors"
+        ]
+      },
+      "kernel::ipc": {
+        "path": "kernel/src/ipc.rs",
+        "num_name": "Ipc",
+        "hil": []
+      },
+      "capsules_extra::wifi": {
+        "path": "capsules/extra/src/wifi/mod.rs",
+        "num_name": "Wifi",
+        "hil": []
+      },
+      "capsules_extra::stepper": {
+        "path": "capsules/extra/src/stepper.rs",
+        "num_name": "Stepper",
+        "hil": [
+          "gpio",
+          "time"
+        ]
+      }
+    },
+    "added_by": {
+      "dma": "pico2w-typed",
+      "pio": "pico2w-typed",
+      "pio_gspi": "pico2w-typed",
+      "pads": "pico2w-typed",
+      "adc": "rp2-adc"
+    },
+    "touched": {
+      "bench/stepper-pico2w": [
+        "Cargo.lock",
+        "Cargo.toml",
+        "boards/README.md",
+        "boards/pico_explorer_base/src/main.rs",
+        "boards/raspberry_pi_pico_2/Makefile",
+        "boards/raspberry_pi_pico_2/src/io.rs",
+        "boards/raspberry_pi_pico_2/src/lib.rs",
+        "boards/raspberry_pi_pico_2/src/main.rs",
+        "boards/raspberry_pi_pico_2_w/.cargo/config.toml",
+        "boards/raspberry_pi_pico_2_w/Cargo.toml",
+        "boards/raspberry_pi_pico_2_w/Makefile",
+        "boards/raspberry_pi_pico_2_w/README.md",
+        "boards/raspberry_pi_pico_2_w/layout.ld",
+        "boards/raspberry_pi_pico_2_w/openocd-picoprobe.cfg",
+        "boards/raspberry_pi_pico_2_w/openocd-swd.cfg",
+        "boards/raspberry_pi_pico_2_w/src/io.rs",
+        "boards/raspberry_pi_pico_2_w/src/main.rs",
+        "boards/raspberry_pi_pico_2_w/src/pio_gspi_component.rs",
+        "boards/raspberry_pi_pico_w/src/main.rs",
+        "boards/raspberry_pi_pico_w/src/pio_gspi_component.rs",
+        "capsules/core/src/driver.rs",
+        "capsules/extra/src/lib.rs",
+        "capsules/extra/src/stepper.rs",
+        "chips/rp2040/src/adc.rs",
+        "chips/rp2040/src/chip.rs",
+        "chips/rp2040/src/dma.rs",
+        "chips/rp2040/src/gpio.rs",
+        "chips/rp2040/src/pio.rs",
+        "chips/rp2040/src/pio_gspi.rs",
+        "chips/rp2040/src/pio_pwm.rs",
+        "chips/rp2040/src/pio_spi.rs",
+        "chips/rp2350/src/adc.rs",
+        "chips/rp2350/src/chip.rs",
+        "chips/rp2350/src/dma.rs",
+        "chips/rp2350/src/gpio.rs",
+        "chips/rp2350/src/lib.rs",
+        "chips/rp2350/src/pio.rs",
+        "chips/rp2350/src/pio_gspi.rs",
+        "chips/rp2xxx/src/adc.rs",
+        "chips/rp2xxx/src/dma.rs",
+        "chips/rp2xxx/src/lib.rs",
+        "chips/rp2xxx/src/pads.rs",
+        "chips/rp2xxx/src/pio.rs",
+        "chips/rp2xxx/src/pio_gspi.rs",
+        "doc/syscalls/00011_stepper.md",
+        "doc/syscalls/README.md"
+      ],
+      "boards-fix-ram-layout": [],
+      "boards-remove-dead-ram-layout": [
+        "boards/nano_rp2040_connect/layout.ld",
+        "boards/pico_explorer_base/layout.ld",
+        "boards/raspberry_pi_pico/layout.ld",
+        "boards/raspberry_pi_pico_2/layout.ld",
+        "boards/raspberry_pi_pico_w/layout.ld"
+      ],
+      "pico2w-typed": [
+        "Cargo.lock",
+        "Cargo.toml",
+        "boards/README.md",
+        "boards/pico_explorer_base/src/main.rs",
+        "boards/raspberry_pi_pico_2/Makefile",
+        "boards/raspberry_pi_pico_2/src/io.rs",
+        "boards/raspberry_pi_pico_2/src/lib.rs",
+        "boards/raspberry_pi_pico_2/src/main.rs",
+        "boards/raspberry_pi_pico_2_w/.cargo/config.toml",
+        "boards/raspberry_pi_pico_2_w/Cargo.toml",
+        "boards/raspberry_pi_pico_2_w/Makefile",
+        "boards/raspberry_pi_pico_2_w/README.md",
+        "boards/raspberry_pi_pico_2_w/layout.ld",
+        "boards/raspberry_pi_pico_2_w/openocd-picoprobe.cfg",
+        "boards/raspberry_pi_pico_2_w/openocd-swd.cfg",
+        "boards/raspberry_pi_pico_2_w/src/io.rs",
+        "boards/raspberry_pi_pico_2_w/src/main.rs",
+        "boards/raspberry_pi_pico_2_w/src/pio_gspi_component.rs",
+        "boards/raspberry_pi_pico_w/src/main.rs",
+        "boards/raspberry_pi_pico_w/src/pio_gspi_component.rs",
+        "chips/rp2040/src/chip.rs",
+        "chips/rp2040/src/dma.rs",
+        "chips/rp2040/src/gpio.rs",
+        "chips/rp2040/src/pio.rs",
+        "chips/rp2040/src/pio_gspi.rs",
+        "chips/rp2040/src/pio_pwm.rs",
+        "chips/rp2040/src/pio_spi.rs",
+        "chips/rp2350/src/chip.rs",
+        "chips/rp2350/src/dma.rs",
+        "chips/rp2350/src/gpio.rs",
+        "chips/rp2350/src/lib.rs",
+        "chips/rp2350/src/pio.rs",
+        "chips/rp2350/src/pio_gspi.rs",
+        "chips/rp2xxx/src/dma.rs",
+        "chips/rp2xxx/src/lib.rs",
+        "chips/rp2xxx/src/pads.rs",
+        "chips/rp2xxx/src/pio.rs",
+        "chips/rp2xxx/src/pio_gspi.rs"
+      ],
+      "rp2-adc": [
+        "boards/raspberry_pi_pico_2/src/main.rs",
+        "chips/rp2040/src/adc.rs",
+        "chips/rp2040/src/chip.rs",
+        "chips/rp2350/src/adc.rs",
+        "chips/rp2350/src/chip.rs",
+        "chips/rp2350/src/lib.rs",
+        "chips/rp2xxx/src/adc.rs",
+        "chips/rp2xxx/src/lib.rs"
+      ],
+      "rp2-pad-controls": [
+        "chips/rp2040/src/gpio.rs",
+        "chips/rp2350/src/gpio.rs",
+        "chips/rp2xxx/src/lib.rs",
+        "chips/rp2xxx/src/pads.rs"
+      ],
+      "rp2-pio-prep": [
+        "chips/rp2040/src/pio.rs",
+        "chips/rp2040/src/pio_gspi.rs",
+        "chips/rp2040/src/pio_pwm.rs",
+        "chips/rp2040/src/pio_spi.rs"
+      ],
+      "rp2-pio-tests": [
+        "boards/raspberry_pi_pico_w/src/pio_gspi_component.rs",
+        "chips/rp2040/src/chip.rs",
+        "chips/rp2040/src/pio.rs",
+        "chips/rp2040/src/pio_gspi.rs"
+      ],
+      "rp2-uart-abort-fix": [
+        "capsules/core/src/virtualizers/virtual_uart.rs",
+        "chips/rp2040/src/uart.rs",
+        "chips/rp2350/src/uart.rs",
+        "chips/sifive/src/uart.rs"
+      ],
+      "rp2350-gpio-irq": [
+        "chips/rp2350/src/chip.rs"
+      ],
+      "stepper-capsule": [
+        "capsules/core/src/driver.rs",
+        "capsules/extra/src/lib.rs",
+        "capsules/extra/src/stepper.rs",
+        "doc/syscalls/00011_stepper.md",
+        "doc/syscalls/README.md"
+      ]
     }
   }
 }
