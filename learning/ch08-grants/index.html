@@ -1340,8 +1340,8 @@ dfn {
   <ul>
     <li>The kernel having no allocator to ask &mdash; <code>kernel/src/lib.rs</code>:93, <code>#![no_std]</code>, with no allocator crate anywhere in its dependencies</li>
     <li>What a grant is, in the kernel's own overview &mdash; <code>kernel/src/grant.rs</code>:5&ndash;40, "Grants allow capsules to dynamically allocate memory from a process to hold state on the process's behalf"</li>
-    <li>A grant not existing until it is entered, and not existing for one process because another entered it &mdash; the same file, :17&ndash;27</li>
-    <li>Upcalls and buffers being stored outside the driver's own type, so the kernel can keep the swap promises chapter 7 described &mdash; the same file, :29&ndash;32</li>
+    <li>A grant not existing until it is entered, and not existing for one process because another entered it &mdash; the same file, :17&ndash;27, "When a capsule does wish to use its Grant to allocate memory from a process, it must "enter" the Grant with a specific [`ProcessId`]"</li>
+    <li>Upcalls and buffers being stored outside the driver's own type, so the kernel can keep the swap promises chapter 7 described &mdash; the same file, :29&ndash;32, "Upcalls and allowed buffer references are stored outside of the `T` object to enable the kernel to manage them and ensure swapping guarantees are met"</li>
     <li>The layout of one grant, drawn &mdash; the same file, :185&ndash;211, with the counters word broken out at :212&ndash;221</li>
     <li>The arithmetic this chapter adds up &mdash; <code>grant_size</code>, the same file, :376&ndash;396: a counters word, then the three arrays, then padding to the driver type's alignment, then the type</li>
     <li>The three slot types, one pointer-pair each &mdash; the same file, :752&ndash;788; <code>MachineRegister</code> and <code>CapabilityPtr</code> are both <code>#[repr(transparent)]</code> over one pointer, at <code>kernel/src/utilities/machine_register.rs</code>:29 and <code>kernel/src/utilities/capability_ptr.rs</code>:29</li>
@@ -1354,11 +1354,11 @@ dfn {
     <li>The count being finalised once the first process exists &mdash; <code>get_grant_count_and_finalize</code>, <code>kernel/src/kernel.rs</code>:273&ndash;276, with grants created at :246</li>
     <li>Cutting a grant: size and alignment from the type, the pointer written into the table &mdash; <code>allocate_grant</code>, <code>kernel/src/process_standard.rs</code>:1213&ndash;1275, calling the region allocator at :1256</li>
     <li>A second grant for a driver number already in the table being refused &mdash; the same file, :1239&ndash;1251</li>
-    <li>The bump itself: down by the size, aligned down, and never back up &mdash; <code>allocate_in_grant_region_internal</code>, the same file, :2583&ndash;2622</li>
+    <li>The bump itself: down by the size, aligned down, and never back up &mdash; <code>allocate_in_grant_region_internal</code>, the same file, :2583&ndash;2622, "Ensures that the allocation is of `size` bytes and aligned to `align` bytes"</li>
     <li>The check that stops it reaching the process's own memory &mdash; the same file, :2604, comparing the would-be break against <code>app_break</code></li>
     <li>The same gap seen from the other side, where a process asking for heap is refused &mdash; the same file, :975&ndash;983</li>
     <li>Entering, and the panic when it is entered twice &mdash; <code>kernel/src/grant.rs</code>:1360&ndash;1400, "we panic!() to notify the developer that they tried to enter the same grant twice which is prohibited because it would result in two mutable references existing for the same memory"</li>
-    <li>The loop over every process skipping an entered grant instead of panicking &mdash; the same file, :1261&ndash;1263</li>
+    <li>The loop over every process skipping an entered grant instead of panicking &mdash; the same file, :1261&ndash;1263, "If the grant is already entered silently skip it"</li>
     <li>The grant being closed by a value going out of scope rather than by a call &mdash; the same file, :222&ndash;227, "On <code>Drop</code>, we leave the grant. This protects against calling <code>grant.enter()</code> without calling the corresponding <code>grant.leave()</code>"</li>
     <li>A restart recomputing the layout, after which every grant is gone &mdash; <code>reset</code>, <code>kernel/src/process_standard.rs</code>:2447&ndash;2463, reached from <code>try_restart</code> at :795 and from exit variant 1 at <code>kernel/src/kernel.rs</code>:1406&ndash;1408</li>
     <li>The target this chapter ends on &mdash; <code>flash-openocd</code>, <code>boards/raspberry_pi_pico_2/Makefile</code>:23&ndash;25, which needs no <code>APP</code> and no mounted drive; the drive route is <code>flash</code> at :27&ndash;30, tested against <code>BOOTSEL_FOLDER</code> at :13</li>

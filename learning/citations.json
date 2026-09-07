@@ -149,6 +149,13 @@
  "ch01-everything-is-memory": {
   "cites": [
    {
+    "closes": "unsafe { StaticRef::new(0xD0000000 as *const SIORegisters) };",
+    "end": 1169,
+    "opens": "const GPIO_BASE: StaticRef<GpioRegisters> =",
+    "path": "chips/rp2350/src/gpio.rs",
+    "start": 1164
+   },
+   {
     "closes": "(0x02C => gpio_hi_out_xor: ReadWrite<u32, GPIO_HI_OUT_XOR::Register>),",
     "end": 108,
     "opens": "/// GPIO0...31 output value",
@@ -173,10 +180,10 @@
     "start": 1519
    },
    {
-    "closes": "FUNCSEL OFFSET(0) NUMBITS(5) [",
+    "closes": "unsafe { StaticRef::new(0x40078000 as *const UartRegisters) };",
     "end": 347,
-    "opens": "DriveOutputHigh = 3",
-    "path": "chips/rp2350/src/gpio.rs",
+    "opens": "const UART0_BASE: StaticRef<UartRegisters> =",
+    "path": "chips/rp2350/src/uart.rs",
     "start": 343
    },
    {
@@ -187,10 +194,10 @@
     "start": 103
    },
    {
-    "closes": "/// This bit is the complement of the UART Out2 (nUARTOut2) modem status output. That is, ",
+    "closes": "fn set(&self);",
     "end": 154,
-    "opens": "CTSEN OFFSET(15) NUMBITS(1) [],",
-    "path": "chips/rp2350/src/uart.rs",
+    "opens": "pub trait Output {",
+    "path": "kernel/src/hil/gpio.rs",
     "start": 151
    },
    {

@@ -836,9 +836,15 @@ def figure_citation_checks(html):
 # were nearly two: the lockfile below needs exactly what `citation_chain_checks`
 # resolves, and a second copy of this token grammar would have drifted from it
 # the first time either changed. The same lesson as `page_bundle()`.
+# A path may be written as <code>path</code> or as <a href=...>path</a>.
+# Chapters 1 and 2 link theirs; every other chapter uses code spans. Reading
+# only the code spans left those paths unrecognised, so `current` stayed on
+# whatever was named before and their line numbers resolved against the wrong
+# file entirely -- the third spelling this parser has had to learn today, after
+# a missing .yml extension and a <div class="sources">.
 CITATION_TOKEN = re.compile(
-    r"<code>([A-Za-z0-9_./-]+\.(?:rs|md|s|toml|cfg|ld|json|ya?ml)"
-    r"|(?:[A-Za-z0-9_./-]*/)?Makefile(?:\.common)?)</code>"
+    r"<(?:code|a)\b[^>]*>([A-Za-z0-9_./-]+\.(?:rs|md|s|toml|cfg|ld|json|ya?ml)"
+    r"|(?:[A-Za-z0-9_./-]*/)?Makefile(?:\.common)?)</(?:code|a)>"
     # The word boundary is load-bearing. Chapter 0 quotes a USB identifier,
     # `2e8a:000c`, and without it that reads as a citation to line 0 of
     # whatever file was named last.
@@ -852,7 +858,8 @@ CITATION_TOKEN = re.compile(
 # and again for `.github/workflows/treadmill-ci.yml`, whose `:5-8` was being
 # measured against a seven-line config. So an unrecognised path is reported and
 # clears `current`, which turns a silent mis-resolution into a loud one.
-PATH_SHAPED = re.compile(r"<code>([A-Za-z0-9_./-]+/[A-Za-z0-9_.-]+\.[A-Za-z0-9]+)</code>")
+PATH_SHAPED = re.compile(
+    r"<(?:code|a)\b[^>]*>([A-Za-z0-9_./-]+/[A-Za-z0-9_.-]+\.[A-Za-z0-9]+)</(?:code|a)>")
 
 
 def unrecognised_paths(html):

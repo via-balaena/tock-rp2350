@@ -1335,9 +1335,9 @@ df02      svc 2            <span class="asm-c">// class 2: command</span>
   <p>Every claim on this page comes from the Tock tree at commit <code>83bad9388</code>, the same commit chapters 4, 5 and 6 were pinned to. The instruction encodings in Figure 1 and in the listing were assembled rather than looked up, from <code>syscall-demo.s</code> beside this page.</p>
   <ul>
     <li>The eight classes and their numbers &mdash; <code>SyscallClass</code>, <code>kernel/src/syscall.rs</code>:87&ndash;96, converted from a byte at :101&ndash;116</li>
-    <li>The file's own opening line saying six, three lines before it describes a seventh &mdash; the same file, :9&ndash;22</li>
-    <li>Eight kinds of request, each with its own set of arguments &mdash; <code>Syscall</code>, the same file, :150&ndash;236</li>
-    <li>Which classes carry a driver number &mdash; <code>driver_number</code>, the same file, :239&ndash;268, returning something for five of the eight</li>
+    <li>The file's own opening line saying six, three lines before it describes a seventh &mdash; the same file, :9&ndash;22, "Tock supports six system calls"</li>
+    <li>Eight kinds of request, each with its own set of arguments &mdash; <code>Syscall</code>, the same file, :150&ndash;236, "Structure representing an invocation of the [`SyscallClass::Yield`] system call class"</li>
+    <li>Which classes carry a driver number &mdash; <code>driver_number</code>, the same file, :239&ndash;268, returning something for five of the eight, "Get the `driver_number` for the syscall classes that use driver numbers"</li>
     <li>Four registers and a number becoming one of those shapes &mdash; <code>syscall_from_register_arguments_trd104</code>, <code>kernel/src/utilities/arch_helpers.rs</code>:42&ndash;107</li>
     <li>Yield being the only class whose first register is checked there, and 0, 1 and 2 being the whole of it &mdash; the same function, :50&ndash;66</li>
     <li>Anything that will not decode becoming a fault &mdash; <code>arch/cortex-m/src/syscall.rs</code>:509&ndash;512</li>
@@ -1370,7 +1370,7 @@ df02      svc 2            <span class="asm-c">// class 2: command</span>
     <li>The two endings, and the names the page borrows for them &mdash; <code>doc/reference/trd104-syscalls.md</code>:310&ndash;337, "Direct Resume" and "Pushed Callback"</li>
     <li>A read-write buffer being checked against the process's memory alone &mdash; <code>build_readwrite_process_buffer</code>, <code>kernel/src/process_standard.rs</code>:1054&ndash;1113, refusing with an invalid-argument error at :1111</li>
     <li>A read-only buffer being allowed to sit in flash &mdash; <code>build_readonly_process_buffer</code>, the same file, :1145&ndash;1147</li>
-    <li>The two addresses that decide it &mdash; <code>in_app_owned_memory</code>, the same file, :2545&ndash;2556, comparing against <code>mem_start()</code> and <code>app_break</code></li>
+    <li>The two addresses that decide it &mdash; <code>in_app_owned_memory</code>, the same file, :2545&ndash;2556, comparing against <code>mem_start()</code> and <code>app_break</code>, "If this method returns `true`, the buffer is guaranteed to be accessible to the process and to not overlap with the grant region"</li>
     <li>Those being the same two the region was built from &mdash; <code>memory_start</code> set to what the unit handed back at :2215 and :1937, and the region's far end moved to the break at :979&ndash;983</li>
     <li>A length of zero accepting any address &mdash; the same file, :1067&ndash;1082 and :1129&ndash;1144</li>
     <li>The mark that goes up and the break that cannot pass it &mdash; the same file, :1089&ndash;1090 and :975</li>

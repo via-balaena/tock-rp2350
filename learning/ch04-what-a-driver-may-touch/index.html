@@ -1505,7 +1505,7 @@ dfn {
   <p>Every claim on this page comes from the Tock tree at commit <code>83bad9388</code>. Nothing here was written from memory. The counts in Figure 3 were taken by counting the word in the <code>.rs</code> files under each path at that commit, once with comments stripped and once whole.</p>
   <ul>
     <li>The declaration in Figure 1, and the bounds check one line above the call &mdash; <code>capsules/core/src/led.rs</code>:71 and :112</li>
-    <li>The five methods of the <code>Led</code> trait &mdash; <code>kernel/src/hil/led.rs</code>:19&ndash;32</li>
+    <li>The five methods of the <code>Led</code> trait &mdash; <code>kernel/src/hil/led.rs</code>:19&ndash;32, "Return the on/off state of the LED"</li>
     <li>The capsule being 158 lines &mdash; <code>wc -l capsules/core/src/led.rs</code> at that commit</li>
     <li>The middle capsule having four fields and the largest thirty-one &mdash; the 290 <code>pub struct</code> declarations under <code>capsules/</code> at that commit, excluding tests and virtualizers; the largest is <code>extra/src/rf233.rs</code></li>
     <li>The kernel having no allocator &mdash; <code>#![no_std]</code> at <code>kernel/src/lib.rs</code>:93, and no crate under <code>kernel/</code> or <code>chips/</code> declaring <code>extern crate alloc</code></li>
@@ -1528,7 +1528,7 @@ dfn {
     <li>One panic handler for the binary, returning <code>!</code>, and the three capsule crates compiled into it &mdash; <code>boards/raspberry_pi_pico_2/src/io.rs</code>:88&ndash;89 and <code>Cargo.toml</code>:19&ndash;21</li>
     <li>The handler blinking the LEDs it is given forever, and why it may not return &mdash; <code>kernel/src/debug.rs</code>:280&ndash;284 and <code>panic_blink_forever</code> at :387</li>
     <li>The Pico 2's handler constructing its own <code>LedHigh</code> on GPIO&nbsp;25 rather than going through the capsule &mdash; <code>boards/raspberry_pi_pico_2/src/io.rs</code>:90&ndash;96</li>
-    <li>A timeslice governing a process rather than kernel code &mdash; the contract on <code>Kernel::do_process</code>, <code>kernel/src/kernel.rs</code>:450&ndash;460</li>
+    <li>A timeslice governing a process rather than kernel code &mdash; the contract on <code>Kernel::do_process</code>, <code>kernel/src/kernel.rs</code>:450&ndash;460, "Transfer control from the kernel to a userspace process"</li>
   </ul>
   <p class="license">Text, diagrams and interactive figures &copy;&nbsp;Jon&nbsp;Hillesheim&nbsp;2026, licensed CC&nbsp;BY-SA&nbsp;4.0 &mdash; share and adapt freely with credit, under the same license. Tock source excerpts quoted above remain under their own Apache-2.0&nbsp;OR&nbsp;MIT license and are not relicensed here.</p>
 </section>

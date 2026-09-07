@@ -325,8 +325,8 @@ SOURCES_BLOCK = re.compile(
     r'(<(?:section|div)[^>]*class="[^"]*\bsources\b[^"]*">)(.*?)(</(?:section|div)>)', re.S)
 PIN_CODE = re.compile(r"commit <code>([0-9a-f]{7,40})</code>")
 CITE_TOKEN = re.compile(
-    r"<code>([A-Za-z0-9_./-]+\.(?:rs|md|s|toml|cfg|ld|json|ya?ml)"
-    r"|(?:[A-Za-z0-9_./-]*/)?Makefile(?:\.common)?)</code>"
+    r"<(?:code|a)\b[^>]*>([A-Za-z0-9_./-]+\.(?:rs|md|s|toml|cfg|ld|json|ya?ml)"
+    r"|(?:[A-Za-z0-9_./-]*/)?Makefile(?:\.common)?)</(?:code|a)>"
     r"|:([1-9]\d*)(?:\s*(?:-|&ndash;|&#8211;|\u2013)\s*(\d+))?(?![\w])")
 
 

@@ -2644,7 +2644,7 @@ dfn {
   <ul>
     <li>Address decode on bits 31:28, the segment table, and unmapped ranges raising a bus error &mdash; RP2350 datasheet &sect;2.2, Table&nbsp;8</li>
     <li>SIO base <code class="addr">0xD0000000</code>, IO_BANK0 <code class="addr">0x40028000</code>, PADS <code class="addr">0x40038000</code> &mdash; <a href="https://github.com/tock/tock/blob/master/chips/rp2350/src/gpio.rs">chips/rp2350/src/gpio.rs</a>:1164&ndash;1169</li>
-    <li>The eight output registers at offsets <code>0x010</code>&ndash;<code>0x02C</code>, including the <code>gpio_hi_</code> siblings &mdash; <code>chips/rp2350/src/gpio.rs</code>:88&ndash;108</li>
+    <li>The eight output registers at offsets <code>0x010</code>&ndash;<code>0x02C</code>, including the <code>gpio_hi_</code> siblings &mdash; <code>chips/rp2350/src/gpio.rs</code>:88&ndash;108, "Output value for GPIO32...47, QSPI IOs and USB pins"</li>
     <li>Pins defined as <code>GPIO0</code>&ndash;<code>GPIO29</code> &mdash; <code>chips/rp2350/src/gpio.rs</code>:1245&ndash;1250</li>
     <li>30 GPIOs on QFN-60 (RP2350A) versus 48 on QFN-80 (RP2350B), their four and eight analogue inputs, the 7&nbsp;&times;&nbsp;7&nbsp;mm and 10&nbsp;&times;&nbsp;10&nbsp;mm packages, and GPIOs 30&ndash;47 being QFN-80 only &mdash; RP2350 datasheet Table&nbsp;1, the sentence introducing it, and the note under the pin-function table</li>
     <li>A pin's high level being the IOVDD rail, and all GPIOs sharing it &mdash; RP2350 datasheet &sect;6.1.1. That rail is 3.3&nbsp;V on a Pico&nbsp;2: <em>"3V3 is the main 3.3&nbsp;V supply to RP2350 and its I/O"</em> &mdash; Pico&nbsp;2 datasheet</li>
