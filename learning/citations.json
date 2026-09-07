@@ -34,10 +34,64 @@
     "start": 42
    },
    {
+    "opens": "OPENOCD=openocd",
+    "path": "boards/raspberry_pi_pico_2/Makefile",
+    "start": 13
+   },
+   {
+    "opens": "",
+    "path": "boards/raspberry_pi_pico_2/Makefile",
+    "start": 30
+   },
+   {
+    "opens": "endif",
+    "path": "boards/raspberry_pi_pico_2/Makefile",
+    "start": 40
+   },
+   {
+    "opens": "",
+    "path": "boards/raspberry_pi_pico_2/Makefile",
+    "start": 30
+   },
+   {
+    "opens": "endif",
+    "path": "boards/raspberry_pi_pico_2/Makefile",
+    "start": 40
+   },
+   {
+    "opens": "$(OPENOCD) $(OPENOCD_OPTIONS) -c \"adapter speed 5000\" -c \"program $<; verify_image $<;  re",
+    "path": "boards/raspberry_pi_pico_2/Makefile",
+    "start": 29
+   },
+   {
+    "opens": "$(error Please define the APP variable with the TBF file to flash an application)",
+    "path": "boards/raspberry_pi_pico_2/Makefile",
+    "start": 39
+   },
+   {
+    "closes": ".PHONY: program",
+    "end": 36,
+    "opens": "@if [ -d $(BOOTSEL_FOLDER) ]; then cp $(TOCK_ROOT_DIRECTORY)target/$(TARGET)/release/$(PLA",
+    "path": "boards/raspberry_pi_pico_2/Makefile",
+    "start": 34
+   },
+   {
+    "opens": "install: flash",
+    "path": "boards/raspberry_pi_pico_2/Makefile",
+    "start": 25
+   },
+   {
     "closes": "source [find target/rp2350.cfg]",
     "end": 6,
     "opens": "source [find interface/cmsis-dap.cfg]",
     "path": "boards/raspberry_pi_pico_2/openocd-picoprobe.cfg",
+    "start": 5
+   },
+   {
+    "closes": "# project. For more information on Treadmill, have a look at its documentation",
+    "end": 8,
+    "opens": "# This workflow contains all Treadmill-based hardware CI jobs.",
+    "path": ".github/workflows/treadmill-ci.yml",
     "start": 5
    },
    {
@@ -48,9 +102,29 @@
     "start": 260
    },
    {
+    "opens": "let uart_mux = components::console::UartMuxComponent::new(&peripherals.uart0, 115200)",
+    "path": "boards/raspberry_pi_pico_2/src/lib.rs",
+    "start": 303
+   },
+   {
     "opens": "kernel::debug!(\"Initialization complete. Enter main loop\");",
     "path": "boards/raspberry_pi_pico_2/src/main.rs",
     "start": 100
+   },
+   {
+    "opens": "kernel::debug!(\"Initialization complete. Enter main loop\");",
+    "path": "boards/raspberry_pi_pico_2/src/main.rs",
+    "start": 100
+   },
+   {
+    "opens": "kernel::process::load_processes(",
+    "path": "boards/raspberry_pi_pico_2/src/main.rs",
+    "start": 117
+   },
+   {
+    "opens": "kernel::debug!(\"Error loading processes!\");",
+    "path": "boards/raspberry_pi_pico_2/src/main.rs",
+    "start": 132
    },
    {
     "opens": "let _ = self.write_bytes(b\"tock$ \");",
@@ -63,6 +137,11 @@
     "opens": ".write_bytes(b\" PID    ShortID    Name                Quanta  \");",
     "path": "capsules/core/src/process_console.rs",
     "start": 897
+   },
+   {
+    "opens": "",
+    "path": "capsules/core/src/process_console.rs",
+    "start": 95
    }
   ],
   "pin": "83bad9388"
@@ -325,6 +404,27 @@
     "start": 304
    },
    {
+    "closes": ".apps (NOLOAD) :",
+    "end": 304,
+    "opens": "/* Section for application binaries in flash.",
+    "path": "boards/build_scripts/tock_kernel_layout.ld",
+    "start": 293
+   },
+   {
+    "closes": "BYTE(0xFF)",
+    "end": 321,
+    "opens": "BYTE(0xFF)",
+    "path": "boards/build_scripts/tock_kernel_layout.ld",
+    "start": 318
+   },
+   {
+    "closes": "_eappmem = ORIGIN(ram) + LENGTH(ram);",
+    "end": 366,
+    "opens": "_ezero = .;",
+    "path": "boards/build_scripts/tock_kernel_layout.ld",
+    "start": 350
+   },
+   {
     "closes": "///  \u255a\u2550 \u2558\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 \u2190 memory_start            \u2550\u255d",
     "end": 473,
     "opens": "///     \u2552\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 \u2190 memory_start + memory_len",
@@ -351,6 +451,40 @@
     "start": 1729
    },
    {
+    "opens": "/// 1712 |     const CALLBACKS_SIZE: usize = mem::size_of::<MaybeUninit<[Task; Self::CALLB",
+    "path": "kernel/src/process_standard.rs",
+    "start": 1753
+   },
+   {
+    "opens": "///      |",
+    "path": "kernel/src/process_standard.rs",
+    "start": 1755
+   },
+   {
+    "closes": "}",
+    "end": 1813,
+    "opens": "}",
+    "path": "kernel/src/process_standard.rs",
+    "start": 1811
+   },
+   {
+    "opens": ".wrapping_add(allocated_kernel_memory.len());",
+    "path": "kernel/src/process_standard.rs",
+    "start": 2108
+   },
+   {
+    "closes": "// accessible memory it must use the `brk` memop syscalls to request",
+    "end": 1843,
+    "opens": "// memory set to 0. This maximizes the flexibility that processes have",
+    "path": "kernel/src/process_standard.rs",
+    "start": 1841
+   },
+   {
+    "opens": ");",
+    "path": "kernel/src/process_standard.rs",
+    "start": 2083
+   },
+   {
     "opens": "const SVC_FRAME_SIZE: usize = 32;",
     "path": "arch/cortex-m/src/syscall.rs",
     "start": 196
@@ -375,6 +509,16 @@
     "opens": "}",
     "path": "kernel/src/process_standard.rs",
     "start": 2303
+   },
+   {
+    "opens": "//",
+    "path": "kernel/src/process_standard.rs",
+    "start": 2046
+   },
+   {
+    "opens": "kernel,",
+    "path": "kernel/src/process_standard.rs",
+    "start": 2216
    },
    {
     "opens": "ptr::write(stack_bottom.add(6), callback.pc.addr() | 1); // -> PC",
@@ -526,13 +670,13 @@
     "start": 33
    },
    {
-    "opens": "",
-    "path": "README.md",
+    "opens": "$ APP=\"<path to app's tbf file>\" make flash-app",
+    "path": "boards/raspberry_pi_pico_2/README.md",
     "start": 50
    },
    {
-    "opens": "@echo \"You'll need to install a few requirements before we get going.\"",
-    "path": "Makefile",
+    "opens": "picotool uf2 convert $< $(TOCK_ROOT_DIRECTORY)target/$(TARGET)/release/$(PLATFORM).uf2",
+    "path": "boards/raspberry_pi_pico_2/Makefile",
     "start": 33
    },
    {
@@ -541,35 +685,35 @@
     "start": 36
    },
    {
-    "opens": "# First, need to fill out some variables that the Makefile will use",
-    "path": "Makefile",
+    "opens": "",
+    "path": "boards/apollo3/redboard_artemis_nano/Makefile",
     "start": 13
    },
    {
-    "opens": "@echo \"$$(tput bold)Welcome to Tock!$$(tput sgr0)\"",
-    "path": "Makefile",
+    "opens": "--load-address-blob 0xE000 \\",
+    "path": "boards/apollo3/redboard_artemis_nano/Makefile",
     "start": 30
    },
    {
-    "opens": "@echo \"run 'make install' to load Tock onto hardware. Check out the README in\"",
-    "path": "Makefile",
+    "opens": "-b 115200 -port $(PORT) -r 2 -v \\",
+    "path": "boards/apollo3/redboard_artemis_nano/Makefile",
     "start": 40
    },
    {
-    "opens": "@echo \"your board's folder for more information.\"",
-    "path": "Makefile",
+    "opens": "--magic-num 0xCB --version 0x0 \\",
+    "path": "boards/apollo3/redboard_artemis_nano/Makefile",
     "start": 41
    },
    {
-    "closes": "@echo \"           audit: Audit Cargo dependencies for all kernel sources\"",
+    "closes": "",
     "end": 49,
-    "opens": "@echo \"There are a few helpful targets that can be run for individual boards. To\"",
-    "path": "Makefile",
+    "opens": "-i 6 --options 0x1",
+    "path": "boards/apollo3/redboard_artemis_nano/Makefile",
     "start": 43
    },
    {
-    "opens": "## Internal support that needs to run first",
-    "path": "Makefile",
+    "opens": "ifndef PORT",
+    "path": "boards/apollo3/redboard_artemis_nano/Makefile",
     "start": 10
    },
    {
@@ -621,6 +765,68 @@
     "start": 27
    },
    {
+    "closes": "],",
+    "end": 110,
+    "opens": "MPU_RBAR [",
+    "path": "arch/cortex-m33/src/mpu_v8m.rs",
+    "start": 80
+   },
+   {
+    "opens": "let rbar_value = MPU_RBAR::BASE.val((logical_start as u32) >> 5)",
+    "path": "arch/cortex-m33/src/mpu_v8m.rs",
+    "start": 346
+   },
+   {
+    "closes": "+ MPU_RLAR::LIMIT.val(((logical_end - 1) as u32) >> 5)",
+    "end": 363,
+    "opens": "// Limit Address register.",
+    "path": "arch/cortex-m33/src/mpu_v8m.rs",
+    "start": 358
+   },
+   {
+    "closes": "}",
+    "end": 356,
+    "opens": "// The end address must be aligned to 32 bytes.",
+    "path": "arch/cortex-m33/src/mpu_v8m.rs",
+    "start": 353
+   },
+   {
+    "opens": "const CORTEXM_MIN_REGION_SIZE: usize = 32;",
+    "path": "arch/cortex-m33/src/mpu_v8m.rs",
+    "start": 25
+   },
+   {
+    "opens": "if logical_size < CORTEXM_MIN_REGION_SIZE || region_size < logical_size {",
+    "path": "arch/cortex-m33/src/mpu_v8m.rs",
+    "start": 330
+   },
+   {
+    "closes": "}",
+    "end": 196,
+    "opens": "fn align32(initial_ptr: *const u8) -> Result<*const u8, ()> {",
+    "path": "arch/cortex-m33/src/mpu_v8m.rs",
+    "start": 188
+   },
+   {
+    "closes": "let region_end = align32(region_start.wrapping_add(min_region_size))?;",
+    "end": 469,
+    "opens": "let region_start = align32(unallocated_memory_start)?;",
+    "path": "arch/cortex-m33/src/mpu_v8m.rs",
+    "start": 468
+   },
+   {
+    "closes": "let region_end = align32(region_start.wrapping_add(memory_size))?;",
+    "end": 551,
+    "opens": "let region_start = align32(unallocated_memory_start)?;",
+    "path": "arch/cortex-m33/src/mpu_v8m.rs",
+    "start": 550
+   },
+   {
+    "opens": "let logical_end = align32(app_memory_break)?;",
+    "path": "arch/cortex-m33/src/mpu_v8m.rs",
+    "start": 623
+   },
+   {
     "closes": "}",
     "end": 17,
     "opens": "pub enum Permissions {",
@@ -628,10 +834,18 @@
     "start": 11
    },
    {
+    "closes": "};",
     "end": 343,
-    "opens": null,
-    "path": "mpu_v8m.rs",
+    "opens": "let (access, execute) = match permissions {",
+    "path": "arch/cortex-m33/src/mpu_v8m.rs",
     "start": 335
+   },
+   {
+    "closes": "}",
+    "end": 342,
+    "opens": "mpu::Permissions::ExecuteOnly => {",
+    "path": "arch/cortex-m33/src/mpu_v8m.rs",
+    "start": 340
    },
    {
     "closes": ".mpu()",
@@ -639,6 +853,13 @@
     "opens": "let process_name = pb.header.get_package_name();",
     "path": "kernel/src/process_standard.rs",
     "start": 1783
+   },
+   {
+    "closes": "//   of this allocation, `initial_kernel_memory_size` bytes long.",
+    "end": 1935,
+    "opens": "//",
+    "path": "kernel/src/process_standard.rs",
+    "start": 1928
    },
    {
     "closes": "}",
@@ -653,24 +874,25 @@
     "start": 196
    },
    {
-    "opens": null,
-    "path": "mpu_v8m.rs",
+    "opens": "const APP_MEMORY_REGION_MAX_NUM: usize = 0;",
+    "path": "arch/cortex-m33/src/mpu_v8m.rs",
     "start": 251
    },
    {
-    "opens": null,
-    "path": "mpu_v8m.rs",
+    "opens": "config.regions[0] = region;",
+    "path": "arch/cortex-m33/src/mpu_v8m.rs",
     "start": 583
    },
    {
-    "opens": null,
-    "path": "mpu_v8m.rs",
+    "opens": "config.regions[0] = region;",
+    "path": "arch/cortex-m33/src/mpu_v8m.rs",
     "start": 648
    },
    {
+    "closes": "}",
     "end": 292,
-    "opens": null,
-    "path": "mpu_v8m.rs",
+    "opens": "fn unused_region_number(&self) -> Option<usize> {",
+    "path": "arch/cortex-m33/src/mpu_v8m.rs",
     "start": 288
    },
    {
@@ -706,8 +928,8 @@
     "start": 136
    },
    {
-    "opens": null,
-    "path": "mpu_v8m.rs",
+    "opens": "fn number_total_regions(&self) -> usize {",
+    "path": "arch/cortex-m33/src/mpu_v8m.rs",
     "start": 421
    },
    {
@@ -738,9 +960,10 @@
     "start": 534
    },
    {
+    "closes": "}",
     "end": 413,
-    "opens": null,
-    "path": "mpu_v8m.rs",
+    "opens": "fn enable_app_mpu(&self) {",
+    "path": "arch/cortex-m33/src/mpu_v8m.rs",
     "start": 407
    },
    {
@@ -751,9 +974,10 @@
     "start": 391
    },
    {
+    "closes": "}",
     "end": 419,
-    "opens": null,
-    "path": "mpu_v8m.rs",
+    "opens": "unsafe fn disable_app_mpu(&self) {",
+    "path": "arch/cortex-m33/src/mpu_v8m.rs",
     "start": 415
    },
    {
@@ -771,10 +995,23 @@
     "start": 560
    },
    {
+    "closes": "}",
     "end": 672,
-    "opens": null,
-    "path": "mpu_v8m.rs",
+    "opens": "unsafe fn configure_mpu(&self, config: &Self::MpuConfig) {",
+    "path": "arch/cortex-m33/src/mpu_v8m.rs",
     "start": 654
+   },
+   {
+    "closes": ".modify(MPU_MAIR0::ATTR0.val(0b0100_0100));",
+    "end": 658,
+    "opens": "// Set ATTR0 to Normal Memory, Outer and Inner Non-cacheable.",
+    "path": "arch/cortex-m33/src/mpu_v8m.rs",
+    "start": 655
+   },
+   {
+    "opens": "+ MPU_RLAR::ATTRINDX.val(0);",
+    "path": "arch/cortex-m33/src/mpu_v8m.rs",
+    "start": 365
    },
    {
     "opens": "MEMFAULTENA     OFFSET(16)  NUMBITS(1),",
@@ -801,6 +1038,20 @@
     "opens": "// fault. If so, then we cannot use this stack while handling this fault",
     "path": "arch/cortex-v7m/src/lib.rs",
     "start": 606
+   },
+   {
+    "closes": "// kernel's original stack. This should in theory leave the bottom",
+    "end": 623,
+    "opens": "movne r1, #1           // BFSR & 0b00110000 != 0; r1 = 1",
+    "path": "arch/cortex-v7m/src/lib.rs",
+    "start": 612
+   },
+   {
+    "closes": "moveq  sp, r3        // Set the stack pointer to _estack",
+    "end": 627,
+    "opens": "// to further debug.",
+    "path": "arch/cortex-v7m/src/lib.rs",
+    "start": 625
    },
    {
     "opens": "pub static mut APP_HARD_FAULT: UnsafeCell<usize> = UnsafeCell::new(0);",
@@ -851,11 +1102,39 @@
     "start": 101
    },
    {
+    "closes": "//!   buffer.",
+    "end": 22,
+    "opens": "//! Tock supports six system calls. The `allow_readonly`, `allow_readwrite`,",
+    "path": "kernel/src/syscall.rs",
+    "start": 9
+   },
+   {
+    "closes": "}",
+    "end": 236,
+    "opens": "pub enum Syscall {",
+    "path": "kernel/src/syscall.rs",
+    "start": 150
+   },
+   {
+    "closes": "subdriver_number: _,",
+    "end": 268,
+    "opens": "/// Get the `driver_number` for the syscall classes that use driver numbers.",
+    "path": "kernel/src/syscall.rs",
+    "start": 239
+   },
+   {
     "closes": "}",
     "end": 107,
     "opens": "pub fn syscall_from_register_arguments_trd104(",
     "path": "kernel/src/utilities/arch_helpers.rs",
     "start": 42
+   },
+   {
+    "closes": "},",
+    "end": 66,
+    "opens": "Ok(SyscallClass::Yield) => match r0 {",
+    "path": "kernel/src/utilities/arch_helpers.rs",
+    "start": 50
    },
    {
     "closes": "}",
@@ -865,6 +1144,13 @@
     "start": 509
    },
    {
+    "closes": "let svc_num = (svc_instr & 0xff) as u8;",
+    "end": 497,
+    "opens": "// Get the actual SVC number.",
+    "path": "arch/cortex-m/src/syscall.rs",
+    "start": 478
+   },
+   {
     "closes": "| Upcall Arguments       | r0-r3   | a0-a3  |",
     "end": 108,
     "opens": "|                        | CortexM | RISC-V |",
@@ -872,11 +1158,18 @@
     "start": 103
    },
    {
-    "closes": "// the frame pointer. However, in the process of restoring and saving the",
-    "end": 298,
-    "opens": "unsafe {",
+    "closes": "svc 0xff",
+    "end": 322,
+    "opens": "// Generate a SVC exception to handle the context switch from kernel to",
     "path": "arch/cortex-v7m/src/lib.rs",
-    "start": 293
+    "start": 318
+   },
+   {
+    "closes": "// alternative/process stack was in use) then we are coming from a process",
+    "end": 82,
+    "opens": "/// - This does not fall-through, it branches in both arms of the branch.",
+    "path": "arch/cortex-v7m/src/lib.rs",
+    "start": 73
    },
    {
     "opens": "const SVC_HANDLER: unsafe extern \"C\" fn() = cortexv7m::svc_handler_arm_v7m;",
@@ -896,6 +1189,23 @@
     "opens": "/// kernel system call filtering policy (if any). Handles `Yield` and",
     "path": "kernel/src/kernel.rs",
     "start": 761
+   },
+   {
+    "closes": "",
+    "end": 857,
+    "opens": "process.set_byte(ptr, has_tasks as u8);",
+    "path": "kernel/src/kernel.rs",
+    "start": 850
+   },
+   {
+    "opens": "let _ =process.remove_pending_upcalls(upcall_id);",
+    "path": "kernel/src/kernel.rs",
+    "start": 1035
+   },
+   {
+    "opens": "}",
+    "path": "kernel/src/kernel.rs",
+    "start": 1036
    },
    {
     "closes": "}",
@@ -938,6 +1248,13 @@
     "start": 1005
    },
    {
+    "closes": "}",
+    "end": 1417,
+    "opens": "| Syscall::Memop { .. } => {",
+    "path": "kernel/src/kernel.rs",
+    "start": 1411
+   },
+   {
     "closes": "fn allocate_grant(&self, process_id: ProcessId) -> Result<(), crate::process::Error>;",
     "end": 390,
     "opens": "pub trait SyscallDriver {",
@@ -960,11 +1277,32 @@
     "start": 390
    },
    {
+    "closes": "/// forgetting to implement this function.",
+    "end": 313,
+    "opens": "/// No default implementation is provided to help prevent accidentally",
+    "path": "kernel/src/syscall_driver.rs",
+    "start": 312
+   },
+   {
     "closes": "}",
     "end": 198,
     "opens": "pub enum TRD104SyscallReturnVariant {",
     "path": "kernel/src/utilities/arch_helpers.rs",
     "start": 187
+   },
+   {
+    "closes": "}",
+    "end": 296,
+    "opens": "pub fn encode_syscall_return_trd104(",
+    "path": "kernel/src/utilities/arch_helpers.rs",
+    "start": 285
+   },
+   {
+    "closes": "}",
+    "end": 663,
+    "opens": "pub unsafe fn encode_upcall_trd104_ptr(",
+    "path": "kernel/src/utilities/arch_helpers.rs",
+    "start": 649
    },
    {
     "opens": "argument3: self.appdata,",
@@ -996,6 +1334,11 @@
     "opens": "false => {",
     "path": "kernel/src/process_standard.rs",
     "start": 625
+   },
+   {
+    "opens": "}",
+    "path": "kernel/src/process_standard.rs",
+    "start": 1729
    },
    {
     "closes": "// If the process is yielded or hasn't been started it is",
@@ -1036,6 +1379,23 @@
     "start": 404
    },
    {
+    "opens": "//  - Stack offset 4 is R12, which the syscall interface ignores",
+    "path": "arch/cortex-m/src/syscall.rs",
+    "start": 393
+   },
+   {
+    "opens": "//  - Instruction addresses require `|1` to indicate thumb code",
+    "path": "arch/cortex-m/src/syscall.rs",
+    "start": 392
+   },
+   {
+    "closes": "ptr::write(stack_bottom.add(5), state.yield_pc | 1); // ... -> LR",
+    "end": 405,
+    "opens": "ptr::write(stack_bottom.add(6), callback.pc.addr() | 1); // -> PC",
+    "path": "arch/cortex-m/src/syscall.rs",
+    "start": 404
+   },
+   {
     "closes": "",
     "end": 337,
     "opens": "",
@@ -1053,6 +1413,73 @@
     "opens": "// `in_app_owned_memory`) and respect alignment and other",
     "path": "kernel/src/process_standard.rs",
     "start": 1111
+   },
+   {
+    "closes": "// It should be fine to ignore the lint here, as a buffer of length",
+    "end": 1147,
+    "opens": "// https://github.com/rust-lang/rust-clippy/issues/3045",
+    "path": "kernel/src/process_standard.rs",
+    "start": 1145
+   },
+   {
+    "closes": "// could skip this check.",
+    "end": 2556,
+    "opens": "argument3: (self.app_break.get() as usize).into(),",
+    "path": "kernel/src/process_standard.rs",
+    "start": 2545
+   },
+   {
+    "opens": "process_id: Cell::new(ProcessId::new(",
+    "path": "kernel/src/process_standard.rs",
+    "start": 2215
+   },
+   {
+    "opens": "let (allocation_start, allocation_size) = match chip.mpu().allocate_app_memory_region(",
+    "path": "kernel/src/process_standard.rs",
+    "start": 1937
+   },
+   {
+    "closes": "config,",
+    "end": 983,
+    "opens": "} else if let Err(()) = self.chip.mpu().update_app_memory_region(",
+    "path": "kernel/src/process_standard.rs",
+    "start": 979
+   },
+   {
+    "closes": "// Relevant discussion:",
+    "end": 1082,
+    "opens": ") -> Result<ReadWriteProcessBuffer, ErrorCode> {",
+    "path": "kernel/src/process_standard.rs",
+    "start": 1067
+   },
+   {
+    "closes": "// Relevant discussion:",
+    "end": 1144,
+    "opens": ") -> Result<ReadOnlyProcessBuffer, ErrorCode> {",
+    "path": "kernel/src/process_standard.rs",
+    "start": 1129
+   },
+   {
+    "closes": "// Therefore, we can encapsulate the unsafe.",
+    "end": 1090,
+    "opens": "// `ReadWriteProcessBuffer` will handle any safety issues.",
+    "path": "kernel/src/process_standard.rs",
+    "start": 1089
+   },
+   {
+    "opens": "if new_break < self.allow_high_water_mark.get() || new_break >= self.mem_end() {",
+    "path": "kernel/src/process_standard.rs",
+    "start": 975
+   },
+   {
+    "opens": "self.app_break.set(app_brk);",
+    "path": "kernel/src/process_standard.rs",
+    "start": 2463
+   },
+   {
+    "opens": "if let Ok(()) = self.reset() {",
+    "path": "kernel/src/process_standard.rs",
+    "start": 795
    },
    {
     "closes": "}",
@@ -1183,6 +1610,48 @@
     "start": 5
    },
    {
+    "closes": "//! entered for other processes.",
+    "end": 27,
+    "opens": "//! When a capsule does wish to use its Grant to allocate memory from a process,",
+    "path": "kernel/src/grant.rs",
+    "start": 17
+   },
+   {
+    "closes": "//! manage them and ensure swapping guarantees are met.",
+    "end": 32,
+    "opens": "//! Upcalls and allowed buffer references are stored in the dynamically",
+    "path": "kernel/src/grant.rs",
+    "start": 29
+   },
+   {
+    "closes": "///            \u2502   Counters (usize)         |       |",
+    "end": 211,
+    "opens": "/// Helper that calculated offsets within the kernel owned memory (i.e. the",
+    "path": "kernel/src/grant.rs",
+    "start": 185
+   },
+   {
+    "closes": "/// |-------------|-------------|-------------|-------------|",
+    "end": 221,
+    "opens": "/// 0x003FF20  \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518",
+    "path": "kernel/src/grant.rs",
+    "start": 212
+   },
+   {
+    "closes": "}",
+    "end": 396,
+    "opens": "fn grant_size(",
+    "path": "kernel/src/grant.rs",
+    "start": 376
+   },
+   {
+    "closes": "}",
+    "end": 788,
+    "opens": "#[repr(C)]",
+    "path": "kernel/src/grant.rs",
+    "start": 752
+   },
+   {
     "opens": "#[repr(transparent)]",
     "path": "kernel/src/utilities/machine_register.rs",
     "start": 29
@@ -1200,6 +1669,20 @@
     "start": 104
    },
    {
+    "closes": "}",
+    "end": 92,
+    "opens": "/// IDs for subscribed upcalls.",
+    "path": "capsules/core/src/console.rs",
+    "start": 59
+   },
+   {
+    "closes": "}",
+    "end": 100,
+    "opens": "#[derive(Default)]",
+    "path": "capsules/core/src/console.rs",
+    "start": 94
+   },
+   {
     "closes": "grant_ptr: *mut u8,",
     "end": 410,
     "opens": "struct GrantPointerEntry {",
@@ -1212,6 +1695,20 @@
     "opens": "/// This defaults to 0 if the grant has not been allocated. Note, however,",
     "path": "kernel/src/process_standard.rs",
     "start": 403
+   },
+   {
+    "closes": "// `GrantPointerEntry`s start.",
+    "end": 2128,
+    "opens": "// Set up initial grant region.",
+    "path": "kernel/src/process_standard.rs",
+    "start": 2102
+   },
+   {
+    "closes": "}",
+    "end": 1813,
+    "opens": "}",
+    "path": "kernel/src/process_standard.rs",
+    "start": 1811
    },
    {
     "closes": "}",
@@ -1238,11 +1735,51 @@
     "start": 1256
    },
    {
+    "closes": "grant_pointers.iter().any(|grant_entry| {",
+    "end": 1251,
+    "opens": "// Verify that the grant is not already allocated. If the pointer is not",
+    "path": "kernel/src/process_standard.rs",
+    "start": 1239
+   },
+   {
+    "closes": "mpu::Permissions::ReadWriteOnly,",
+    "end": 2622,
+    "opens": "",
+    "path": "kernel/src/process_standard.rs",
+    "start": 2583
+   },
+   {
+    "opens": "let align = cmp::max(align, 2);",
+    "path": "kernel/src/process_standard.rs",
+    "start": 2604
+   },
+   {
+    "closes": "config,",
+    "end": 983,
+    "opens": "if new_break < self.allow_high_water_mark.get() || new_break >= self.mem_end() {",
+    "path": "kernel/src/process_standard.rs",
+    "start": 975
+   },
+   {
     "closes": "// that is using the capsule, and sometimes it is intuitive to",
     "end": 1400,
     "opens": "/// grant memory.",
     "path": "kernel/src/grant.rs",
     "start": 1360
+   },
+   {
+    "closes": "/// associated Upcalls.",
+    "end": 1263,
+    "opens": "/// related Grant only if that grant region is not already entered. If the",
+    "path": "kernel/src/grant.rs",
+    "start": 1261
+   },
+   {
+    "closes": "/// calling the corresponding `grant.leave()`, perhaps due to accidentally using",
+    "end": 227,
+    "opens": "/// ```",
+    "path": "kernel/src/grant.rs",
+    "start": 222
    },
    {
     "closes": "self.app_break.set(app_brk);",

@@ -1343,7 +1343,7 @@ df02      svc 2            <span class="asm-c">// class 2: command</span>
     <li>Anything that will not decode becoming a fault &mdash; <code>arch/cortex-m/src/syscall.rs</code>:509&ndash;512</li>
     <li>The class number coming out of the instruction rather than a register &mdash; the same file, :478&ndash;497, stepping the program counter back one halfword and masking the low eight bits</li>
     <li>The arguments travelling in <b>r0</b> to <b>r3</b> and the class identifier travelling in the instruction &mdash; <code>doc/reference/trd104-syscalls.md</code>:103&ndash;108, where the row for the class identifier says <code>svc</code> rather than a register</li>
-    <li>The kernel entering a process with the same instruction, and the number there meaning nothing &mdash; <code>arch/cortex-v7m/src/lib.rs</code>:293&ndash;298, "It doesn't matter which SVC number we use here as it is not used in the exception handler"</li>
+    <li>The kernel entering a process with the same instruction, and the number there meaning nothing &mdash; <code>arch/cortex-v7m/src/lib.rs</code>:318&ndash;322, "It doesn't matter which SVC number we use here as it is not used in the exception handler"</li>
     <li>One bit of the link register sorting the two directions apart &mdash; the same file, :73&ndash;82, the same bit chapter 6's fault handler branched on</li>
     <li>That handler being this board's, so the bit above is the one this board branches on &mdash; <code>arch/cortex-m33/src/lib.rs</code>:47, where the Cortex-M33 takes the v7-M one</li>
     <li>The frame being eight words &mdash; <code>arch/cortex-m/src/syscall.rs</code>:195&ndash;196, "Space for 8 u32s: r0-r3, r12, lr, pc, and xPSR"</li>

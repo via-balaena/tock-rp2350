@@ -837,9 +837,31 @@ def figure_citation_checks(html):
 # resolves, and a second copy of this token grammar would have drifted from it
 # the first time either changed. The same lesson as `page_bundle()`.
 CITATION_TOKEN = re.compile(
-    r"<code>([A-Za-z0-9_./-]+\.(?:rs|md|s|toml|cfg|ld|json)"
+    r"<code>([A-Za-z0-9_./-]+\.(?:rs|md|s|toml|cfg|ld|json|ya?ml)"
     r"|(?:[A-Za-z0-9_./-]*/)?Makefile(?:\.common)?)</code>"
-    r"|:(\d+)(?:\s*(?:-|&ndash;|&#8211;|\u2013)\s*(\d+))?")
+    # The word boundary is load-bearing. Chapter 0 quotes a USB identifier,
+    # `2e8a:000c`, and without it that reads as a citation to line 0 of
+    # whatever file was named last.
+    r"|:(\d+)(?:\s*(?:-|&ndash;|&#8211;|\u2013)\s*(\d+))?(?![\w])")
+
+# A `<code>` that is shaped like a path and did not match above. The extension
+# list is an allowlist, and a missing entry does not merely leave a citation
+# unchecked -- the path is not recognised at all, so `current` stays on
+# whatever came before and every line under it resolves against the wrong
+# file. That has now happened twice: once for a Makefile and an OpenOCD config,
+# and again for `.github/workflows/treadmill-ci.yml`, whose `:5-8` was being
+# measured against a seven-line config. So an unrecognised path is reported and
+# clears `current`, which turns a silent mis-resolution into a loud one.
+PATH_SHAPED = re.compile(r"<code>([A-Za-z0-9_./-]+/[A-Za-z0-9_.-]+\.[A-Za-z0-9]+)</code>")
+
+
+def unrecognised_paths(html):
+    """Path-shaped code spans in a sources list that the token grammar misses."""
+    _, block = sources_pin(html)
+    if not block:
+        return set()
+    named = {m.group(1) for m in CITATION_TOKEN.finditer(block) if m.group(1)}
+    return {p for p in PATH_SHAPED.findall(block) if p not in named}
 
 
 def sources_pin(html):
@@ -865,8 +887,17 @@ def iter_citations(html):
     _, block = sources_pin(html)
     if not block:
         return
+    # `current` and `seen` persist ACROSS bullets, deliberately. A bullet
+    # reading "the same file, :17-27" names no path of its own and resolves to
+    # the last one the list gave -- which is the whole reason the chain check
+    # exists. Resetting them per bullet silently drops every abbreviated
+    # citation: 87 of 293 here, and the lockfile built on it recorded 206.
+    current, seen = None, {}
+    strays = unrecognised_paths(html)
     for item in re.findall(r"<li>(.*?)</li>", block, re.S):
-        current, seen = None, {}
+        # Where a bullet names a path this grammar does not know, everything
+        # after it in that bullet has no reliable path context.
+        unknown = min((item.index(p) for p in strays if p in item), default=None)
         for token in CITATION_TOKEN.finditer(item):
             if token.group(1):
                 named = token.group(1)
@@ -874,6 +905,8 @@ def iter_citations(html):
                 if "/" in named:
                     seen[named.rsplit("/", 1)[1]] = named
                 continue
+            if unknown and token.start() > unknown:
+                current, unknown = None, None
             if current is None:
                 continue
             end = int(token.group(3)) if token.group(3) else None
@@ -904,53 +937,120 @@ def citation_chain_checks(html):
     Skipped where git or the pinned commit is unavailable, so a clone without
     full history still runs the rest of the gate.
     """
-    block = re.search(r'<section class="col sources">(.*?)</section>', html, re.S)
-    if not block:
-        return []
-    pin = re.search(r"commit <code>([0-9a-f]{7,40})</code>", block.group(1))
+    pin, _ = sources_pin(html)
     if not pin:
         return []
-    pin = pin.group(1)
     if subprocess.run(["git", "-C", TOCK, "cat-file", "-e", pin + "^{commit}"],
                       capture_output=True).returncode != 0:
         return []
 
-    problems, lengths, current, seen = [], {}, None, {}
-    for item in re.findall(r"<li>(.*?)</li>", block.group(1), re.S):
-        # The extensions this series actually cites, plus `Makefile`, which has
-        # none. A path shape missing from here is not merely unchecked: it is
-        # never recognised as a path at all, so `current` stays on whatever was
-        # named before it and every line number under it is resolved against
-        # the wrong file. Chapter 0 cites a Makefile and an OpenOCD config, and
-        # both silently measured themselves against a 13-line `config.toml`.
-        for token in re.finditer(
-                r"<code>([A-Za-z0-9_./-]+\.(?:rs|md|s|toml|cfg|ld|json)"
-                r"|(?:[A-Za-z0-9_./-]*/)?Makefile(?:\.common)?)</code>|:(\d+)",
-                item):
+    problems, lengths = [], {}
+    for stray in sorted(unrecognised_paths(html)):
+        problems.append(
+            "a citation names %s and this parser does not recognise that path "
+            "shape, so nothing under it resolves -- add its extension to "
+            "CITATION_TOKEN" % stray)
+    for path, first, last in iter_citations(html):
+        if path not in lengths:
+            shown = subprocess.run(["git", "-C", TOCK, "show", "%s:%s" % (pin, path)],
+                                   capture_output=True, text=True)
+            lengths[path] = (len(shown.stdout.split("\n"))
+                             if shown.returncode == 0 else None)
+        total = lengths[path]
+        if total is None:
+            problems.append("a citation names %s, which is not in the tree "
+                            "at %s" % (path, pin))
+            lengths[path] = 0
+            continue
+        for line in (first, last):
+            if line and total and line > total:
+                problems.append(
+                    "a citation resolves to %s:%d and that file has %d lines "
+                    "at %s -- check what the nearest 'the same file' points at"
+                    % (path, line, total, pin))
+    return problems
+
+
+
+# A quote in a sources bullet is a falsifiable claim: these words are at that
+# citation. Everything else in a bullet is prose about the code, and prose
+# legitimately names things the cited lines do not contain -- checking those
+# produced 32 "failures" that were all the bullet doing its job.
+SOURCE_QUOTE = re.compile(r'[\u201c"]((?:[^\u201c\u201d"]|<[^>]+>){12,}?)[\u201d"]')
+
+
+def _quotable(text):
+    """Text flattened enough that a quote and its source compare equal.
+
+    Comment markers, backticks, emphasis and smart punctuation all differ
+    between a page and the file it quotes without either being wrong.
+    """
+    text = re.sub(r"<[^>]+>", "", text)
+    text = html_module.unescape(text)
+    for fancy, plain in (("\u2019", "'"), ("\u2018", "'"), ("\u201c", '"'),
+                         ("\u201d", '"'), ("\u2014", "-"), ("\u2013", "-"),
+                         ("`", ""), ("*", "")):
+        text = text.replace(fancy, plain)
+    text = re.sub(r"(?m)^\s*(///|//!|//|#(?=\s))\s?", "", text)
+    return re.sub(r"\s+", " ", text).strip().lower()
+
+
+def citation_quote_checks(html):
+    """A quoted line of source must be inside the lines cited beside it.
+
+    The lockfile stops a citation *becoming* wrong. This is what makes one
+    right: where a bullet quotes the source, the quote says exactly what the
+    reader should find there, and that can be tested rather than reviewed.
+
+    It found chapter 7 citing `arch/cortex-v7m/src/lib.rs:293-298` for a
+    sentence that is at line 319 -- twenty-five lines away, in a passage about
+    register clobbers rather than about entering a process. Nothing else could
+    have seen it: the file has those lines, so the chain check passed, and the
+    lockfile recorded what they said, so it passed too.
+
+    Only quotes are checked. Skipped, like the rest, without the kernel tree.
+    """
+    pin, block = sources_pin(html)
+    if not pin or not block:
+        return []
+    if subprocess.run(["git", "-C", TOCK, "cat-file", "-e", pin + "^{commit}"],
+                      capture_output=True).returncode != 0:
+        return []
+
+    problems, blobs, current = [], {}, None
+    for item in re.findall(r"<li>(.*?)</li>", block, re.S):
+        cites = []
+        for token in CITATION_TOKEN.finditer(item):
             if token.group(1):
-                named = token.group(1)
-                # An abbreviation of a path this list has already given in full.
-                current = seen.get(named, named)
-                if "/" in named:
-                    seen[named.rsplit("/", 1)[1]] = named
+                current = token.group(1)
                 continue
             if current is None:
                 continue
-            if current not in lengths:
-                shown = subprocess.run(["git", "-C", TOCK, "show", "%s:%s" % (pin, current)],
+            cites.append((current, int(token.group(2)),
+                          int(token.group(3)) if token.group(3) else None))
+        quotes = SOURCE_QUOTE.findall(item)
+        if not cites or not quotes:
+            continue
+        body = []
+        for path, first, last in cites:
+            if path not in blobs:
+                shown = subprocess.run(["git", "-C", TOCK, "show", "%s:%s" % (pin, path)],
                                        capture_output=True, text=True)
-                lengths[current] = (len(shown.stdout.split("\n"))
-                                    if shown.returncode == 0 else None)
-            total = lengths[current]
-            if total is None:
-                problems.append("a citation names %s, which is not in the tree "
-                                "at %s" % (current, pin))
-                lengths[current] = 0
-            elif total and int(token.group(2)) > total:
+                blobs[path] = (shown.stdout.split("\n")
+                               if shown.returncode == 0 else None)
+            lines = blobs[path]
+            if lines:
+                body.append("\n".join(lines[first - 1:(last or first)]))
+        if not body:
+            continue
+        haystack = _quotable("\n".join(body))
+        for quote in quotes:
+            if _quotable(quote) not in haystack:
+                where = ", ".join("%s:%d%s" % (p, a, "-%d" % b if b else "")
+                                  for p, a, b in cites)
                 problems.append(
-                    "a citation resolves to %s:%s and that file has %d lines "
-                    "at %s -- check what the nearest 'the same file' points at"
-                    % (current, token.group(2), total, pin))
+                    "a bullet quotes %r and cites %s, and those lines do not "
+                    "contain it" % (_quotable(quote)[:70], where))
     return problems
 
 
@@ -2616,6 +2716,7 @@ def static_checks(html, name):
     problems.extend(demo_asm_checks(html, os.path.join(ROOT, name)))
     problems.extend(assembled_listing_checks(html, os.path.join(ROOT, name)))
     problems.extend(citation_chain_checks(html))
+    problems.extend(citation_quote_checks(html))
     problems.extend(figure_reachable_checks(html))
     problems.extend(own_path_checks(html))
     problems.extend(counted_tree_checks(html))
@@ -3860,6 +3961,30 @@ def citation_lock_checks():
     return problems
 
 
+
+def citation_opening_notes():
+    """Citations that begin on a blank line or on a lone delimiter.
+
+    Reported rather than failed. A range that *ends* on a closing brace is
+    correct and common; one that *begins* on the brace closing the construct
+    above it is almost always off by one, but "almost always" is not a gate --
+    a citation may deliberately start at a boundary, and only the sentence it
+    supports can say which. So these are listed, not enforced, and the list is
+    short enough to read.
+    """
+    notes = []
+    for chapter, entry in sorted(citation_survey().items()):
+        for cite in entry["cites"]:
+            opens = cite.get("opens")
+            if opens is None:
+                continue
+            if opens in ("", "}", "{", "};", ")", ");", "*/", "//") or len(opens) < 3:
+                notes.append("%s cites %s:%d, which begins on %s"
+                             % (chapter, cite["path"], cite["start"],
+                                repr(opens) if opens else "a blank line"))
+    return notes
+
+
 def main():
     chapters = sorted(d for d in os.listdir(ROOT)
                       if d.startswith("ch")
@@ -3996,6 +4121,8 @@ def main():
         failures += 1
     else:
         print("  pass  every citation still aims where it was recorded")
+    for note in citation_opening_notes():
+        print("  open  %s" % note)
 
     print("\n%s" % ("all chapters passed" if not failures
                     else "%d chapter(s) with failures" % failures))
