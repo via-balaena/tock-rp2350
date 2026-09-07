@@ -314,12 +314,12 @@ and I would not recommend copying it.</p>
   <b>empty</b> &mdash; I measured <code>size&nbsp;0x0</code> on all four RP2040
   boards in the tree: <code>raspberry_pi_pico</code>,
   <code>raspberry_pi_pico_w</code>, <code>pico_explorer_base</code> and
-  <code>nano_rp2040_connect</code>. That is not the same four as the boards
-  fixed below, which swap <code>raspberry_pi_pico_w</code> &mdash; it has no
-  <code>program</code> rule at all &mdash; for the RP2350
-  <code>raspberry_pi_pico_2</code>. The day any kernel change introduces one initialised
-  static, this workaround starts producing a kernel with garbage in
-  <code>.data</code>, and nothing in the build will say so.</li>
+  <code>nano_rp2040_connect</code>. The day any kernel change introduces one
+  initialised static, this workaround starts producing a kernel with garbage in
+  <code>.data</code>, and nothing in the build will say so. (Those are not the
+  same four as the boards fixed below, which swap
+  <code>raspberry_pi_pico_w</code> &mdash; it has no <code>program</code> rule
+  at all &mdash; for the RP2350 <code>raspberry_pi_pico_2</code>.)</li>
   <li><b><code>-R .bss</code> does nothing.</b> Tock's layout has no
   <code>.bss</code> section; the kernel's zeroed memory is
   <code>.sram</code>. There are zero matches for <code>.bss</code> in the

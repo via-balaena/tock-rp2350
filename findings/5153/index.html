@@ -254,9 +254,10 @@ when it has used it. Step through what that bit does here.</p>
 <a href="https://github.com/tock/tock/commit/4d903e2c9"><code>4d903e2c9</code></a>
 of 2022-11-02, and has never been modified. It is also inconsistent with the
 rest of the same function. <code>handle_bus_reset</code> writes exactly one
-other endpoint buffer &mdash; the bulk OUT one &mdash; and that write clears to
-zero first and arms second. The control endpoint's arm clears nothing, and the
-bulk IN side is never touched at all.</p>
+other endpoint buffer &mdash; the bulk OUT one &mdash; and that write clears it
+to zero before it sets <code>AVAILABLE</code>. No other buffer is written at
+all: a control endpoint gets a state change and nothing else, and the bulk IN
+side is left alone.</p>
 
 <pre><span class="srcref">chips/rp2040/src/usb.rs:1535 — the bulk OUT path, earlier in the same function</span>
 self.dpsram.ep_buf_ctrl[ep].ep_out_buf_ctrl<b>.set(0)</b>;
