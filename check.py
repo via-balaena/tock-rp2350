@@ -58,6 +58,7 @@ Exit 0 clean, 1 problems found, 2 could not run.
 """
 
 import argparse
+import html
 import importlib.util
 import json
 import pathlib
@@ -451,6 +452,40 @@ def check_findings(build, data, problems):
                 f"cannot say whether it is still open — run ./build.py")
 
 
+def check_quotes(build, data, problems):
+    """Everything a findings page quotes from its issue is really in it.
+
+    The pages argue with the reports they cite, and one of them calls a claim
+    wrong. Quoting the claim you are about to dispute is the worst place to
+    paraphrase, and the first review pass found exactly that: a three-item
+    numbered list rendered as one flowing sentence inside quotation marks. The
+    substance was faithful and the form was not.
+
+    Whitespace is normalised because the page wraps and the issue does not.
+    Nothing else is: an apostrophe swapped for a straight one, a numeral
+    dropped, a word tidied, all fail.
+    """
+    bodies = {i["number"]: re.sub(r"\s+", " ", i.get("body") or "")
+              for i in data.get("findings", [])}
+    for number, slug, _, _ in build.FINDINGS:
+        page = ROOT / "findings" / slug / "index.html"
+        if not page.exists():
+            continue
+        body = bodies.get(number)
+        if not body:
+            problems.append(
+                f"quotes: no fetched body for #{number}, so findings/{slug}/'s "
+                f"quotations cannot be checked — run ./build.py")
+            continue
+        for raw in re.findall(r'<p class="said">(.*?)</p>', page.read_text(), re.S):
+            said = html.unescape(re.sub(r"<[^>]+>", "", raw))
+            said = re.sub(r"\s+", " ", said).strip().rstrip(".")
+            if said not in body:
+                problems.append(
+                    f"quotes: findings/{slug}/ puts {said[:60]!r}... in quotation "
+                    f"marks and #{number} does not say that")
+
+
 def check_pins(build, data, problems):
     """Every role beside a pin has a name, and every name is used.
 
@@ -663,12 +698,13 @@ def main():
     check_bits(html, problems)
     check_queue(build, data, html, problems)
     check_findings(build, data, problems)
+    check_quotes(build, data, problems)
     check_learning(problems)
     skipped = check_interactions(problems)
     if not args.offline:
         check_fresh(build, data, problems)
 
-    ran = (19 if args.offline else 20) + (0 if skipped else 1)
+    ran = (20 if args.offline else 21) + (0 if skipped else 1)
     if skipped:
         print(f"note: the interaction check did not run — {skipped}\n")
     if problems:

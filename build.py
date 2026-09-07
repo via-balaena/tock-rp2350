@@ -1083,7 +1083,7 @@ def fetch():
     ])
     findings = [
         gh_json(["issue", "view", str(number), "--repo", REPO, "--json",
-                 "number,title,state,author,createdAt,url"])
+                 "number,title,state,author,createdAt,url,body"])
         for number, _, _, _ in FINDINGS
     ]
     return {

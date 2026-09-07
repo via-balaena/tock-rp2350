@@ -202,10 +202,16 @@ The rows on the front page come from `FINDINGS` in `build.py`, and each issue's
 open/closed state is **fetched** rather than written down — a page drawn as open
 after it is closed is the page lying, which is the same rule the queue follows.
 
-Two checks cover them. `findings` refuses a row whose page does not exist, a
+Three checks cover them. `findings` refuses a row whose page does not exist, a
 page no row lists, a page that cites a different issue number than its row, and
 a missing landing page — all of them the same failure from a reader's side, a
-link that goes nowhere. And `findings/drive.js` runs both pages in a real DOM:
+link that goes nowhere. `quotes` re-reads every sentence a page puts in
+quotation marks against the fetched body of the issue it came from: whitespace
+is normalised because the page wraps and the issue does not, and nothing else
+is, so a dropped numeral or a straightened apostrophe fails. It exists because
+the first review pass found a three-item numbered list rendered as one flowing
+sentence inside quote marks — on the one claim the page calls wrong, which is
+the worst place to paraphrase. And `findings/drive.js` runs both pages in a real DOM:
 
     node findings/drive.js
 

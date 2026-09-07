@@ -282,7 +282,7 @@ implies a patch.</p>
   <div class="claim">
     <h3><span class="tag is-ok">confirmed</span> The 64-byte DATA0 comes from the reset handler</h3>
     <p class="said">The packet length of exactly 64 bytes matches a hard-coded
-    value in Tock's RP2040 bus-reset handler.</p>
+    value in Tock’s RP2040 bus-reset handler.</p>
     <p class="found">It does. <code>usb.rs:1552-1556</code> writes
     <code>TRANSFER_LENGTH0 = 64</code> and <code>DATA_PID0 = DATA0</code> into
     EP0 IN, and sets <code>AVAILABLE</code> in the same call.</p>
@@ -302,8 +302,8 @@ implies a patch.</p>
   <div class="claim">
     <h3><span class="tag is-bad">not as described</span> That Tock skips the datasheet's wait before setting AVAILABLE</h3>
     <p class="said">It says USB DPRAM is asynchronous and non-atomic, and
-    software must: write the buffer information; wait enough system-clock cycles
-    for a USB-clock cycle; set AVAILABLE separately and last.</p>
+    software must: 1. write the buffer information; 2. wait enough system-clock
+    cycles for a USB-clock cycle; 3. set AVAILABLE separately and last.</p>
     <p class="found">The requirement is real and quoted correctly, but Tock
     already follows it. <code>transmit_in_ep0</code> writes the fields, calls
     <code>nop_wait()</code> &mdash; a hundred <code>nop</code>s,

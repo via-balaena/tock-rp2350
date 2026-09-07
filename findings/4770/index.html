@@ -66,7 +66,7 @@ defect in the file it was handed.</p>
 
 <h2><span class="n">2</span>What the two objcopy steps do to the program headers</h2>
 
-<p><a href="https://github.com/tock/tock/blob/2a7a40450/boards/raspberry_pi_pico/Makefile#L43-L48">The
+<p><a href="https://github.com/tock/tock/blob/2a7a40450/boards/raspberry_pi_pico/Makefile#L39-L44">The
 rule</a> runs <code>objcopy</code> twice: once to give <code>.apps</code>
 contents, once to fill it with the <code>.tbf</code>. Both are needed &mdash;
 <code>--update-section</code> on its own fails with <i>section has no
@@ -312,7 +312,12 @@ and I would not recommend copying it.</p>
   Tock copies it into SRAM at boot. Stripping it from the image would leave that
   data uninitialised. It happens to be safe today only because the section is
   <b>empty</b> &mdash; I measured <code>size&nbsp;0x0</code> on all four RP2040
-  boards in the tree. The day any kernel change introduces one initialised
+  boards in the tree: <code>raspberry_pi_pico</code>,
+  <code>raspberry_pi_pico_w</code>, <code>pico_explorer_base</code> and
+  <code>nano_rp2040_connect</code>. That is not the same four as the boards
+  fixed below, which swap <code>raspberry_pi_pico_w</code> &mdash; it has no
+  <code>program</code> rule at all &mdash; for the RP2350
+  <code>raspberry_pi_pico_2</code>. The day any kernel change introduces one initialised
   static, this workaround starts producing a kernel with garbage in
   <code>.data</code>, and nothing in the build will say so.</li>
   <li><b><code>-R .bss</code> does nothing.</b> Tock's layout has no
@@ -377,7 +382,7 @@ keeps its symbols.</p>
 
 <figure id="f5">
   <div class="instrument">
-    <p class="ititle">The same make target on every RP2 board, with the line and without it</p>
+    <p class="ititle">The same make target on all four RP2 boards that can splice an app, with the line and without it</p>
     <div class="scroll">
       <table class="grid">
         <thead><tr>
