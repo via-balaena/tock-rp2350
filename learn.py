@@ -21,7 +21,9 @@ site serves, and `check.py` at the repository root fails if the two disagree.
 """
 
 import argparse
+import html
 import importlib.util
+import json
 import pathlib
 import re
 import sys
@@ -30,26 +32,188 @@ ROOT = pathlib.Path(__file__).parent
 SOURCE = ROOT / "learning"
 OUT = ROOT / "read"
 
-# A strip at the top of the cover only, not on every chapter. The chapters
-# carry their own headers and their own sticky elements, and dropping site
-# chrome above them is how a page ends up with two bars fighting for the same
-# forty pixels. A chapter already links back to the cover; the cover links on
-# to the map from here.
-BAR = """<nav class="sitebar"><a href="../">&larr; The work map</a>
-<span>Tock on the RP2350 &mdash; what is done, what it runs on, what is left</span></nav>
-<style>
-.sitebar{display:flex;gap:14px;align-items:baseline;flex-wrap:wrap;
-padding:11px 20px;border-bottom:1px solid #e4e2dd;background:#fff;
-font:13px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
-.sitebar a{color:#7a4b1e;font-weight:600;text-decoration:none}
-.sitebar a:hover{text-decoration:underline}
-.sitebar span{color:#6f7278}
+# The chrome belongs to the site, not to the chapters. Everything below is
+# added at publish time: the sources keep no site navigation, so the series'
+# own gate, mkbook.py and serve.py go on reading exactly what they always read.
+#
+# Nothing here relies on a chapter's own CSS tokens, and nothing here styles a
+# chapter's own elements. The rail is fixed and the page is pushed by a wrapper
+# the chapters know nothing about, because a chapter's stylesheet is loaded
+# after this one and would win any argument about `body`.
+
+CHROME_CSS = """
+.dc-rail{position:fixed;top:0;left:0;width:244px;height:100vh;overflow-y:auto;
+box-sizing:border-box;padding:22px 14px 20px;background:#fff;
+border-right:1px solid #e4e2dd;z-index:40;
+font:13px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+.dc-main{margin-left:244px}
+.dc-mark{display:block;color:#16171a;text-decoration:none;font-weight:600;
+padding:0 8px;margin-bottom:3px;letter-spacing:-.01em}
+.dc-back{display:block;color:#7a4b1e;text-decoration:none;font-size:12px;
+padding:0 8px;margin-bottom:18px}
+.dc-back:hover{text-decoration:underline}
+.dc-group{font-size:10.5px;text-transform:uppercase;letter-spacing:.09em;
+color:#6f7278;padding:0 8px;margin:0 0 6px}
+.dc-rail ol,.dc-rail ul{list-style:none;margin:0;padding:0}
+.dc-ch{display:flex;gap:9px;align-items:baseline;color:#4f5157;text-decoration:none;
+padding:4px 8px;border-radius:6px}
+.dc-ch:hover{background:#fbfaf8;color:#16171a}
+.dc-ch .dc-n{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;
+color:#8e8f95;flex:none;width:12px}
+.dc-ch.dc-here{background:#fbfaf8;color:#16171a;font-weight:600;
+box-shadow:inset 2px 0 0 #7a4b1e}
+.dc-secs{margin:2px 0 8px 29px;border-left:1px solid #e4e2dd}
+.dc-sec{display:block;color:#6f7278;text-decoration:none;font-size:12px;
+padding:3px 0 3px 11px;margin-left:-1px;border-left:2px solid transparent}
+.dc-sec:hover{color:#16171a}
+.dc-sec.dc-on{color:#16171a;border-left-color:#7a4b1e}
+.dc-keys{margin:18px 8px 0;font-size:11px;color:#8e8f95}
+.dc-keys kbd{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10.5px;
+border:1px solid #e4e2dd;border-bottom-width:2px;border-radius:4px;padding:0 4px;color:#4f5157}
+.dc-bar{position:fixed;top:0;left:244px;right:0;height:2px;background:transparent;z-index:41}
+.dc-bar i{display:block;height:100%;width:0;background:#7a4b1e}
+.dc-sheet{position:fixed;inset:0;z-index:60;display:flex;justify-content:center;
+align-items:flex-start;padding-top:11vh;background:rgba(12,12,14,.45);
+font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+.dc-sheet[hidden]{display:none}
+.dc-box{background:#fff;border:1px solid #e4e2dd;border-radius:12px;
+width:min(620px,92vw);padding:16px;box-shadow:0 20px 64px rgba(0,0,0,.3)}
+.dc-box h2{margin:0 0 12px;font-size:16px;color:#16171a}
+#dc-q{width:100%;box-sizing:border-box;font:inherit;font-size:15px;padding:10px 12px;
+border-radius:8px;border:1px solid #e4e2dd;background:#fbfaf8;color:#16171a}
+#dc-hits{list-style:none;margin:8px 0 0;padding:0;max-height:46vh;overflow-y:auto}
+#dc-hits li{display:flex;justify-content:space-between;gap:12px;padding:7px 9px;
+border-radius:7px;color:#4f5157;cursor:pointer;font-size:13px}
+#dc-hits li.dc-on{background:#fbfaf8;color:#16171a}
+#dc-hits .dc-where{font-size:11px;color:#8e8f95;white-space:nowrap}
+.dc-kl{display:grid;grid-template-columns:110px 1fr;gap:8px 14px;margin:0;
+font-size:13px;color:#4f5157}
+.dc-kl dt,.dc-kl dd{margin:0}
 @media (prefers-color-scheme:dark){
-.sitebar{background:#1b1c20;border-bottom-color:#2c2d33}
-.sitebar a{color:#d9a273}
-.sitebar span{color:#8e8f95}
+.dc-rail{background:#1b1c20;border-right-color:#2c2d33}
+.dc-mark{color:#edecea}.dc-back{color:#d9a273}.dc-group{color:#8e8f95}
+.dc-ch{color:#b6b6ba}.dc-ch:hover{background:#131316;color:#edecea}
+.dc-ch.dc-here{background:#131316;color:#edecea;box-shadow:inset 2px 0 0 #d9a273}
+.dc-ch .dc-n{color:#8e8f95}
+.dc-secs{border-left-color:#2c2d33}.dc-sec{color:#8e8f95}
+.dc-sec:hover{color:#edecea}.dc-sec.dc-on{color:#edecea;border-left-color:#d9a273}
+.dc-keys{color:#8e8f95}.dc-keys kbd{border-color:#2c2d33;color:#b6b6ba}
+.dc-bar i{background:#d9a273}
+.dc-box{background:#1b1c20;border-color:#2c2d33}
+.dc-box h2{color:#edecea}
+#dc-q{background:#131316;border-color:#2c2d33;color:#edecea}
+#dc-hits li{color:#b6b6ba}#dc-hits li.dc-on{background:#131316;color:#edecea}
+#dc-hits .dc-where{color:#8e8f95}.dc-kl{color:#b6b6ba}
 }
-</style>
+@media (max-width:1000px){
+.dc-rail{position:static;width:auto;height:auto;border-right:0;
+border-bottom:1px solid #e4e2dd}
+.dc-main{margin-left:0}.dc-bar{left:0}.dc-secs{display:none}
+.dc-rail ol{display:flex;flex-wrap:wrap;gap:2px}
+}
+"""
+
+CHROME_JS = """
+(function () {
+  "use strict";
+  var INDEX = __INDEX__, HERE = __HERE__;
+
+  /* --- which section you are in, and how far through --- */
+  var links = [].slice.call(document.querySelectorAll(".dc-sec"));
+  var heads = links.map(function (a) {
+    return document.getElementById(a.getAttribute("href").slice(1));
+  });
+  var fill = document.querySelector(".dc-bar i");
+  function onScroll() {
+    var y = window.scrollY + 90, at = -1;
+    for (var i = 0; i < heads.length; i++) {
+      if (heads[i] && heads[i].offsetTop <= y) { at = i; }
+    }
+    links.forEach(function (a, i) { a.classList.toggle("dc-on", i === at); });
+    if (fill) {
+      var run = document.body.scrollHeight - window.innerHeight;
+      fill.style.width = (run > 0 ? (window.scrollY / run) * 100 : 0) + "%";
+    }
+  }
+  addEventListener("scroll", onScroll, { passive: true });
+  addEventListener("resize", onScroll);
+  onScroll();
+
+  /* --- search, over every heading in the series --- */
+  var sheet = document.getElementById("dc-search");
+  var keys = document.getElementById("dc-keysheet");
+  var box = document.getElementById("dc-q");
+  var list = document.getElementById("dc-hits");
+  var hits = [], at = 0;
+
+  function score(text, q) {
+    var t = text.toLowerCase(), i = t.indexOf(q);
+    if (i === 0) { return 0; }
+    if (i > 0) { return 1; }
+    var k = 0;
+    for (var c = 0; c < q.length; c++) {
+      k = t.indexOf(q[c], k) + 1;
+      if (!k) { return -1; }
+    }
+    return 2;
+  }
+  function draw() {
+    var q = box.value.trim().toLowerCase();
+    hits = !q ? INDEX.slice(0, 8)
+              : INDEX.map(function (e) { return [score(e.t, q), e]; })
+                     .filter(function (p) { return p[0] >= 0; })
+                     .sort(function (a, b) { return a[0] - b[0]; })
+                     .slice(0, 12).map(function (p) { return p[1]; });
+    at = 0;
+    list.replaceChildren.apply(list, hits.map(function (e, i) {
+      var li = document.createElement("li");
+      li.setAttribute("role", "option");
+      if (i === 0) { li.className = "dc-on"; }
+      var a = document.createElement("span"); a.textContent = e.t;
+      var b = document.createElement("span"); b.className = "dc-where"; b.textContent = e.c;
+      li.append(a, b);
+      li.addEventListener("click", function () { go(e); });
+      return li;
+    }));
+  }
+  function mark() {
+    [].slice.call(list.children).forEach(function (li, i) {
+      li.classList.toggle("dc-on", i === at);
+    });
+  }
+  function go(e) {
+    close();
+    if (e.p === HERE) {
+      var el = e.h && document.getElementById(e.h);
+      if (el) { el.scrollIntoView({ block: "start", behavior: "smooth" }); return; }
+    }
+    location.href = (HERE ? "../" : "") + e.p + (e.h ? "#" + e.h : "");
+  }
+  function open() { keys.hidden = true; sheet.hidden = false; box.value = ""; draw(); box.focus(); }
+  function close() { sheet.hidden = true; keys.hidden = true; }
+
+  [sheet, keys].forEach(function (el) {
+    el.addEventListener("click", function (ev) { if (ev.target === el) { close(); } });
+  });
+  box.addEventListener("input", draw);
+  box.addEventListener("keydown", function (ev) {
+    if (ev.key === "ArrowDown") { ev.preventDefault(); at = Math.min(at + 1, hits.length - 1); mark(); }
+    else if (ev.key === "ArrowUp") { ev.preventDefault(); at = Math.max(at - 1, 0); mark(); }
+    else if (ev.key === "Enter" && hits[at]) { ev.preventDefault(); go(hits[at]); }
+  });
+  addEventListener("keydown", function (ev) {
+    var typing = /^(INPUT|TEXTAREA|SELECT)$/.test(ev.target.tagName)
+                 || ev.target.isContentEditable;
+    if (ev.key === "Escape") { close(); return; }
+    if (typing || ev.metaKey || ev.ctrlKey || ev.altKey) { return; }
+    if (ev.key === "/") { ev.preventDefault(); open(); }
+    else if (ev.key === "?") { ev.preventDefault(); sheet.hidden = true; keys.hidden = !keys.hidden; }
+    else if (ev.key === "ArrowLeft" || ev.key === "ArrowRight") {
+      var step = document.querySelector(ev.key === "ArrowLeft" ? ".dc-prev" : ".dc-next");
+      if (step) { location.href = step.getAttribute("href"); }
+    }
+  });
+}());
 """
 
 
@@ -68,13 +232,132 @@ def skeleton():
 
 def pages():
     """The cover, then every chapter in reading order."""
-    yield "", SOURCE / "index.html"
+    out = [("", SOURCE / "index.html")]
     for chapter in sorted(SOURCE.glob("ch*/index.html")):
-        yield chapter.parent.name, chapter
+        out.append((chapter.parent.name, chapter))
+    return out
 
 
-def render(shell, body, bar):
-    return shell % {"theme": "", "body": (BAR if bar else "") + body}
+HEADING = re.compile(r"<h2(?![a-zA-Z])([^>]*)>(.*?)</h2>", re.S)
+TITLE = re.compile(r"<h1[^>]*>(.*?)</h1>", re.S)
+
+
+def plain(markup):
+    return re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", "", markup))).strip()
+
+
+def outline(body):
+    """Give every section heading an id, and report them in order.
+
+    The chapters carry no ids of their own -- they were written as one column
+    to be read, not navigated -- so the anchors are added here rather than in
+    the sources, where they would be one more thing for the series' own gate
+    to have an opinion about.
+    """
+    found = []
+
+    def anchor(match):
+        attrs, inner = match.group(1), match.group(2)
+        existing = re.search(r'id="([^"]+)"', attrs)
+        ident = existing.group(1) if existing else "s%d" % (len(found) + 1)
+        found.append((ident, plain(inner)))
+        if existing:
+            return match.group(0)
+        return "<h2%s id=\"%s\">%s</h2>" % (attrs, ident, inner)
+
+    return HEADING.sub(anchor, body), found
+
+
+def rail(meta, here):
+    """The fixed rail: the series, the chapter you are in, and its sections."""
+    up = "../../" if here else "../"
+    rows = []
+    for name, number, title, _ in meta:
+        if not name:
+            continue
+        current = name == here
+        href = ("../" + name + "/") if here else (name + "/")
+        rows.append('<li><a class="dc-ch%s" href="%s"><span class="dc-n">%d</span>'
+                    '<span>%s</span></a>%s</li>'
+                    % (" dc-here" if current else "", e(href), number, e(title),
+                       sections(meta, name) if current else ""))
+    order = [m for m in meta if m[0]]
+    at = next((i for i, m in enumerate(order) if m[0] == here), None)
+    steps = ""
+    if at is not None:
+        if at > 0:
+            steps += '<a class="dc-prev" href="../%s/" hidden></a>' % e(order[at - 1][0])
+        if at < len(order) - 1:
+            steps += '<a class="dc-next" href="../%s/" hidden></a>' % e(order[at + 1][0])
+    return (
+        '<nav class="dc-rail" aria-label="The series">'
+        '<a class="dc-mark" href="%s">Tock on the RP2350</a>'
+        '<a class="dc-back" href="%s">&larr; The work map</a>'
+        '<p class="dc-group">Chapters</p><ol>%s</ol>'
+        '<p class="dc-keys"><kbd>/</kbd> search &nbsp; <kbd>?</kbd> keys</p>'
+        '%s</nav>' % (e(up + ""), e(up), "".join(rows), steps))
+
+
+def sections(meta, name):
+    for entry in meta:
+        if entry[0] == name:
+            return ('<ul class="dc-secs">%s</ul>' % "".join(
+                '<li><a class="dc-sec" href="#%s">%s</a></li>' % (e(i), e(t))
+                for i, t in entry[3]))
+    return ""
+
+
+def e(text):
+    return html.escape(str(text))
+
+
+def render(shell, body, meta, here, index):
+    body, _ = outline(body)
+    chrome = (
+        '<style>%s</style>%s<div class="dc-bar"><i></i></div>'
+        '<div class="dc-main">%s</div>'
+        '<div class="dc-sheet" id="dc-search" hidden role="dialog" aria-modal="true"'
+        ' aria-label="Search the series"><div class="dc-box">'
+        '<input id="dc-q" type="search" autocomplete="off" spellcheck="false"'
+        ' placeholder="Search every heading in the series" aria-controls="dc-hits">'
+        '<ul id="dc-hits" role="listbox" aria-label="Results"></ul></div></div>'
+        '<div class="dc-sheet" id="dc-keysheet" hidden role="dialog" aria-modal="true"'
+        ' aria-labelledby="dc-kt"><div class="dc-box"><h2 id="dc-kt">Keys</h2>'
+        '<dl class="dc-kl"><dt><kbd>/</kbd></dt><dd>Search every heading</dd>'
+        '<dt><kbd>?</kbd></dt><dd>This list</dd>'
+        '<dt><kbd>&larr;</kbd> <kbd>&rarr;</kbd></dt><dd>Previous and next chapter</dd>'
+        '<dt><kbd>Esc</kbd></dt><dd>Close</dd></dl></div></div>'
+        '<script>%s</script>'
+        % (CHROME_CSS, rail(meta, here), body,
+           CHROME_JS.replace("__INDEX__", index.replace("</", "<\\/"))
+                    .replace("__HERE__", json.dumps(here))))
+    return shell % {"theme": "", "body": chrome}
+
+
+def survey():
+    """Every page's number, title and section headings, read once."""
+    meta = []
+    for name, source in pages():
+        body = source.read_text()
+        _, found = outline(body)
+        title = TITLE.search(body)
+        number = int(name[2:4]) if name else -1
+        meta.append((name, number, plain(title.group(1)) if title else name, found))
+    return meta
+
+
+def search_index(meta):
+    """Every chapter and every heading in it, as one list the pages share."""
+    entries = []
+    for name, number, title, found in meta:
+        if not name:
+            continue
+        entries.append({"t": "%d. %s" % (number, title), "c": "chapter",
+                        "p": name + "/", "h": ""})
+        for ident, text in found:
+            entries.append({"t": text, "c": "%d. %s" % (number, title),
+                            "p": name + "/", "h": ident})
+    return json.dumps(entries, separators=(",", ":"))
 
 
 def main():
@@ -84,10 +367,12 @@ def main():
     args = parser.parse_args()
 
     shell = skeleton()
+    meta = survey()
+    index = search_index(meta)
     stale = []
     for name, source in pages():
         target = OUT / name / "index.html" if name else OUT / "index.html"
-        page = render(shell, source.read_text(), bar=not name)
+        page = render(shell, source.read_text(), meta, name, index)
         if args.check:
             if not target.exists() or target.read_text() != page:
                 stale.append(str(target.relative_to(ROOT)))

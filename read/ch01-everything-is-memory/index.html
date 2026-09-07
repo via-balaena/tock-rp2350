@@ -9,7 +9,77 @@ img { max-width: 100%; }
 [hidden]:not([hidden="until-found"]) { display: none !important; }
 </style>
 </head><body>
-<!-- Licensed under the Creative Commons Attribution-ShareAlike 4.0 International License. -->
+<style>
+.dc-rail{position:fixed;top:0;left:0;width:244px;height:100vh;overflow-y:auto;
+box-sizing:border-box;padding:22px 14px 20px;background:#fff;
+border-right:1px solid #e4e2dd;z-index:40;
+font:13px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+.dc-main{margin-left:244px}
+.dc-mark{display:block;color:#16171a;text-decoration:none;font-weight:600;
+padding:0 8px;margin-bottom:3px;letter-spacing:-.01em}
+.dc-back{display:block;color:#7a4b1e;text-decoration:none;font-size:12px;
+padding:0 8px;margin-bottom:18px}
+.dc-back:hover{text-decoration:underline}
+.dc-group{font-size:10.5px;text-transform:uppercase;letter-spacing:.09em;
+color:#6f7278;padding:0 8px;margin:0 0 6px}
+.dc-rail ol,.dc-rail ul{list-style:none;margin:0;padding:0}
+.dc-ch{display:flex;gap:9px;align-items:baseline;color:#4f5157;text-decoration:none;
+padding:4px 8px;border-radius:6px}
+.dc-ch:hover{background:#fbfaf8;color:#16171a}
+.dc-ch .dc-n{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;
+color:#8e8f95;flex:none;width:12px}
+.dc-ch.dc-here{background:#fbfaf8;color:#16171a;font-weight:600;
+box-shadow:inset 2px 0 0 #7a4b1e}
+.dc-secs{margin:2px 0 8px 29px;border-left:1px solid #e4e2dd}
+.dc-sec{display:block;color:#6f7278;text-decoration:none;font-size:12px;
+padding:3px 0 3px 11px;margin-left:-1px;border-left:2px solid transparent}
+.dc-sec:hover{color:#16171a}
+.dc-sec.dc-on{color:#16171a;border-left-color:#7a4b1e}
+.dc-keys{margin:18px 8px 0;font-size:11px;color:#8e8f95}
+.dc-keys kbd{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10.5px;
+border:1px solid #e4e2dd;border-bottom-width:2px;border-radius:4px;padding:0 4px;color:#4f5157}
+.dc-bar{position:fixed;top:0;left:244px;right:0;height:2px;background:transparent;z-index:41}
+.dc-bar i{display:block;height:100%;width:0;background:#7a4b1e}
+.dc-sheet{position:fixed;inset:0;z-index:60;display:flex;justify-content:center;
+align-items:flex-start;padding-top:11vh;background:rgba(12,12,14,.45);
+font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+.dc-sheet[hidden]{display:none}
+.dc-box{background:#fff;border:1px solid #e4e2dd;border-radius:12px;
+width:min(620px,92vw);padding:16px;box-shadow:0 20px 64px rgba(0,0,0,.3)}
+.dc-box h2{margin:0 0 12px;font-size:16px;color:#16171a}
+#dc-q{width:100%;box-sizing:border-box;font:inherit;font-size:15px;padding:10px 12px;
+border-radius:8px;border:1px solid #e4e2dd;background:#fbfaf8;color:#16171a}
+#dc-hits{list-style:none;margin:8px 0 0;padding:0;max-height:46vh;overflow-y:auto}
+#dc-hits li{display:flex;justify-content:space-between;gap:12px;padding:7px 9px;
+border-radius:7px;color:#4f5157;cursor:pointer;font-size:13px}
+#dc-hits li.dc-on{background:#fbfaf8;color:#16171a}
+#dc-hits .dc-where{font-size:11px;color:#8e8f95;white-space:nowrap}
+.dc-kl{display:grid;grid-template-columns:110px 1fr;gap:8px 14px;margin:0;
+font-size:13px;color:#4f5157}
+.dc-kl dt,.dc-kl dd{margin:0}
+@media (prefers-color-scheme:dark){
+.dc-rail{background:#1b1c20;border-right-color:#2c2d33}
+.dc-mark{color:#edecea}.dc-back{color:#d9a273}.dc-group{color:#8e8f95}
+.dc-ch{color:#b6b6ba}.dc-ch:hover{background:#131316;color:#edecea}
+.dc-ch.dc-here{background:#131316;color:#edecea;box-shadow:inset 2px 0 0 #d9a273}
+.dc-ch .dc-n{color:#8e8f95}
+.dc-secs{border-left-color:#2c2d33}.dc-sec{color:#8e8f95}
+.dc-sec:hover{color:#edecea}.dc-sec.dc-on{color:#edecea;border-left-color:#d9a273}
+.dc-keys{color:#8e8f95}.dc-keys kbd{border-color:#2c2d33;color:#b6b6ba}
+.dc-bar i{background:#d9a273}
+.dc-box{background:#1b1c20;border-color:#2c2d33}
+.dc-box h2{color:#edecea}
+#dc-q{background:#131316;border-color:#2c2d33;color:#edecea}
+#dc-hits li{color:#b6b6ba}#dc-hits li.dc-on{background:#131316;color:#edecea}
+#dc-hits .dc-where{color:#8e8f95}.dc-kl{color:#b6b6ba}
+}
+@media (max-width:1000px){
+.dc-rail{position:static;width:auto;height:auto;border-right:0;
+border-bottom:1px solid #e4e2dd}
+.dc-main{margin-left:0}.dc-bar{left:0}.dc-secs{display:none}
+.dc-rail ol{display:flex;flex-wrap:wrap;gap:2px}
+}
+</style><nav class="dc-rail" aria-label="The series"><a class="dc-mark" href="../../">Tock on the RP2350</a><a class="dc-back" href="../../">&larr; The work map</a><p class="dc-group">Chapters</p><ol><li><a class="dc-ch" href="../ch00-getting-it-running/"><span class="dc-n">0</span><span>Getting It Running</span></a></li><li><a class="dc-ch dc-here" href="../ch01-everything-is-memory/"><span class="dc-n">1</span><span>Everything Is Memory</span></a><ul class="dc-secs"><li><a class="dc-sec" href="#s1">What you&#x27;ll be able to do at the end</a></li><li><a class="dc-sec" href="#s2">The nine words, and where each one is</a></li><li><a class="dc-sec" href="#s3">Start with the metal</a></li><li><a class="dc-sec" href="#s4">Question 1 — the first hex digit picks the hardware</a></li><li><a class="dc-sec" href="#s5">Question 2 — the distance past the base picks the control</a></li><li><a class="dc-sec" href="#s6">Question 3 — one bit per pin picks which one</a></li><li><a class="dc-sec" href="#s7">Check yourself</a></li><li><a class="dc-sec" href="#s8">Every word, collected</a></li></ul></li><li><a class="dc-ch" href="../ch02-registers-are-not-variables/"><span class="dc-n">2</span><span>Registers Are Not Variables</span></a></li><li><a class="dc-ch" href="../ch03-how-code-starts-running/"><span class="dc-n">3</span><span>How Code Starts Running</span></a></li><li><a class="dc-ch" href="../ch04-what-a-driver-may-touch/"><span class="dc-n">4</span><span>What a Driver May Touch</span></a></li><li><a class="dc-ch" href="../ch05-what-a-process-is/"><span class="dc-n">5</span><span>What a Process Is</span></a></li><li><a class="dc-ch" href="../ch06-the-memory-protection-unit/"><span class="dc-n">6</span><span>The Memory Protection Unit</span></a></li><li><a class="dc-ch" href="../ch07-asking-the-kernel/"><span class="dc-n">7</span><span>Asking the Kernel</span></a></li><li><a class="dc-ch" href="../ch08-grants/"><span class="dc-n">8</span><span>Grants</span></a></li></ol><p class="dc-keys"><kbd>/</kbd> search &nbsp; <kbd>?</kbd> keys</p><a class="dc-prev" href="../ch00-getting-it-running/" hidden></a><a class="dc-next" href="../ch02-registers-are-not-variables/" hidden></a></nav><div class="dc-bar"><i></i></div><div class="dc-main"><!-- Licensed under the Creative Commons Attribution-ShareAlike 4.0 International License. -->
 <!-- SPDX-License-Identifier: CC-BY-SA-4.0 -->
 <!-- Copyright Jon Hillesheim 2026. -->
 
@@ -1439,7 +1509,7 @@ dfn {
 
 <section class="col">
   <div class="goals">
-    <h2>What you'll be able to do at the end</h2>
+    <h2 id="s1">What you'll be able to do at the end</h2>
     <ol>
       <li>Read something like <code class="addr">0xD0000018</code> and say which piece of hardware answers to it, and why that one.</li>
       <li>Meet a datasheet listing that gives distances rather than finished numbers, and work out the one you would actually use.</li>
@@ -1452,7 +1522,7 @@ dfn {
 
 
 <section class="col">
-  <h2>The nine words, and where each one is</h2>
+  <h2 id="s2">The nine words, and where each one is</h2>
   <p>These get used constantly from here on. None is hard, and you do not have to remember them &mdash; each is repeated in context when it matters.</p>
   <p>What is worth having now is a <em>place</em> for each one, because they name things in three different places.</p>
   <p class="note">Every word the chapter uses, including these, is collected in the <a href="#glossary">glossary</a> at the end.</p>
@@ -1592,7 +1662,7 @@ dfn {
 </figure>
 
 <section class="col">
-  <h2>Start with the metal</h2>
+  <h2 id="s3">Start with the metal</h2>
   <p>Start with what is physically in front of you, because it is smaller and plainer than people expect.</p>
   <p>The chip is a black square about 7&nbsp;mm on a side, soldered flat, with nothing sticking out of it. What you actually touch is the board it sits on.</p>
 </section>
@@ -1979,7 +2049,7 @@ dfn {
 </div>
 
 <section class="col">
-  <h2>Question 1 &mdash; the first hex digit picks the hardware</h2>
+  <h2 id="s4">Question 1 &mdash; the first hex digit picks the hardware</h2>
   <p>The same word means two different things, depending on the machine.</p>
   <dl id="pairs-machines" class="glossary inline">
     <dt>on a desktop</dt><dd>an address names a slot of memory. Store a number, read it back, get it. That is where variables live.</dd>
@@ -2183,7 +2253,7 @@ dfn {
 </div>
 
 <section class="col">
-  <h2>Question 2 &mdash; the distance past the base picks the control</h2>
+  <h2 id="s5">Question 2 &mdash; the distance past the base picks the control</h2>
   <p>SIO is not a single switch. It is a panel of them, and each switch on that panel is a register with its own address.</p>
   <p>Registers are laid out the same way on every peripheral of this chip, and on nearly every chip you will meet. The block gets a <dfn>base address</dfn> &mdash; SIO's is <code class="addr">0xD0000000</code> &mdash; and each register sits a small fixed distance beyond it. That distance is the register's <dfn>offset</dfn>.</p>
   <p>So the address we started with splits into two decisions that have already been made.</p>
@@ -2368,7 +2438,7 @@ dfn {
 </div>
 
 <section class="col">
-  <h2>Question 3 &mdash; one bit per pin picks which one</h2>
+  <h2 id="s6">Question 3 &mdash; one bit per pin picks which one</h2>
   <p>Before any explanation, go and play with this. Drag the slider, watch which square lights and what the code line underneath says, and see whether you can work out the rule before it is stated.</p>
 </section>
 
@@ -2566,7 +2636,7 @@ dfn {
 </div>
 
 <section class="col">
-  <h2>Check yourself</h2>
+  <h2 id="s7">Check yourself</h2>
   <p>Reading this again will not make it stick. Neither will highlighting it &mdash; that is one of the few study habits the research is actually rude about.</p>
   <p>What does work is producing the answer before you look at one. Three questions, three choices each: commit to one and the reasoning opens underneath it. Getting one wrong is useful information, not a problem &mdash; it is the whole reason to answer before reading.</p>
 </section>
@@ -2621,7 +2691,7 @@ dfn {
 </div>
 
 <section class="col" id="glossary">
-  <h2>Every word, collected</h2>
+  <h2 id="s8">Every word, collected</h2>
   <dl class="glossary">
     <dt>address</dt><dd>A number naming one location. The processor puts it on wires and the chip decides who answers.</dd>
     <dt>bank</dt><dd>A group of pins driven together by one register, one bit each.</dd>
@@ -3261,5 +3331,106 @@ dfn {
 
 }());
 </script>
+</div><div class="dc-sheet" id="dc-search" hidden role="dialog" aria-modal="true" aria-label="Search the series"><div class="dc-box"><input id="dc-q" type="search" autocomplete="off" spellcheck="false" placeholder="Search every heading in the series" aria-controls="dc-hits"><ul id="dc-hits" role="listbox" aria-label="Results"></ul></div></div><div class="dc-sheet" id="dc-keysheet" hidden role="dialog" aria-modal="true" aria-labelledby="dc-kt"><div class="dc-box"><h2 id="dc-kt">Keys</h2><dl class="dc-kl"><dt><kbd>/</kbd></dt><dd>Search every heading</dd><dt><kbd>?</kbd></dt><dd>This list</dd><dt><kbd>&larr;</kbd> <kbd>&rarr;</kbd></dt><dd>Previous and next chapter</dd><dt><kbd>Esc</kbd></dt><dd>Close</dd></dl></div></div><script>
+(function () {
+  "use strict";
+  var INDEX = [{"t":"0. Getting It Running","c":"chapter","p":"ch00-getting-it-running/","h":""},{"t":"What you'll be able to do at the end","c":"0. Getting It Running","p":"ch00-getting-it-running/","h":"s1"},{"t":"Thirteen words this chapter needs","c":"0. Getting It Running","p":"ch00-getting-it-running/","h":"s2"},{"t":"Why this chapter exists","c":"0. Getting It Running","p":"ch00-getting-it-running/","h":"s3"},{"t":"One command builds it","c":"0. Getting It Running","p":"ch00-getting-it-running/","h":"s4"},{"t":"Four ways to flash, and two of them are quiet about failing","c":"0. Getting It Running","p":"ch00-getting-it-running/","h":"s5"},{"t":"Wire the console before you flash, not after","c":"0. Getting It Running","p":"ch00-getting-it-running/","h":"s6"},{"t":"Getting it onto the chip","c":"0. Getting It Running","p":"ch00-getting-it-running/","h":"s7"},{"t":"The line that means it worked","c":"0. Getting It Running","p":"ch00-getting-it-running/","h":"s8"},{"t":"Splitting the bench across two machines","c":"0. Getting It Running","p":"ch00-getting-it-running/","h":"s9"},{"t":"When nothing happens, and how to tell the silences apart","c":"0. Getting It Running","p":"ch00-getting-it-running/","h":"s10"},{"t":"If the board on your desk is a Pico 2 W","c":"0. Getting It Running","p":"ch00-getting-it-running/","h":"wboard"},{"t":"Check yourself","c":"0. Getting It Running","p":"ch00-getting-it-running/","h":"s12"},{"t":"What you can say now","c":"0. Getting It Running","p":"ch00-getting-it-running/","h":"s13"},{"t":"1. Everything Is Memory","c":"chapter","p":"ch01-everything-is-memory/","h":""},{"t":"What you'll be able to do at the end","c":"1. Everything Is Memory","p":"ch01-everything-is-memory/","h":"s1"},{"t":"The nine words, and where each one is","c":"1. Everything Is Memory","p":"ch01-everything-is-memory/","h":"s2"},{"t":"Start with the metal","c":"1. Everything Is Memory","p":"ch01-everything-is-memory/","h":"s3"},{"t":"Question 1 \u2014 the first hex digit picks the hardware","c":"1. Everything Is Memory","p":"ch01-everything-is-memory/","h":"s4"},{"t":"Question 2 \u2014 the distance past the base picks the control","c":"1. Everything Is Memory","p":"ch01-everything-is-memory/","h":"s5"},{"t":"Question 3 \u2014 one bit per pin picks which one","c":"1. Everything Is Memory","p":"ch01-everything-is-memory/","h":"s6"},{"t":"Check yourself","c":"1. Everything Is Memory","p":"ch01-everything-is-memory/","h":"s7"},{"t":"Every word, collected","c":"1. Everything Is Memory","p":"ch01-everything-is-memory/","h":"s8"},{"t":"2. Registers Are Not Variables","c":"chapter","p":"ch02-registers-are-not-variables/","h":""},{"t":"What you'll be able to do at the end","c":"2. Registers Are Not Variables","p":"ch02-registers-are-not-variables/","h":"s1"},{"t":"Where chapter 1 left off","c":"2. Registers Are Not Variables","p":"ch02-registers-are-not-variables/","h":"s2"},{"t":"Why bother with four registers?","c":"2. Registers Are Not Variables","p":"ch02-registers-are-not-variables/","h":"s3"},{"t":"The trap: reading back is a separate decision","c":"2. Registers Are Not Variables","p":"ch02-registers-are-not-variables/","h":"s4"},{"t":"The compiler does not know any of this","c":"2. Registers Are Not Variables","p":"ch02-registers-are-not-variables/","h":"s5"},{"t":"Receipts","c":"2. Registers Are Not Variables","p":"ch02-registers-are-not-variables/","h":"s6"},{"t":"Where that store sits in Tock","c":"2. Registers Are Not Variables","p":"ch02-registers-are-not-variables/","h":"s7"},{"t":"So here is the problem","c":"2. Registers Are Not Variables","p":"ch02-registers-are-not-variables/","h":"s8"},{"t":"Check yourself","c":"2. Registers Are Not Variables","p":"ch02-registers-are-not-variables/","h":"s9"},{"t":"Every word, collected","c":"2. Registers Are Not Variables","p":"ch02-registers-are-not-variables/","h":"s10"},{"t":"3. How Code Starts Running","c":"chapter","p":"ch03-how-code-starts-running/","h":""},{"t":"What you'll be able to do at the end","c":"3. How Code Starts Running","p":"ch03-how-code-starts-running/","h":"s1"},{"t":"Seven words this chapter needs","c":"3. How Code Starts Running","p":"ch03-how-code-starts-running/","h":"s2"},{"t":"The first instruction is never yours","c":"3. How Code Starts Running","p":"ch03-how-code-starts-running/","h":"s3"},{"t":"What the boot ROM is looking for","c":"3. How Code Starts Running","p":"ch03-how-code-starts-running/","h":"s4"},{"t":"The rest of that first kilobyte","c":"3. How Code Starts Running","p":"ch03-how-code-starts-running/","h":"s5"},{"t":"What is at that address","c":"3. How Code Starts Running","p":"ch03-how-code-starts-running/","h":"s6"},{"t":"What \"set up memory\" means","c":"3. How Code Starts Running","p":"ch03-how-code-starts-running/","h":"s7"},{"t":"The whole thing, in order","c":"3. How Code Starts Running","p":"ch03-how-code-starts-running/","h":"s8"},{"t":"One thing that is not the boot path","c":"3. How Code Starts Running","p":"ch03-how-code-starts-running/","h":"s9"},{"t":"Check yourself","c":"3. How Code Starts Running","p":"ch03-how-code-starts-running/","h":"s10"},{"t":"So here is the next problem","c":"3. How Code Starts Running","p":"ch03-how-code-starts-running/","h":"s11"},{"t":"Every word, collected","c":"3. How Code Starts Running","p":"ch03-how-code-starts-running/","h":"s12"},{"t":"4. What a Driver May Touch","c":"chapter","p":"ch04-what-a-driver-may-touch/","h":""},{"t":"What you'll be able to do at the end","c":"4. What a Driver May Touch","p":"ch04-what-a-driver-may-touch/","h":"s1"},{"t":"Nine words, before we start","c":"4. What a Driver May Touch","p":"ch04-what-a-driver-may-touch/","h":"s2"},{"t":"The kernel has everything. A driver should not.","c":"4. What a Driver May Touch","p":"ch04-what-a-driver-may-touch/","h":"s3"},{"t":"What a capsule cannot say","c":"4. What a Driver May Touch","p":"ch04-what-a-driver-may-touch/","h":"s4"},{"t":"How much of Tock is unchecked","c":"4. What a Driver May Touch","p":"ch04-what-a-driver-may-touch/","h":"s5"},{"t":"The chain, end to end","c":"4. What a Driver May Touch","p":"ch04-what-a-driver-may-touch/","h":"s6"},{"t":"Twelve lines hold every address","c":"4. What a Driver May Touch","p":"ch04-what-a-driver-may-touch/","h":"s7"},{"t":"Who decides what a capsule gets","c":"4. What a Driver May Touch","p":"ch04-what-a-driver-may-touch/","h":"s8"},{"t":"One capsule, any chip","c":"4. What a Driver May Touch","p":"ch04-what-a-driver-may-touch/","h":"s9"},{"t":"What this does not buy","c":"4. What a Driver May Touch","p":"ch04-what-a-driver-may-touch/","h":"s10"},{"t":"The last check is weaker than it reads","c":"4. What a Driver May Touch","p":"ch04-what-a-driver-may-touch/","h":"s11"},{"t":"If the board on your desk is a Pico 2 W","c":"4. What a Driver May Touch","p":"ch04-what-a-driver-may-touch/","h":"s12"},{"t":"Check yourself","c":"4. What a Driver May Touch","p":"ch04-what-a-driver-may-touch/","h":"s13"},{"t":"What you can say now","c":"4. What a Driver May Touch","p":"ch04-what-a-driver-may-touch/","h":"s14"},{"t":"5. What a Process Is","c":"chapter","p":"ch05-what-a-process-is/","h":""},{"t":"What you'll be able to do at the end","c":"5. What a Process Is","p":"ch05-what-a-process-is/","h":"s1"},{"t":"Eleven words, before we start","c":"5. What a Process Is","p":"ch05-what-a-process-is/","h":"s2"},{"t":"The compiler saw the capsule. It never sees the app.","c":"5. What a Process Is","p":"ch05-what-a-process-is/","h":"s3"},{"t":"Sixteen bytes the kernel does trust","c":"5. What a Process Is","p":"ch05-what-a-process-is/","h":"s4"},{"t":"Walking the list","c":"5. What a Process Is","p":"ch05-what-a-process-is/","h":"s5"},{"t":"Where that number comes from","c":"5. What a Process Is","p":"ch05-what-a-process-is/","h":"s6"},{"t":"How an application reaches the board","c":"5. What a Process Is","p":"ch05-what-a-process-is/","h":"s7"},{"t":"One process's memory","c":"5. What a Process Is","p":"ch05-what-a-process-is/","h":"s8"},{"t":"What the kernel keeps inside your memory","c":"5. What a Process Is","p":"ch05-what-a-process-is/","h":"s9"},{"t":"Told where it is","c":"5. What a Process Is","p":"ch05-what-a-process-is/","h":"s10"},{"t":"Six states a capsule cannot be in","c":"5. What a Process Is","p":"ch05-what-a-process-is/","h":"s11"},{"t":"Who decides what a fault costs","c":"5. What a Process Is","p":"ch05-what-a-process-is/","h":"s12"},{"t":"What this does not buy","c":"5. What a Process Is","p":"ch05-what-a-process-is/","h":"s13"},{"t":"Check yourself","c":"5. What a Process Is","p":"ch05-what-a-process-is/","h":"s14"},{"t":"What you can say now","c":"5. What a Process Is","p":"ch05-what-a-process-is/","h":"s15"},{"t":"6. The Memory Protection Unit","c":"chapter","p":"ch06-the-memory-protection-unit/","h":""},{"t":"What you'll be able to do at the end","c":"6. The Memory Protection Unit","p":"ch06-the-memory-protection-unit/","h":"s1"},{"t":"Nine words this chapter needs","c":"6. The Memory Protection Unit","p":"ch06-the-memory-protection-unit/","h":"s2"},{"t":"The gap chapter 5 left","c":"6. The Memory Protection Unit","p":"ch06-the-memory-protection-unit/","h":"s3"},{"t":"One region, two registers","c":"6. The Memory Protection Unit","p":"ch06-the-memory-protection-unit/","h":"s4"},{"t":"Build a region yourself","c":"6. The Memory Protection Unit","p":"ch06-the-memory-protection-unit/","h":"s5"},{"t":"Five permissions, and the two Tock actually uses","c":"6. The Memory Protection Unit","p":"ch06-the-memory-protection-unit/","h":"s6"},{"t":"You get eight regions. Two are gone before you start.","c":"6. The Memory Protection Unit","p":"ch06-the-memory-protection-unit/","h":"s7"},{"t":"The same request on an older chip","c":"6. The Memory Protection Unit","p":"ch06-the-memory-protection-unit/","h":"s8"},{"t":"What happens the instant a process gets it wrong","c":"6. The Memory Protection Unit","p":"ch06-the-memory-protection-unit/","h":"s9"},{"t":"Turning the unit on is three bits","c":"6. The Memory Protection Unit","p":"ch06-the-memory-protection-unit/","h":"s10"},{"t":"What the unit does not protect","c":"6. The Memory Protection Unit","p":"ch06-the-memory-protection-unit/","h":"s11"},{"t":"Check yourself","c":"6. The Memory Protection Unit","p":"ch06-the-memory-protection-unit/","h":"s12"},{"t":"What you can say now","c":"6. The Memory Protection Unit","p":"ch06-the-memory-protection-unit/","h":"s13"},{"t":"7. Asking the Kernel","c":"chapter","p":"ch07-asking-the-kernel/","h":""},{"t":"What you'll be able to do at the end","c":"7. Asking the Kernel","p":"ch07-asking-the-kernel/","h":"s1"},{"t":"Eleven words, before we start","c":"7. Asking the Kernel","p":"ch07-asking-the-kernel/","h":"s2"},{"t":"The wall with no door in it","c":"7. Asking the Kernel","p":"ch07-asking-the-kernel/","h":"s3"},{"t":"Eight kinds of question","c":"7. Asking the Kernel","p":"ch07-asking-the-kernel/","h":"s4"},{"t":"Turning on the light","c":"7. Asking the Kernel","p":"ch07-asking-the-kernel/","h":"s5"},{"t":"What a driver is actually asked","c":"7. Asking the Kernel","p":"ch07-asking-the-kernel/","h":"s6"},{"t":"The answer, in the same four words","c":"7. Asking the Kernel","p":"ch07-asking-the-kernel/","h":"s7"},{"t":"Things that do not finish","c":"7. Asking the Kernel","p":"ch07-asking-the-kernel/","h":"s8"},{"t":"One frame, three jobs","c":"7. Asking the Kernel","p":"ch07-asking-the-kernel/","h":"s9"},{"t":"A buffer through the wall","c":"7. Asking the Kernel","p":"ch07-asking-the-kernel/","h":"s10"},{"t":"Three requests the door refuses","c":"7. Asking the Kernel","p":"ch07-asking-the-kernel/","h":"s11"},{"t":"Check yourself","c":"7. Asking the Kernel","p":"ch07-asking-the-kernel/","h":"s12"},{"t":"What you can say now","c":"7. Asking the Kernel","p":"ch07-asking-the-kernel/","h":"s13"},{"t":"8. Grants","c":"chapter","p":"ch08-grants/","h":""},{"t":"What you'll be able to do at the end","c":"8. Grants","p":"ch08-grants/","h":"s1"},{"t":"Eight words, before we start","c":"8. Grants","p":"ch08-grants/","h":"s2"},{"t":"The problem chapter 4 named","c":"8. Grants","p":"ch08-grants/","h":"s3"},{"t":"Where the memory comes from","c":"8. Grants","p":"ch08-grants/","h":"s4"},{"t":"What one driver costs one process","c":"8. Grants","p":"ch08-grants/","h":"s5"},{"t":"The twenty-four bytes nobody uses","c":"8. Grants","p":"ch08-grants/","h":"s6"},{"t":"A grant's whole life","c":"8. Grants","p":"ch08-grants/","h":"s7"},{"t":"Getting at what is inside","c":"8. Grants","p":"ch08-grants/","h":"s8"},{"t":"The rule that stops the board","c":"8. Grants","p":"ch08-grants/","h":"s9"},{"t":"Two breaks, one gap","c":"8. Grants","p":"ch08-grants/","h":"s10"},{"t":"Where that leaves chapter 2's question","c":"8. Grants","p":"ch08-grants/","h":"s11"},{"t":"Check yourself","c":"8. Grants","p":"ch08-grants/","h":"s12"},{"t":"What you can say now","c":"8. Grants","p":"ch08-grants/","h":"s13"}], HERE = "ch01-everything-is-memory";
 
+  /* --- which section you are in, and how far through --- */
+  var links = [].slice.call(document.querySelectorAll(".dc-sec"));
+  var heads = links.map(function (a) {
+    return document.getElementById(a.getAttribute("href").slice(1));
+  });
+  var fill = document.querySelector(".dc-bar i");
+  function onScroll() {
+    var y = window.scrollY + 90, at = -1;
+    for (var i = 0; i < heads.length; i++) {
+      if (heads[i] && heads[i].offsetTop <= y) { at = i; }
+    }
+    links.forEach(function (a, i) { a.classList.toggle("dc-on", i === at); });
+    if (fill) {
+      var run = document.body.scrollHeight - window.innerHeight;
+      fill.style.width = (run > 0 ? (window.scrollY / run) * 100 : 0) + "%";
+    }
+  }
+  addEventListener("scroll", onScroll, { passive: true });
+  addEventListener("resize", onScroll);
+  onScroll();
+
+  /* --- search, over every heading in the series --- */
+  var sheet = document.getElementById("dc-search");
+  var keys = document.getElementById("dc-keysheet");
+  var box = document.getElementById("dc-q");
+  var list = document.getElementById("dc-hits");
+  var hits = [], at = 0;
+
+  function score(text, q) {
+    var t = text.toLowerCase(), i = t.indexOf(q);
+    if (i === 0) { return 0; }
+    if (i > 0) { return 1; }
+    var k = 0;
+    for (var c = 0; c < q.length; c++) {
+      k = t.indexOf(q[c], k) + 1;
+      if (!k) { return -1; }
+    }
+    return 2;
+  }
+  function draw() {
+    var q = box.value.trim().toLowerCase();
+    hits = !q ? INDEX.slice(0, 8)
+              : INDEX.map(function (e) { return [score(e.t, q), e]; })
+                     .filter(function (p) { return p[0] >= 0; })
+                     .sort(function (a, b) { return a[0] - b[0]; })
+                     .slice(0, 12).map(function (p) { return p[1]; });
+    at = 0;
+    list.replaceChildren.apply(list, hits.map(function (e, i) {
+      var li = document.createElement("li");
+      li.setAttribute("role", "option");
+      if (i === 0) { li.className = "dc-on"; }
+      var a = document.createElement("span"); a.textContent = e.t;
+      var b = document.createElement("span"); b.className = "dc-where"; b.textContent = e.c;
+      li.append(a, b);
+      li.addEventListener("click", function () { go(e); });
+      return li;
+    }));
+  }
+  function mark() {
+    [].slice.call(list.children).forEach(function (li, i) {
+      li.classList.toggle("dc-on", i === at);
+    });
+  }
+  function go(e) {
+    close();
+    if (e.p === HERE) {
+      var el = e.h && document.getElementById(e.h);
+      if (el) { el.scrollIntoView({ block: "start", behavior: "smooth" }); return; }
+    }
+    location.href = (HERE ? "../" : "") + e.p + (e.h ? "#" + e.h : "");
+  }
+  function open() { keys.hidden = true; sheet.hidden = false; box.value = ""; draw(); box.focus(); }
+  function close() { sheet.hidden = true; keys.hidden = true; }
+
+  [sheet, keys].forEach(function (el) {
+    el.addEventListener("click", function (ev) { if (ev.target === el) { close(); } });
+  });
+  box.addEventListener("input", draw);
+  box.addEventListener("keydown", function (ev) {
+    if (ev.key === "ArrowDown") { ev.preventDefault(); at = Math.min(at + 1, hits.length - 1); mark(); }
+    else if (ev.key === "ArrowUp") { ev.preventDefault(); at = Math.max(at - 1, 0); mark(); }
+    else if (ev.key === "Enter" && hits[at]) { ev.preventDefault(); go(hits[at]); }
+  });
+  addEventListener("keydown", function (ev) {
+    var typing = /^(INPUT|TEXTAREA|SELECT)$/.test(ev.target.tagName)
+                 || ev.target.isContentEditable;
+    if (ev.key === "Escape") { close(); return; }
+    if (typing || ev.metaKey || ev.ctrlKey || ev.altKey) { return; }
+    if (ev.key === "/") { ev.preventDefault(); open(); }
+    else if (ev.key === "?") { ev.preventDefault(); sheet.hidden = true; keys.hidden = !keys.hidden; }
+    else if (ev.key === "ArrowLeft" || ev.key === "ArrowRight") {
+      var step = document.querySelector(ev.key === "ArrowLeft" ? ".dc-prev" : ".dc-next");
+      if (step) { location.href = step.getAttribute("href"); }
+    }
+  });
+}());
+</script>
 </body></html>

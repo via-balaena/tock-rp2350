@@ -346,7 +346,11 @@ def check_styles(build, html, problems):
 
 
 def check_interactions(problems):
-    """Run the page in a DOM and assert its interactions actually work.
+    """Run the pages in a DOM and assert their interactions actually work.
+
+    Both products: the work map, and the course's site chrome. The chapters'
+    own gate runs their figures under a shim and knows nothing about the rail,
+    the search or the keys, which are added at publish time.
 
     Everything else here reads the HTML as text. This runs the script the way
     a browser would. It is optional because it needs node and jsdom, and it is
@@ -355,22 +359,27 @@ def check_interactions(problems):
     IntersectionObserver was missing, and because the page ships one script,
     that one throw took the search, the key bindings and the palette with it.
     """
-    driver = ROOT / "drive.js"
-    if not driver.exists():
-        return "interactions: drive.js is missing"
-    try:
-        run = subprocess.run(["node", str(driver), str(ROOT / "index.html")],
-                             capture_output=True, text=True, cwd=ROOT)
-    except FileNotFoundError:
-        return "node is not installed"
-    if run.returncode == 2:
-        return "jsdom is not installed (npm install jsdom)"
-    if run.returncode != 0:
-        for line in (run.stdout + run.stderr).splitlines():
-            if line.strip():
-                problems.append("interactions: " + line.strip())
-        if not run.stdout.strip():
-            problems.append("interactions: the driver failed with no output")
+    runs = [(ROOT / "drive.js", [str(ROOT / "index.html")])]
+    course = sorted((ROOT / "read").glob("ch*/index.html"))
+    if (ROOT / "drive-read.js").exists() and course:
+        runs.append((ROOT / "drive-read.js",
+                     [str(ROOT / "read" / "index.html")] + [str(p) for p in course]))
+    for driver, args in runs:
+        if not driver.exists():
+            return "%s is missing" % driver.name
+        try:
+            run = subprocess.run(["node", str(driver), *args],
+                                 capture_output=True, text=True, cwd=ROOT)
+        except FileNotFoundError:
+            return "node is not installed"
+        if run.returncode == 2:
+            return "jsdom is not installed (npm install jsdom)"
+        if run.returncode != 0:
+            for line in (run.stdout + run.stderr).splitlines():
+                if line.strip():
+                    problems.append("interactions: " + line.strip())
+            if not run.stdout.strip():
+                problems.append("interactions: %s failed with no output" % driver.name)
     return None
 
 
