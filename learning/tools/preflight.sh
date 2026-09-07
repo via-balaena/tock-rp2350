@@ -43,18 +43,32 @@ else
 fi
 rm -f /tmp/preflight-gate.$$
 
-step "Tock's own CI, which does not know this directory is special"
-if cargo run --quiet --manifest-path=tools/ci/license-checker/Cargo.toml \
-        --release > /dev/null 2>&1; then
-    ok "license checker"
-else
-    bad "license checker -- check SPDX headers and learning/.lcignore"
-fi
+# Three of the steps below are Tock's own CI, which exists in a Tock checkout
+# and not in the site repository the chapters moved to on 2026-09-06. They are
+# SKIPPED there, and a skip is printed as a skip: reporting a pass for a check
+# that did not run is the exact failure this whole gate exists to prevent.
+skip() { printf "  skip  %s\n" "$1"; }
 
-if cargo fmt --check > /dev/null 2>&1; then
-    ok "cargo fmt --check"
+if [ -d tools/ci ]; then
+    step "Tock's own CI, which does not know this directory is special"
+
+    if cargo run --quiet --manifest-path=tools/ci/license-checker/Cargo.toml \
+            --release > /dev/null 2>&1; then
+        ok "license checker"
+    else
+        bad "license checker -- check SPDX headers and learning/.lcignore"
+    fi
+
+    if cargo fmt --check > /dev/null 2>&1; then
+        ok "cargo fmt --check"
+    else
+        bad "cargo fmt --check"
+    fi
 else
-    bad "cargo fmt --check"
+    step "Tock's own CI -- not run, this is not a kernel checkout"
+    skip "license checker"
+    skip "cargo fmt --check"
+    skip "check-for-readmes.sh"
 fi
 
 # The other half of make format-check reaches every tracked .rs file, workspace
@@ -66,10 +80,12 @@ else
     bad "tab characters in Rust sources"
 fi
 
-if ./tools/ci/check-for-readmes.sh > /dev/null 2>&1; then
-    ok "check-for-readmes.sh"
-else
-    bad "check-for-readmes.sh"
+if [ -d tools/ci ]; then
+    if ./tools/ci/check-for-readmes.sh > /dev/null 2>&1; then
+        ok "check-for-readmes.sh"
+    else
+        bad "check-for-readmes.sh"
+    fi
 fi
 
 MARKED="$(grep -rl '<!-- toc -->' learning --include='*.md' 2>/dev/null || true)"
