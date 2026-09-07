@@ -146,6 +146,61 @@
   ],
   "pin": "83bad9388"
  },
+ "ch01-everything-is-memory": {
+  "cites": [
+   {
+    "closes": "(0x02C => gpio_hi_out_xor: ReadWrite<u32, GPIO_HI_OUT_XOR::Register>),",
+    "end": 108,
+    "opens": "/// GPIO0...31 output value",
+    "path": "chips/rp2350/src/gpio.rs",
+    "start": 88
+   },
+   {
+    "closes": "}",
+    "end": 1250,
+    "opens": "pub enum RPGpio {",
+    "path": "chips/rp2350/src/gpio.rs",
+    "start": 1245
+   }
+  ],
+  "pin": "83bad9388"
+ },
+ "ch02-registers-are-not-variables": {
+  "cites": [
+   {
+    "opens": "self.sio_registers.gpio_out_set.set(1 << self.pin);",
+    "path": "chips/rp2350/src/gpio.rs",
+    "start": 1519
+   },
+   {
+    "closes": "FUNCSEL OFFSET(0) NUMBITS(5) [",
+    "end": 347,
+    "opens": "DriveOutputHigh = 3",
+    "path": "chips/rp2350/src/gpio.rs",
+    "start": 343
+   },
+   {
+    "closes": "TXFF OFFSET(5) NUMBITS(1) [],",
+    "end": 104,
+    "opens": "/// Transmit FIFO full. The meaning of this bit depends on the state of the FEN bit in the",
+    "path": "chips/rp2350/src/uart.rs",
+    "start": 103
+   },
+   {
+    "closes": "/// This bit is the complement of the UART Out2 (nUARTOut2) modem status output. That is, ",
+    "end": 154,
+    "opens": "CTSEN OFFSET(15) NUMBITS(1) [],",
+    "path": "chips/rp2350/src/uart.rs",
+    "start": 151
+   },
+   {
+    "opens": null,
+    "path": "src/registers.rs",
+    "start": 63
+   }
+  ],
+  "pin": "83bad9388"
+ },
  "ch04-what-a-driver-may-touch": {
   "cites": [
    {

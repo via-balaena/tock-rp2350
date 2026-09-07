@@ -842,7 +842,7 @@ CITATION_TOKEN = re.compile(
     # The word boundary is load-bearing. Chapter 0 quotes a USB identifier,
     # `2e8a:000c`, and without it that reads as a citation to line 0 of
     # whatever file was named last.
-    r"|:(\d+)(?:\s*(?:-|&ndash;|&#8211;|\u2013)\s*(\d+))?(?![\w])")
+    r"|:([1-9]\d*)(?:\s*(?:-|&ndash;|&#8211;|\u2013)\s*([1-9]\d*))?(?![\w])")
 
 # A `<code>` that is shaped like a path and did not match above. The extension
 # list is an allowlist, and a missing entry does not merely leave a citation
@@ -861,16 +861,25 @@ def unrecognised_paths(html):
     if not block:
         return set()
     named = {m.group(1) for m in CITATION_TOKEN.finditer(block) if m.group(1)}
-    return {p for p in PATH_SHAPED.findall(block) if p not in named}
+    outside = ("pico-sdk/", "http://", "https://")
+    return {p for p in PATH_SHAPED.findall(block)
+            if p not in named and not p.startswith(outside)}
 
 
 def sources_pin(html):
     """The commit a chapter's sources list names, or None."""
-    block = re.search(r'<section class="col sources">(.*?)</section>', html, re.S)
+    # Both spellings. Chapters 1 and 2 write `<div class="sources">` and every
+    # other chapter writes `<section class="col sources">`, so matching only
+    # the second left those two bibliographies unchecked by every citation
+    # gate here -- not failing, simply never looked at. The prose rule in this
+    # same file had the identical bug pointing the other way.
+    block = re.search(r'<(section|div)[^>]*class="[^"]*\bsources\b[^"]*">(.*?)</\1>',
+                      html, re.S)
     if not block:
         return None, None
-    pin = re.search(r"commit <code>([0-9a-f]{7,40})</code>", block.group(1))
-    return (pin.group(1) if pin else None), block.group(1)
+    body = block.group(2)
+    pin = re.search(r"commit <code>([0-9a-f]{7,40})</code>", body)
+    return (pin.group(1) if pin else None), body
 
 
 def iter_citations(html):
@@ -944,6 +953,20 @@ def citation_chain_checks(html):
                       capture_output=True).returncode != 0:
         return []
 
+    # A bullet that names a crate and a version is citing that crate, not this
+    # tree: "tock-registers 0.10.0, src/registers.rs:63" is a reference into a
+    # published dependency and will never resolve at the kernel's pin.
+    _, sources = sources_pin(html)
+    external = set()
+    for item in re.findall(r"<li>(.*?)</li>", sources or "", re.S):
+        if not re.search(r"\b\d+\.\d+\.\d+\b", re.sub(r"<[^>]+>", " ", item)):
+            continue
+        for path in re.findall(r"<code>([A-Za-z0-9_./-]+\.[A-Za-z0-9]+)</code>", item):
+            if path.split("/")[0] not in ("kernel", "chips", "boards", "capsules",
+                                          "arch", "libraries", "doc", ".github",
+                                          "tools", "vagrant"):
+                external.add(path)
+
     problems, lengths = [], {}
     for stray in sorted(unrecognised_paths(html)):
         problems.append(
@@ -958,8 +981,9 @@ def citation_chain_checks(html):
                              if shown.returncode == 0 else None)
         total = lengths[path]
         if total is None:
-            problems.append("a citation names %s, which is not in the tree "
-                            "at %s" % (path, pin))
+            if path not in external:
+                problems.append("a citation names %s, which is not in the tree "
+                                "at %s" % (path, pin))
             lengths[path] = 0
             continue
         for line in (first, last):
@@ -1028,7 +1052,9 @@ def citation_quote_checks(html):
                 continue
             cites.append((current, int(token.group(2)),
                           int(token.group(3)) if token.group(3) else None))
-        quotes = SOURCE_QUOTE.findall(item)
+        # Tags go to nothing, not to a space: `<code>Drop</code>,` must read
+        # as "Drop," the way the source does, not as "Drop ,".
+        quotes = SOURCE_QUOTE.findall(re.sub(r"<[^>]+>", "", item))
         if not cites or not quotes:
             continue
         body = []

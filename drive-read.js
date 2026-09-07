@@ -72,6 +72,16 @@ const check = (name, ok, detail) =>
     press('Escape');
     check(where + ': escape closes search', sheet.hidden);
 
+    // a page that pins a commit must link its citations to it
+    const pinned = /commit <code>[0-9a-f]{7,}<\/code>/.test(doc.body.innerHTML);
+    const cites = [...doc.querySelectorAll('a.dc-cite')];
+    if (pinned && doc.querySelector('.sources')) {
+      check(where + ': citations link to the commit they name',
+            cites.length > 0, cites.length + ' links');
+      check(where + ': every citation link carries a line anchor',
+            cites.every(a => /#L\d+/.test(a.getAttribute('href'))));
+    }
+
     // every term this page defines is anchored, so search can reach it
     const terms = [...doc.querySelectorAll('dt[id]')];
     check(where + ': defined terms carry anchors',

@@ -35,6 +35,9 @@ box-shadow:inset 2px 0 0 #7a4b1e}
 padding:3px 0 3px 11px;margin-left:-1px;border-left:2px solid transparent}
 .dc-sec:hover{color:#16171a}
 .dc-sec.dc-on{color:#16171a;border-left-color:#7a4b1e}
+.dc-cite{color:#7a4b1e;text-decoration:none;border-bottom:1px solid rgba(122,75,30,.35)}
+.dc-cite:hover{border-bottom-color:#7a4b1e}
+.dc-pin{font-size:12px;color:#6f7278;margin:10px 0 0}
 .dc-keys{margin:18px 8px 0;font-size:11px;color:#8e8f95}
 .dc-keys kbd{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10.5px;
 border:1px solid #e4e2dd;border-bottom-width:2px;border-radius:4px;padding:0 4px;color:#4f5157}
@@ -70,6 +73,8 @@ font-size:13px;color:#4f5157}
 .dc-secs{border-left-color:#2c2d33}.dc-sec{color:#8e8f95}
 .dc-sec:hover{color:#edecea}.dc-sec.dc-on{color:#edecea;border-left-color:#d9a273}
 .dc-keys{color:#8e8f95}.dc-keys kbd{border-color:#2c2d33;color:#b6b6ba}
+.dc-cite{color:#d9a273;border-bottom-color:rgba(217,162,115,.35)}
+.dc-pin{color:#8e8f95}
 .dc-bar i{background:#d9a273}
 .dc-box{background:#1b1c20;border-color:#2c2d33}
 .dc-box h2{color:#edecea}
@@ -2730,8 +2735,8 @@ dfn {
   <ul>
     <li>Address decode on bits 31:28, the segment table, and unmapped ranges raising a bus error &mdash; RP2350 datasheet &sect;2.2, Table&nbsp;8</li>
     <li>SIO base <code class="addr">0xD0000000</code>, IO_BANK0 <code class="addr">0x40028000</code>, PADS <code class="addr">0x40038000</code> &mdash; <a href="https://github.com/tock/tock/blob/master/chips/rp2350/src/gpio.rs">chips/rp2350/src/gpio.rs</a>:1164&ndash;1169</li>
-    <li>The eight output registers at offsets <code>0x010</code>&ndash;<code>0x02C</code>, including the <code>gpio_hi_</code> siblings &mdash; <code>chips/rp2350/src/gpio.rs</code>:88&ndash;108</li>
-    <li>Pins defined as <code>GPIO0</code>&ndash;<code>GPIO29</code> &mdash; <code>chips/rp2350/src/gpio.rs</code>:1245&ndash;1250</li>
+    <li>The eight output registers at offsets <code>0x010</code>&ndash;<code>0x02C</code>, including the <code>gpio_hi_</code> siblings &mdash; <code>chips/rp2350/src/gpio.rs</code><a class="dc-cite" href="https://github.com/via-balaena/tock/blob/83bad9388/chips/rp2350/src/gpio.rs#L88-L108">:88&ndash;108</a></li>
+    <li>Pins defined as <code>GPIO0</code>&ndash;<code>GPIO29</code> &mdash; <code>chips/rp2350/src/gpio.rs</code><a class="dc-cite" href="https://github.com/via-balaena/tock/blob/83bad9388/chips/rp2350/src/gpio.rs#L1245-L1250">:1245&ndash;1250</a></li>
     <li>30 GPIOs on QFN-60 (RP2350A) versus 48 on QFN-80 (RP2350B), their four and eight analogue inputs, the 7&nbsp;&times;&nbsp;7&nbsp;mm and 10&nbsp;&times;&nbsp;10&nbsp;mm packages, and GPIOs 30&ndash;47 being QFN-80 only &mdash; RP2350 datasheet Table&nbsp;1, the sentence introducing it, and the note under the pin-function table</li>
     <li>A pin's high level being the IOVDD rail, and all GPIOs sharing it &mdash; RP2350 datasheet &sect;6.1.1. That rail is 3.3&nbsp;V on a Pico&nbsp;2: <em>"3V3 is the main 3.3&nbsp;V supply to RP2350 and its I/O"</em> &mdash; Pico&nbsp;2 datasheet</li>
     <li>Default drive strength of 4&nbsp;mA &mdash; RP2350 datasheet, <code>PADS_BANK0: GPIOx</code>, field <code>DRIVE</code>, reset <code>0x1</code></li>
@@ -2745,7 +2750,7 @@ dfn {
   <p class="note">The datasheets are linked from <a href="https://www.raspberrypi.com/documentation/microcontrollers/silicon.html">Raspberry Pi's silicon documentation page</a>. They are licensed no-derivatives, so this page quotes them briefly with attribution rather than reproducing them.</p>
   <p>One earlier draft of this chapter said SIO was reached by a route separate from the peripheral fabric. That was wrong. The datasheet says it is accessed via the AHB Fabric, with a dedicated bus interface per core. The mistake came from recalling the RP2040, where SIO does sit on a single-cycle port off the processor. Different chip, different answer, and it is recorded here rather than quietly fixed.</p>
   <p class="license">Text, diagrams and interactive figures &copy;&nbsp;Jon&nbsp;Hillesheim&nbsp;2026, licensed <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC&nbsp;BY-SA&nbsp;4.0</a> &mdash; share and adapt freely with credit, under the same license. Tock source excerpts quoted above remain under their own Apache-2.0&nbsp;OR&nbsp;MIT license and are not relicensed here.</p>
-</div>
+<p class="dc-pin">Every line reference below links to that commit on the fork it was read from, at the lines it names.</p></div>
 
 </div>
 <script>

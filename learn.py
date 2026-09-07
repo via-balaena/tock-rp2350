@@ -67,6 +67,9 @@ box-shadow:inset 2px 0 0 #7a4b1e}
 padding:3px 0 3px 11px;margin-left:-1px;border-left:2px solid transparent}
 .dc-sec:hover{color:#16171a}
 .dc-sec.dc-on{color:#16171a;border-left-color:#7a4b1e}
+.dc-cite{color:#7a4b1e;text-decoration:none;border-bottom:1px solid rgba(122,75,30,.35)}
+.dc-cite:hover{border-bottom-color:#7a4b1e}
+.dc-pin{font-size:12px;color:#6f7278;margin:10px 0 0}
 .dc-keys{margin:18px 8px 0;font-size:11px;color:#8e8f95}
 .dc-keys kbd{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10.5px;
 border:1px solid #e4e2dd;border-bottom-width:2px;border-radius:4px;padding:0 4px;color:#4f5157}
@@ -102,6 +105,8 @@ font-size:13px;color:#4f5157}
 .dc-secs{border-left-color:#2c2d33}.dc-sec{color:#8e8f95}
 .dc-sec:hover{color:#edecea}.dc-sec.dc-on{color:#edecea;border-left-color:#d9a273}
 .dc-keys{color:#8e8f95}.dc-keys kbd{border-color:#2c2d33;color:#b6b6ba}
+.dc-cite{color:#d9a273;border-bottom-color:rgba(217,162,115,.35)}
+.dc-pin{color:#8e8f95}
 .dc-bar i{background:#d9a273}
 .dc-box{background:#1b1c20;border-color:#2c2d33}
 .dc-box h2{color:#edecea}
@@ -310,6 +315,55 @@ def vocabulary(body):
     return TERM.sub(anchor, body), found
 
 
+# Where the tree the chapters cite actually lives. The pages name a commit and
+# nothing else, so a reader meets a bare hex string with no way to know it is
+# reachable at all. It is: the fork is public, and GitHub takes a line range as
+# an anchor, so every citation can be one click onto the exact lines it names.
+FORK = "https://github.com/via-balaena/tock/blob/%s/%s"
+
+SOURCES_BLOCK = re.compile(
+    r'(<(?:section|div)[^>]*class="[^"]*\bsources\b[^"]*">)(.*?)(</(?:section|div)>)', re.S)
+PIN_CODE = re.compile(r"commit <code>([0-9a-f]{7,40})</code>")
+CITE_TOKEN = re.compile(
+    r"<code>([A-Za-z0-9_./-]+\.(?:rs|md|s|toml|cfg|ld|json|ya?ml)"
+    r"|(?:[A-Za-z0-9_./-]*/)?Makefile(?:\.common)?)</code>"
+    r"|:([1-9]\d*)(?:\s*(?:-|&ndash;|&#8211;|\u2013)\s*(\d+))?(?![\w])")
+
+
+def link_citations(body):
+    """Turn every line reference in a sources list into a link to those lines.
+
+    The path context carries across bullets exactly as the gate resolves it, so
+    "the same file, :17-27" links to the same file the gate checks -- one
+    grammar, one answer. Nothing is added to the sources; the numbers that were
+    already there become clickable.
+    """
+    def rewrite(match):
+        head, block, tail = match.groups()
+        found = PIN_CODE.search(block)
+        if not found:
+            return match.group(0)
+        pin = found.group(1)
+        current = {"path": None}
+
+        def one(token):
+            if token.group(1):
+                current["path"] = token.group(1)
+                return token.group(0)
+            if current["path"] is None:
+                return token.group(0)
+            first, last = token.group(2), token.group(3)
+            anchor = "#L" + first + ("-L" + last if last else "")
+            return '<a class="dc-cite" href="%s%s">%s</a>' % (
+                FORK % (pin, current["path"]), anchor, token.group(0))
+
+        note = ('<p class="dc-pin">Every line reference below links to that '
+                'commit on the fork it was read from, at the lines it names.</p>')
+        return head + CITE_TOKEN.sub(one, block) + note + tail
+
+    return SOURCES_BLOCK.sub(rewrite, body)
+
+
 def rail(meta, here):
     """The fixed rail: the series, the chapter you are in, and its sections."""
     up = "../../" if here else "../"
@@ -356,6 +410,7 @@ def e(text):
 def render(shell, body, meta, here, index):
     body, _ = outline(body)
     body, _ = vocabulary(body)
+    body = link_citations(body)
     chrome = (
         '<style>%s</style>%s<div class="dc-bar"><i></i></div>'
         '<div class="dc-main">%s</div>'

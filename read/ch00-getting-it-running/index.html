@@ -35,6 +35,9 @@ box-shadow:inset 2px 0 0 #7a4b1e}
 padding:3px 0 3px 11px;margin-left:-1px;border-left:2px solid transparent}
 .dc-sec:hover{color:#16171a}
 .dc-sec.dc-on{color:#16171a;border-left-color:#7a4b1e}
+.dc-cite{color:#7a4b1e;text-decoration:none;border-bottom:1px solid rgba(122,75,30,.35)}
+.dc-cite:hover{border-bottom-color:#7a4b1e}
+.dc-pin{font-size:12px;color:#6f7278;margin:10px 0 0}
 .dc-keys{margin:18px 8px 0;font-size:11px;color:#8e8f95}
 .dc-keys kbd{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10.5px;
 border:1px solid #e4e2dd;border-bottom-width:2px;border-radius:4px;padding:0 4px;color:#4f5157}
@@ -70,6 +73,8 @@ font-size:13px;color:#4f5157}
 .dc-secs{border-left-color:#2c2d33}.dc-sec{color:#8e8f95}
 .dc-sec:hover{color:#edecea}.dc-sec.dc-on{color:#edecea;border-left-color:#d9a273}
 .dc-keys{color:#8e8f95}.dc-keys kbd{border-color:#2c2d33;color:#b6b6ba}
+.dc-cite{color:#d9a273;border-bottom-color:rgba(217,162,115,.35)}
+.dc-pin{color:#8e8f95}
 .dc-bar i{background:#d9a273}
 .dc-box{background:#1b1c20;border-color:#2c2d33}
 .dc-box h2{color:#edecea}
@@ -1431,23 +1436,23 @@ $ openocd -f interface/cmsis-dap.cfg -f target/rp2350.cfg \
   <h3>Everything above, checked against source</h3>
   <p>Every claim on this page about what a file says comes from the Tock tree at commit <code>83bad9388</code>. The build output in the second section is a real run on an Apple laptop, not a transcription.</p>
   <ul>
-    <li>The pinned toolchain and the target list installed with it &mdash; <code>rust-toolchain.toml</code>:6&ndash;15</li>
-    <li>The target this board builds for &mdash; <code>boards/raspberry_pi_pico_2/.cargo/config.toml</code>:11</li>
-    <li>The four flashing targets, in order &mdash; <code>boards/raspberry_pi_pico_2/Makefile</code>:23, :27, :32 and :42</li>
-    <li>The folder the two copying routes test for, and its Linux path &mdash; the same file, :13, tested at :30 and :40</li>
-    <li>The message those routes print instead of copying, and that they exit successfully after it &mdash; the same file, :30 and :40</li>
-    <li>The two routes that need a separate converter to make a UF2 &mdash; the same file, :29 and :39</li>
-    <li><code>program</code> refusing to run at all with no application given &mdash; the same file, :34&ndash;36</li>
-    <li>What <code>flash-openocd</code> actually runs: write, verify, reset, exit &mdash; the same file, :25. The form run on the bench was the split one below, which is that line with the config spelled out; the two are the same command because the config is only those two lines</li>
-    <li>The whole of this board's OpenOCD configuration, which is two lines &mdash; <code>boards/raspberry_pi_pico_2/openocd-picoprobe.cfg</code>:5&ndash;6</li>
-    <li>Tock's own hardware testing being built as small hosts beside real boards &mdash; <code>.github/workflows/treadmill-ci.yml</code>:5&ndash;8, "Treadmill is a distributed hardware testbed developed within the Tock OS project"</li>
-    <li>Pin&nbsp;0 transmitting and pin&nbsp;1 receiving, and both being handed to the serial hardware &mdash; <code>boards/raspberry_pi_pico_2/src/lib.rs</code>:260&ndash;263</li>
-    <li>The console running at 115200 &mdash; the same file, :303</li>
-    <li>The banner, and where in start-up it is printed &mdash; <code>boards/raspberry_pi_pico_2/src/main.rs</code>:100</li>
-    <li>The second banner sitting after the first rather than replacing it, with the search for applications between them &mdash; the same file, :100, then <code>load_processes</code> at :117, then :132</li>
-    <li>The prompt, and the header row <code>list</code> prints, both quoted as the process console writes them &mdash; <code>capsules/core/src/process_console.rs</code>:1036 for <code>tock$&nbsp;</code>, and :897&ndash;898 for the header</li>
+    <li>The pinned toolchain and the target list installed with it &mdash; <code>rust-toolchain.toml</code><a class="dc-cite" href="https://github.com/via-balaena/tock/blob/83bad9388/rust-toolchain.toml#L6-L15">:6&ndash;15</a></li>
+    <li>The target this board builds for &mdash; <code>boards/raspberry_pi_pico_2/.cargo/config.toml</code><a class="dc-cite" href="https://github.com/via-balaena/tock/blob/83bad9388/boards/raspberry_pi_pico_2/.cargo/config.toml#L11">:11</a></li>
+    <li>The four flashing targets, in order &mdash; <code>boards/raspberry_pi_pico_2/Makefile</code><a class="dc-cite" href="https://github.com/via-balaena/tock/blob/83bad9388/boards/raspberry_pi_pico_2/Makefile#L23">:23</a>, <a class="dc-cite" href="https://github.com/via-balaena/tock/blob/83bad9388/boards/raspberry_pi_pico_2/Makefile#L27">:27</a>, <a class="dc-cite" href="https://github.com/via-balaena/tock/blob/83bad9388/boards/raspberry_pi_pico_2/Makefile#L32">:32</a> and <a class="dc-cite" href="https://github.com/via-balaena/tock/blob/83bad9388/boards/raspberry_pi_pico_2/Makefile#L42">:42</a></li>
+    <li>The folder the two copying routes test for, and its Linux path &mdash; the same file, <a class="dc-cite" href="https://github.com/via-balaena/tock/blob/83bad9388/boards/raspberry_pi_pico_2/Makefile#L13">:13</a>, tested at <a class="dc-cite" href="https://github.com/via-balaena/tock/blob/83bad9388/boards/raspberry_pi_pico_2/Makefile#L30">:30</a> and <a class="dc-cite" href="https://github.com/via-balaena/tock/blob/83bad9388/boards/raspberry_pi_pico_2/Makefile#L40">:40</a></li>
+    <li>The message those routes print instead of copying, and that they exit successfully after it &mdash; the same file, <a class="dc-cite" href="https://github.com/via-balaena/tock/blob/83bad9388/boards/raspberry_pi_pico_2/Makefile#L30">:30</a> and <a class="dc-cite" href="https://github.com/via-balaena/tock/blob/83bad9388/boards/raspberry_pi_pico_2/Makefile#L40">:40</a></li>
+    <li>The two routes that need a separate converter to make a UF2 &mdash; the same file, <a class="dc-cite" href="https://github.com/via-balaena/tock/blob/83bad9388/boards/raspberry_pi_pico_2/Makefile#L29">:29</a> and <a class="dc-cite" href="https://github.com/via-balaena/tock/blob/83bad9388/boards/raspberry_pi_pico_2/Makefile#L39">:39</a></li>
+    <li><code>program</code> refusing to run at all with no application given &mdash; the same file, <a class="dc-cite" href="https://github.com/via-balaena/tock/blob/83bad9388/boards/raspberry_pi_pico_2/Makefile#L34-L36">:34&ndash;36</a></li>
+    <li>What <code>flash-openocd</code> actually runs: write, verify, reset, exit &mdash; the same file, <a class="dc-cite" href="https://github.com/via-balaena/tock/blob/83bad9388/boards/raspberry_pi_pico_2/Makefile#L25">:25</a>. The form run on the bench was the split one below, which is that line with the config spelled out; the two are the same command because the config is only those two lines</li>
+    <li>The whole of this board's OpenOCD configuration, which is two lines &mdash; <code>boards/raspberry_pi_pico_2/openocd-picoprobe.cfg</code><a class="dc-cite" href="https://github.com/via-balaena/tock/blob/83bad9388/boards/raspberry_pi_pico_2/openocd-picoprobe.cfg#L5-L6">:5&ndash;6</a></li>
+    <li>Tock's own hardware testing being built as small hosts beside real boards &mdash; <code>.github/workflows/treadmill-ci.yml</code><a class="dc-cite" href="https://github.com/via-balaena/tock/blob/83bad9388/.github/workflows/treadmill-ci.yml#L5-L8">:5&ndash;8</a>, "Treadmill is a distributed hardware testbed developed within the Tock OS project"</li>
+    <li>Pin&nbsp;0 transmitting and pin&nbsp;1 receiving, and both being handed to the serial hardware &mdash; <code>boards/raspberry_pi_pico_2/src/lib.rs</code><a class="dc-cite" href="https://github.com/via-balaena/tock/blob/83bad9388/boards/raspberry_pi_pico_2/src/lib.rs#L260-L263">:260&ndash;263</a></li>
+    <li>The console running at 115200 &mdash; the same file, <a class="dc-cite" href="https://github.com/via-balaena/tock/blob/83bad9388/boards/raspberry_pi_pico_2/src/lib.rs#L303">:303</a></li>
+    <li>The banner, and where in start-up it is printed &mdash; <code>boards/raspberry_pi_pico_2/src/main.rs</code><a class="dc-cite" href="https://github.com/via-balaena/tock/blob/83bad9388/boards/raspberry_pi_pico_2/src/main.rs#L100">:100</a></li>
+    <li>The second banner sitting after the first rather than replacing it, with the search for applications between them &mdash; the same file, <a class="dc-cite" href="https://github.com/via-balaena/tock/blob/83bad9388/boards/raspberry_pi_pico_2/src/main.rs#L100">:100</a>, then <code>load_processes</code> at <a class="dc-cite" href="https://github.com/via-balaena/tock/blob/83bad9388/boards/raspberry_pi_pico_2/src/main.rs#L117">:117</a>, then <a class="dc-cite" href="https://github.com/via-balaena/tock/blob/83bad9388/boards/raspberry_pi_pico_2/src/main.rs#L132">:132</a></li>
+    <li>The prompt, and the header row <code>list</code> prints, both quoted as the process console writes them &mdash; <code>capsules/core/src/process_console.rs</code><a class="dc-cite" href="https://github.com/via-balaena/tock/blob/83bad9388/capsules/core/src/process_console.rs#L1036">:1036</a> for <code>tock$&nbsp;</code>, and <a class="dc-cite" href="https://github.com/via-balaena/tock/blob/83bad9388/capsules/core/src/process_console.rs#L897-L898">:897&ndash;898</a> for the header</li>
     <li>The tree having five Pico directories, one of them a Pico 2&nbsp;W &mdash; <code>boards/</code> at that commit</li>
-    <li>Pin&nbsp;25 being the light the plain Pico&nbsp;2 hands to the light driver &mdash; the same file, :95</li>
+    <li>Pin&nbsp;25 being the light the plain Pico&nbsp;2 hands to the light driver &mdash; the same file, <a class="dc-cite" href="https://github.com/via-balaena/tock/blob/83bad9388/capsules/core/src/process_console.rs#L95">:95</a></li>
     <li>The Pico 2&nbsp;W crate having no light driver, and halting rather than blinking after a panic prints &mdash; <code>boards/raspberry_pi_pico_2_w/src/main.rs</code> and <code>boards/raspberry_pi_pico_2_w/src/io.rs</code></li>
     <li>The build taking 7.2 seconds of wall time, of which 5.64 were the compiler &mdash; measured on this machine with <code>/usr/bin/time</code>. The block above is that run, abridged: five <code>Compiling</code> lines and a trailing checksum are left out, and the size line's filename column is shortened from an absolute path. No number in it is altered</li>
     <li>A Mac having <code>screen</code> already, and <code>picocom</code> needing installing on Debian &mdash; checked on the machine these pages were written on, which had <code>screen</code> and neither of the other two</li>
@@ -1461,7 +1466,7 @@ $ openocd -f interface/cmsis-dap.cfg -f target/rp2350.cfg \
     <li>The copying routes printing that message and then exiting with status&nbsp;0 &mdash; <code>make flash</code> run on this machine with no board attached. The conversion succeeded, so the copy was the only step that did not happen, and nothing reported it</li>
   </ul>
   <p class="license">Text, diagrams and interactive figures &copy;&nbsp;Jon&nbsp;Hillesheim&nbsp;2026, licensed <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC&nbsp;BY-SA&nbsp;4.0</a> &mdash; share and adapt freely with credit, under the same license. Tock source excerpts quoted above remain under their own Apache-2.0&nbsp;OR&nbsp;MIT license and are not relicensed here.</p>
-</section>
+<p class="dc-pin">Every line reference below links to that commit on the fork it was read from, at the lines it names.</p></section>
 
 </div>
 
