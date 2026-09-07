@@ -91,6 +91,11 @@ figcaption b{color:var(--ink-soft);font-weight:600}
 .controls button[aria-pressed=true]{background:var(--accent);
   border-color:var(--accent);color:var(--panel);font-weight:600}
 .panel[hidden]{display:none}
+/* Shown only when scripting is off, where the panels stack and the button that
+   named each one is gone. (Deliberately not naming the tag: a tool that inlines
+   this file into a page would then find the name in the head.) */
+.nojs-label{display:none;font-size:11px;text-transform:uppercase;
+  letter-spacing:.08em;color:var(--ink-faint);margin:0 0 10px;font-weight:600}
 
 /* ---- data tables ---- */
 .grid{width:100%;border-collapse:collapse;font-family:var(--mono);

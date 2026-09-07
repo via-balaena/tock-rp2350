@@ -21,6 +21,23 @@ set -eu
 KERNEL=${1:?usage: reproduce.sh path/to/raspberry_pi_pico.elf}
 OC=${OBJCOPY:-arm-none-eabi-objcopy}
 RE=${READELF:-arm-none-eabi-readelf}
+
+# Every objcopy below sends its stderr to /dev/null, because the whole point is
+# to compare exit statuses rather than to read warnings. That makes a wrong
+# path or a missing tool look like an empty table under `set -e`, so both are
+# checked here where they can still be reported.
+[ -r "$KERNEL" ] || {
+    echo "reproduce.sh: cannot read '$KERNEL'" >&2
+    echo "  build one first:  (cd boards/raspberry_pi_pico && make)" >&2
+    exit 2
+}
+for tool in "$OC" "$RE" elf2uf2-rs python3; do
+    command -v "$tool" >/dev/null 2>&1 || {
+        echo "reproduce.sh: '$tool' is not on PATH" >&2
+        exit 2
+    }
+done
+
 WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT
 

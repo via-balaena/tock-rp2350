@@ -84,6 +84,7 @@ in the table below is collateral.</p>
 
     <div class="scroll">
       <div class="panel" id="p-before">
+      <p class="nojs-label">The kernel as linked</p>
         <table class="grid">
           <thead><tr>
             <th>Sections</th><th>Address</th><th>Region</th>
@@ -102,6 +103,7 @@ in the table below is collateral.</p>
       </div>
 
       <div class="panel" id="p-after" hidden>
+      <p class="nojs-label">After both objcopy steps</p>
         <table class="grid">
           <thead><tr>
             <th>Sections</th><th>Address</th><th>Region</th>
@@ -421,11 +423,12 @@ is fixed by the same line.</p>
 <h2><span class="n">8</span>Reproducing it</h2>
 
 <p>No board and no application are needed &mdash; the trigger is the section
-flags, so any 4,096 bytes stand in for a <code>.tbf</code>. Build the kernel,
-then:</p>
+flags, so any 4,096 bytes stand in for a <code>.tbf</code>. Save
+<a href="reproduce.sh"><code>reproduce.sh</code></a> at the root of a Tock
+checkout, build a kernel, and hand it the ELF:</p>
 
-<pre>$ cd boards/raspberry_pi_pico &amp;&amp; make
-$ ./reproduce.sh ../../target/thumbv6m-none-eabi/release/raspberry_pi_pico.elf
+<pre>$ (cd boards/raspberry_pi_pico &amp;&amp; make)
+$ sh reproduce.sh target/thumbv6m-none-eabi/release/raspberry_pi_pico.elf
 
 VARIANT                        STACK-FILE/MEM  UF2      _ESTACK  APP
 -------                        --------------  ---      -------  ---
@@ -469,6 +472,19 @@ printed that. It needs <code>arm-none-eabi-objcopy</code>,
 </ul>
 
 </main>
+
+<noscript><style>
+/* Without scripting the buttons cannot switch anything, so the controls are
+   taken away rather than left as dead affordances, and every panel is shown at
+   once with the label its button carried. Without this block a reader with no
+   JavaScript gets only the first panel of each figure -- which on these pages
+   is the segments before the objcopy, and step one of four. */
+.controls, .matrix { display: none; }
+.panel[hidden], .verdict[hidden] { display: block !important; }
+.panel + .panel { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
+.nojs-label { display: block !important; }
+</style></noscript>
+
 
 <footer>
   <p>Measured against tock/tock

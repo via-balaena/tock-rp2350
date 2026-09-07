@@ -180,6 +180,27 @@ function drivePage(name) {
     }
   });
 
+  // A panel that starts hidden is unreachable with scripting off. These pages
+  // are opened by strangers following a link out of a GitHub issue, so the
+  // argument has to survive without JavaScript -- which means a <noscript>
+  // block revealing every panel and taking the dead buttons away. Read from the
+  // authored markup, not the DOM: the click loop above has already moved every
+  // `hidden` attribute by the time this runs.
+  const startsHidden = (html.match(/class="panel"[^>]*\shidden/g) || []).length;
+  if (startsHidden) {
+    const ns = html.match(/<noscript>([\s\S]*?)<\/noscript>/);
+    const css = ns ? ns[1] : '';
+    check(at('hidden panels are revealed with scripting off'),
+          /\.panel\[hidden\][^{]*\{[^}]*display\s*:\s*block/.test(css),
+          startsHidden + ' panel(s) start hidden and no <noscript> reveals them');
+    check(at('dead controls are taken away with scripting off'),
+          /\.controls[^{]*\{[^}]*display\s*:\s*none/.test(css));
+    // Stacked panels need the label their button carried.
+    const labels = (html.match(/class="nojs-label"/g) || []).length;
+    check(at('every stacking panel group is labelled'), labels > 0,
+          labels + ' label(s) for ' + startsHidden + ' hidden panel(s)');
+  }
+
   // A class that uppercases its content must not be given a hex number.
   // `0x10040000` renders as `0X10040000`, which this project has shipped
   // before -- in the chapter explaining what `0x` means. Neither the markup

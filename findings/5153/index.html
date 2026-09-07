@@ -78,6 +78,7 @@ when it has used it. Step through what that bit does here.</p>
     </div>
 
     <div class="panel" id="e-0">
+      <p class="nojs-label">1. Bus reset</p>
       <p class="evt"><code>handle_bus_reset</code> writes
       <code>AVAILABLE0=1</code>, <code>TRANSFER_LENGTH0=64</code>,
       <code>DATA_PID0=DATA0</code> into EP0 IN's buffer control.</p>
@@ -109,6 +110,7 @@ when it has used it. Step through what that bit does here.</p>
     </div>
 
     <div class="panel" id="e-1" hidden>
+      <p class="nojs-label">2. SETUP arrives</p>
       <p class="evt">The host sends <code>SETUP GET_DESCRIPTOR</code>. The
       hardware clears EP0's stall bits and sets
       <code>SIE_STATUS.SETUP_REC</code>. It does <b>not</b> touch
@@ -140,6 +142,7 @@ when it has used it. Step through what that bit does here.</p>
     </div>
 
     <div class="panel" id="e-2" hidden>
+      <p class="nojs-label">3. Tock writes the descriptor</p>
       <p class="evt"><code>transmit_in_ep0</code> copies 18 descriptor bytes
       into the buffer and modifies the length, <code>BUFFER0_FULL</code> and the
       PID.</p>
@@ -173,6 +176,7 @@ when it has used it. Step through what that bit does here.</p>
     </div>
 
     <div class="panel" id="e-3" hidden>
+      <p class="nojs-label">4. The IN token</p>
       <p class="evt">The host sends <code>IN</code>. The controller serves
       whatever the buffer control said when it sampled it.</p>
       <div class="tracks">
@@ -249,10 +253,12 @@ when it has used it. Step through what that bit does here.</p>
 <p>The line has been there since the driver's first commit,
 <a href="https://github.com/tock/tock/commit/4d903e2c9"><code>4d903e2c9</code></a>
 of 2022-11-02, and has never been modified. It is also inconsistent with the
-rest of the same function: every other endpoint the reset handler touches is
-cleared to zero first.</p>
+rest of the same function. <code>handle_bus_reset</code> writes exactly one
+other endpoint buffer &mdash; the bulk OUT one &mdash; and that write clears to
+zero first and arms second. The control endpoint's arm clears nothing, and the
+bulk IN side is never touched at all.</p>
 
-<pre><span class="srcref">chips/rp2040/src/usb.rs:1535 — the bulk OUT path, three lines above</span>
+<pre><span class="srcref">chips/rp2040/src/usb.rs:1535 — the bulk OUT path, earlier in the same function</span>
 self.dpsram.ep_buf_ctrl[ep].ep_out_buf_ctrl<b>.set(0)</b>;
 self.dpsram.ep_buf_ctrl[ep].ep_out_buf_ctrl.modify(
     EP_BUFFER_CONTROL::AVAILABLE0::SET
@@ -295,9 +301,9 @@ implies a patch.</p>
 
   <div class="claim">
     <h3><span class="tag is-bad">not as described</span> That Tock skips the datasheet's wait before setting AVAILABLE</h3>
-    <p class="said">Software must write the buffer information, wait enough
-    system-clock cycles for a USB-clock cycle, then set AVAILABLE separately and
-    last.</p>
+    <p class="said">It says USB DPRAM is asynchronous and non-atomic, and
+    software must: write the buffer information; wait enough system-clock cycles
+    for a USB-clock cycle; set AVAILABLE separately and last.</p>
     <p class="found">The requirement is real and quoted correctly, but Tock
     already follows it. <code>transmit_in_ep0</code> writes the fields, calls
     <code>nop_wait()</code> &mdash; a hundred <code>nop</code>s,
@@ -406,8 +412,12 @@ pattern correct in general.</p>
   the failing host.</li>
   <li><b>The RP2350 cannot stand in for it.</b> <code>chips/rp2350</code> has no
   USB driver at all; the only <code>usb</code> matches on a Pico 2 board are
-  <code>PllUsb</code> clock names. Only the four RP2040 boards instantiate
-  <code>rp2040::usb::UsbCtrl</code>.</li>
+  <code>PllUsb</code> clock names. Only the four RP2040 boards have USB at
+  all, and only three of them name it: <code>raspberry_pi_pico</code>,
+  <code>pico_explorer_base</code> and <code>nano_rp2040_connect</code>
+  instantiate <code>rp2040::usb::UsbCtrl</code>, while
+  <code>raspberry_pi_pico_w</code> inherits it as a binary over
+  <code>raspberry_pi_pico::Platform</code>.</li>
   <li><b>The race is inferred, not observed.</b> That the controller samples the
   buffer control before <code>transmit_in_ep0</code> rewrites it is what the
   capture is consistent with and what the ownership rule predicts. I have not
@@ -425,6 +435,19 @@ pattern correct in general.</p>
 </ul>
 
 </main>
+
+<noscript><style>
+/* Without scripting the buttons cannot switch anything, so the controls are
+   taken away rather than left as dead affordances, and every panel is shown at
+   once with the label its button carried. Without this block a reader with no
+   JavaScript gets only the first panel of each figure -- which on these pages
+   is the segments before the objcopy, and step one of four. */
+.controls, .matrix { display: none; }
+.panel[hidden], .verdict[hidden] { display: block !important; }
+.panel + .panel { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
+.nojs-label { display: block !important; }
+</style></noscript>
+
 
 <footer>
   <p>Read against tock/tock
