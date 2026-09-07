@@ -63,8 +63,20 @@ const check = (name, ok, detail) =>
     const from = new Set([...doc.querySelectorAll('#dc-hits .dc-where')].map(e => e.textContent));
     check(where + ': search reaches more than the page you are on',
           from.size > 1, [...from].slice(0, 3).join(' / '));
+    q.value = 'grant';
+    q.dispatchEvent(new window.Event('input', { bubbles: true }));
+    const defs = [...doc.querySelectorAll('#dc-hits .dc-def')];
+    check(where + ': search answers with definitions, not just links',
+          defs.length > 0 && defs[0].textContent.length > 15,
+          defs.length ? defs[0].textContent.slice(0, 40) : 'none');
     press('Escape');
     check(where + ': escape closes search', sheet.hidden);
+
+    // every term this page defines is anchored, so search can reach it
+    const terms = [...doc.querySelectorAll('dt[id]')];
+    check(where + ': defined terms carry anchors',
+          terms.every(t => doc.getElementById(t.id)),
+          terms.length + ' terms');
     press('?');
     check(where + ': question mark opens the keys', !keys.hidden);
     press('Escape');

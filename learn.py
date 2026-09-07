@@ -82,8 +82,12 @@ width:min(620px,92vw);padding:16px;box-shadow:0 20px 64px rgba(0,0,0,.3)}
 #dc-q{width:100%;box-sizing:border-box;font:inherit;font-size:15px;padding:10px 12px;
 border-radius:8px;border:1px solid #e4e2dd;background:#fbfaf8;color:#16171a}
 #dc-hits{list-style:none;margin:8px 0 0;padding:0;max-height:46vh;overflow-y:auto}
-#dc-hits li{display:flex;justify-content:space-between;gap:12px;padding:7px 9px;
-border-radius:7px;color:#4f5157;cursor:pointer;font-size:13px}
+#dc-hits li{display:flex;justify-content:space-between;align-items:baseline;gap:12px;
+padding:7px 9px;border-radius:7px;color:#4f5157;cursor:pointer;font-size:13px}
+.dc-l{display:flex;flex-direction:column;gap:2px;min-width:0}
+.dc-term{font-weight:600;color:#16171a}
+.dc-def{font-size:12px;color:#6f7278;overflow:hidden;text-overflow:ellipsis;
+white-space:nowrap;max-width:44ch}
 #dc-hits li.dc-on{background:#fbfaf8;color:#16171a}
 #dc-hits .dc-where{font-size:11px;color:#8e8f95;white-space:nowrap}
 .dc-kl{display:grid;grid-template-columns:110px 1fr;gap:8px 14px;margin:0;
@@ -104,6 +108,7 @@ font-size:13px;color:#4f5157}
 #dc-q{background:#131316;border-color:#2c2d33;color:#edecea}
 #dc-hits li{color:#b6b6ba}#dc-hits li.dc-on{background:#131316;color:#edecea}
 #dc-hits .dc-where{color:#8e8f95}.dc-kl{color:#b6b6ba}
+.dc-term{color:#edecea}.dc-def{color:#8e8f95}
 }
 @media (max-width:1000px){
 .dc-rail{position:static;width:auto;height:auto;border-right:0;
@@ -159,7 +164,7 @@ CHROME_JS = """
   }
   function draw() {
     var q = box.value.trim().toLowerCase();
-    hits = !q ? INDEX.slice(0, 8)
+    hits = !q ? INDEX.filter(function (e) { return e.c === "chapter"; })
               : INDEX.map(function (e) { return [score(e.t, q), e]; })
                      .filter(function (p) { return p[0] >= 0; })
                      .sort(function (a, b) { return a[0] - b[0]; })
@@ -169,9 +174,20 @@ CHROME_JS = """
       var li = document.createElement("li");
       li.setAttribute("role", "option");
       if (i === 0) { li.className = "dc-on"; }
-      var a = document.createElement("span"); a.textContent = e.t;
+      var left = document.createElement("span");
+      left.className = "dc-l";
+      var a = document.createElement("span");
+      a.className = e.d ? "dc-term" : "";
+      a.textContent = e.t;
+      left.append(a);
+      if (e.d) {
+        var say = document.createElement("span");
+        say.className = "dc-def";
+        say.textContent = e.d;
+        left.append(say);
+      }
       var b = document.createElement("span"); b.className = "dc-where"; b.textContent = e.c;
-      li.append(a, b);
+      li.append(left, b);
       li.addEventListener("click", function () { go(e); });
       return li;
     }));
@@ -268,11 +284,37 @@ def outline(body):
     return HEADING.sub(anchor, body), found
 
 
+TERM = re.compile(r"<dt(?![a-zA-Z])([^>]*)>(.*?)</dt>\s*<dd(?![a-zA-Z])[^>]*>(.*?)</dd>", re.S)
+
+
+def vocabulary(body):
+    """Give every defined term an id, and report the term and its definition.
+
+    The series defines 137 words across nine pages and each one is already
+    marked up as a dt with its dd -- a glossary in every chapter, reachable
+    only by scrolling to the end of the right one. Nothing here writes a
+    definition; it collects the ones that are already written.
+    """
+    found = []
+
+    def anchor(match):
+        attrs, term, meaning = match.groups()
+        existing = re.search(r'id="([^"]+)"', attrs)
+        ident = existing.group(1) if existing else "t%d" % (len(found) + 1)
+        found.append((ident, plain(term), plain(meaning)))
+        if existing:
+            return match.group(0)
+        return match.group(0).replace("<dt" + attrs + ">",
+                                      "<dt%s id=\"%s\">" % (attrs, ident), 1)
+
+    return TERM.sub(anchor, body), found
+
+
 def rail(meta, here):
     """The fixed rail: the series, the chapter you are in, and its sections."""
     up = "../../" if here else "../"
     rows = []
-    for name, number, title, _ in meta:
+    for name, number, title, _, _defined in meta:
         if not name:
             continue
         current = name == here
@@ -313,17 +355,18 @@ def e(text):
 
 def render(shell, body, meta, here, index):
     body, _ = outline(body)
+    body, _ = vocabulary(body)
     chrome = (
         '<style>%s</style>%s<div class="dc-bar"><i></i></div>'
         '<div class="dc-main">%s</div>'
         '<div class="dc-sheet" id="dc-search" hidden role="dialog" aria-modal="true"'
         ' aria-label="Search the series"><div class="dc-box">'
         '<input id="dc-q" type="search" autocomplete="off" spellcheck="false"'
-        ' placeholder="Search every heading in the series" aria-controls="dc-hits">'
+        ' placeholder="Search 137 defined words and every heading" aria-controls="dc-hits">'
         '<ul id="dc-hits" role="listbox" aria-label="Results"></ul></div></div>'
         '<div class="dc-sheet" id="dc-keysheet" hidden role="dialog" aria-modal="true"'
         ' aria-labelledby="dc-kt"><div class="dc-box"><h2 id="dc-kt">Keys</h2>'
-        '<dl class="dc-kl"><dt><kbd>/</kbd></dt><dd>Search every heading</dd>'
+        '<dl class="dc-kl"><dt><kbd>/</kbd></dt><dd>Search the words and the headings</dd>'
         '<dt><kbd>?</kbd></dt><dd>This list</dd>'
         '<dt><kbd>&larr;</kbd> <kbd>&rarr;</kbd></dt><dd>Previous and next chapter</dd>'
         '<dt><kbd>Esc</kbd></dt><dd>Close</dd></dl></div></div>'
@@ -340,23 +383,27 @@ def survey():
     for name, source in pages():
         body = source.read_text()
         _, found = outline(body)
+        _, defined = vocabulary(body)
         title = TITLE.search(body)
         number = int(name[2:4]) if name else -1
-        meta.append((name, number, plain(title.group(1)) if title else name, found))
+        meta.append((name, number, plain(title.group(1)) if title else name,
+                     found, defined))
     return meta
 
 
 def search_index(meta):
     """Every chapter and every heading in it, as one list the pages share."""
     entries = []
-    for name, number, title, found in meta:
+    for name, number, title, found, defined in meta:
         if not name:
             continue
-        entries.append({"t": "%d. %s" % (number, title), "c": "chapter",
-                        "p": name + "/", "h": ""})
+        where = "%d. %s" % (number, title)
+        entries.append({"t": where, "c": "chapter", "p": name + "/", "h": ""})
         for ident, text in found:
-            entries.append({"t": text, "c": "%d. %s" % (number, title),
-                            "p": name + "/", "h": ident})
+            entries.append({"t": text, "c": where, "p": name + "/", "h": ident})
+        for ident, term, meaning in defined:
+            entries.append({"t": term, "c": where, "p": name + "/", "h": ident,
+                            "d": meaning[:190]})
     return json.dumps(entries, separators=(",", ":"))
 
 
