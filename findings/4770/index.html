@@ -455,8 +455,10 @@ printed that. It needs <code>arm-none-eabi-objcopy</code>,
   <code>raspberry_pi_pico_2</code>'s <code>program-openocd</code> hand the ELF
   to <code>probe-rs</code> and to openocd. Both build the same broken file
   today, and both are fixed by the same line, but whether those tools reject it
-  or write 5,376 bytes into the stack region and carry on, I have not
-  checked.</li>
+  or write the stack segment into SRAM and carry on, I have not checked. It is
+  not the same number on each: <code>.stack</code> is 0x1500 on the Pico and
+  0x3000 on the Pico&nbsp;2, so 5,376 bytes on one and 12,288 on the
+  other.</li>
   <li><b>One toolchain.</b> GNU Binutils 2.47.20260726. The reporter hit the
   same failure on a different machine and a different binutils, so this is not
   version-specific, but I have only measured the variant matrix on mine.</li>
