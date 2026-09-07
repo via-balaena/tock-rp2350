@@ -34,29 +34,29 @@
     "start": 42
    },
    {
-    "opens": "OPENOCD=openocd",
+    "opens": "BOOTSEL_FOLDER?=/run/media/$(USER)/RP2350",
     "path": "boards/raspberry_pi_pico_2/Makefile",
-    "start": 13
+    "start": 17
    },
    {
-    "opens": "",
+    "opens": "@if [ -d $(BOOTSEL_FOLDER) ]; then cp $(TOCK_ROOT_DIRECTORY)target/$(TARGET)/release/$(PLA",
     "path": "boards/raspberry_pi_pico_2/Makefile",
-    "start": 30
+    "start": 34
    },
    {
-    "opens": "endif",
+    "opens": "@if [ -d $(BOOTSEL_FOLDER) ]; then cp $(TOCK_ROOT_DIRECTORY)target/$(TARGET)/release/$(PLA",
     "path": "boards/raspberry_pi_pico_2/Makefile",
-    "start": 40
+    "start": 44
    },
    {
-    "opens": "",
+    "opens": "@if [ -d $(BOOTSEL_FOLDER) ]; then cp $(TOCK_ROOT_DIRECTORY)target/$(TARGET)/release/$(PLA",
     "path": "boards/raspberry_pi_pico_2/Makefile",
-    "start": 30
+    "start": 34
    },
    {
-    "opens": "endif",
+    "opens": "@if [ -d $(BOOTSEL_FOLDER) ]; then cp $(TOCK_ROOT_DIRECTORY)target/$(TARGET)/release/$(PLA",
     "path": "boards/raspberry_pi_pico_2/Makefile",
-    "start": 40
+    "start": 44
    },
    {
     "opens": "$(OPENOCD) $(OPENOCD_OPTIONS) -c \"adapter speed 5000\" -c \"program $<; verify_image $<;  re",
@@ -139,8 +139,8 @@
     "start": 897
    },
    {
-    "opens": "",
-    "path": "capsules/core/src/process_console.rs",
+    "opens": "LedHigh::new(peripherals.pins.get_pin(RPGpio::GPIO25))",
+    "path": "boards/raspberry_pi_pico_2/src/main.rs",
     "start": 95
    }
   ],
@@ -501,9 +501,9 @@
     "start": 1995
    },
    {
-    "opens": "}",
+    "opens": "/// Number of upcalls stored in the upcall ring buffer (10 element length).",
     "path": "kernel/src/process_standard.rs",
-    "start": 1729
+    "start": 1737
    },
    {
     "opens": "/// 1712 |     const CALLBACKS_SIZE: usize = mem::size_of::<MaybeUninit<[Task; Self::CALLB",
@@ -528,16 +528,16 @@
     "start": 2108
    },
    {
-    "closes": "// accessible memory it must use the `brk` memop syscalls to request",
-    "end": 1843,
-    "opens": "// memory set to 0. This maximizes the flexibility that processes have",
+    "closes": ".initial_process_app_brk_size();",
+    "end": 1852,
+    "opens": "let min_process_memory_size = chip",
     "path": "kernel/src/process_standard.rs",
-    "start": 1841
+    "start": 1850
    },
    {
-    "opens": ");",
+    "opens": "let initial_app_brk = unsafe {",
     "path": "kernel/src/process_standard.rs",
-    "start": 2083
+    "start": 2092
    },
    {
     "opens": "const SVC_FRAME_SIZE: usize = 32;",
@@ -566,14 +566,14 @@
     "start": 2303
    },
    {
-    "opens": "//",
+    "opens": "let allocated_memory_len = allocated_memory.len();",
     "path": "kernel/src/process_standard.rs",
-    "start": 2046
+    "start": 2055
    },
    {
-    "opens": "kernel,",
+    "opens": "memory_len: allocated_memory_len,",
     "path": "kernel/src/process_standard.rs",
-    "start": 2216
+    "start": 2225
    },
    {
     "opens": "ptr::write(stack_bottom.add(6), callback.pc.addr() | 1); // -> PC",
@@ -740,36 +740,36 @@
     "start": 36
    },
    {
-    "opens": "",
-    "path": "boards/apollo3/redboard_artemis_nano/Makefile",
-    "start": 13
+    "opens": "BOOTSEL_FOLDER?=/run/media/$(USER)/RP2350",
+    "path": "boards/raspberry_pi_pico_2/Makefile",
+    "start": 17
    },
    {
-    "opens": "--load-address-blob 0xE000 \\",
-    "path": "boards/apollo3/redboard_artemis_nano/Makefile",
-    "start": 30
+    "opens": "@if [ -d $(BOOTSEL_FOLDER) ]; then cp $(TOCK_ROOT_DIRECTORY)target/$(TARGET)/release/$(PLA",
+    "path": "boards/raspberry_pi_pico_2/Makefile",
+    "start": 34
    },
    {
-    "opens": "-b 115200 -port $(PORT) -r 2 -v \\",
-    "path": "boards/apollo3/redboard_artemis_nano/Makefile",
-    "start": 40
+    "opens": "@if [ -d $(BOOTSEL_FOLDER) ]; then cp $(TOCK_ROOT_DIRECTORY)target/$(TARGET)/release/$(PLA",
+    "path": "boards/raspberry_pi_pico_2/Makefile",
+    "start": 44
    },
    {
-    "opens": "--magic-num 0xCB --version 0x0 \\",
-    "path": "boards/apollo3/redboard_artemis_nano/Makefile",
+    "opens": "arm-none-eabi-objcopy --set-section-flags .apps=LOAD,ALLOC $(KERNEL) $(KERNEL_WITH_APP)",
+    "path": "boards/raspberry_pi_pico_2/Makefile",
     "start": 41
    },
    {
-    "closes": "",
-    "end": 49,
-    "opens": "-i 6 --options 0x1",
-    "path": "boards/apollo3/redboard_artemis_nano/Makefile",
-    "start": 43
+    "closes": "$(OPENOCD) $(OPENOCD_OPTIONS) -c \"adapter speed 5000\" -c \"program $(KERNEL_WITH_APP); veri",
+    "end": 53,
+    "opens": "program-openocd: $(KERNEL)",
+    "path": "boards/raspberry_pi_pico_2/Makefile",
+    "start": 47
    },
    {
-    "opens": "ifndef PORT",
-    "path": "boards/apollo3/redboard_artemis_nano/Makefile",
-    "start": 10
+    "opens": "OPENOCD_INTERFACE=picoprobe",
+    "path": "boards/raspberry_pi_pico_2/Makefile",
+    "start": 14
    },
    {
     "closes": "//! trying to write their own flash space, and not the TBF header either.",
@@ -963,14 +963,14 @@
     "start": 927
    },
    {
-    "opens": "}",
+    "opens": "mpu: cortexm33::mpu::MPU<8>,",
     "path": "chips/rp2350/src/chip.rs",
-    "start": 27
+    "start": 30
    },
    {
-    "opens": "}",
+    "opens": "type MPU = cortexm33::mpu::MPU<8>;",
     "path": "chips/rp2350/src/chip.rs",
-    "start": 49
+    "start": 52
    },
    {
     "opens": "// Note: Cortex-M33 supports up to 16 regions.",
@@ -1258,9 +1258,9 @@
     "start": 1035
    },
    {
-    "opens": "}",
+    "opens": "None => upcall.into_subscribe_failure(ErrorCode::NODEVICE),",
     "path": "kernel/src/kernel.rs",
-    "start": 1036
+    "start": 1022
    },
    {
     "closes": "}",
@@ -1291,9 +1291,9 @@
     "start": 1416
    },
    {
-    "opens": "",
+    "opens": "// At this point we must save the new",
     "path": "kernel/src/kernel.rs",
-    "start": 936
+    "start": 944
    },
    {
     "closes": "_ => {}",
@@ -1391,9 +1391,9 @@
     "start": 625
    },
    {
-    "opens": "}",
+    "opens": "const CALLBACK_LEN: usize = 10;",
     "path": "kernel/src/process_standard.rs",
-    "start": 1729
+    "start": 1738
    },
    {
     "closes": "// If the process is yielded or hasn't been started it is",
@@ -1410,9 +1410,9 @@
     "start": 1483
    },
    {
-    "opens": ")",
+    "opens": "self.state.set(State::Running);",
     "path": "kernel/src/process_standard.rs",
-    "start": 1514
+    "start": 1523
    },
    {
     "closes": "}",

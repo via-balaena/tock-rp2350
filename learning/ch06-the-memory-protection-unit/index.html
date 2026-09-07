@@ -1745,7 +1745,7 @@ dfn {
     <li>The accessible part starting at 32 bytes &mdash; <code>initial_process_app_brk_size</code> returning <code>SVC_FRAME_SIZE</code>, <code>arch/cortex-m/src/syscall.rs</code>:273&ndash;277 and :196</li>
     <li>Region 0 being reserved for a process's RAM &mdash; <code>APP_MEMORY_REGION_MAX_NUM</code> at <code>mpu_v8m.rs</code>:251, written at :583 and :648, and skipped by <code>unused_region_number</code> at :288&ndash;292</li>
     <li>Six slots for everything else &mdash; <code>mpu_regions: [Cell&lt;Option&lt;mpu::Region&gt;&gt;; 6]</code>, <code>kernel/src/process_standard.rs</code>:548, filled at :927&ndash;935</li>
-    <li>Eight regions asked for by the chip crate &mdash; <code>chips/rp2350/src/chip.rs</code>:27 and :49</li>
+    <li>Eight regions asked for by the chip crate &mdash; <code>chips/rp2350/src/chip.rs</code>:30 and :52</li>
     <li>The Cortex-M33 supporting more than that &mdash; the comment at <code>arch/cortex-m33/src/lib.rs</code>:17, "Cortex-M33 supports up to 16 regions"</li>
     <li>A method that would ask the hardware how many regions exist &mdash; <code>number_total_regions</code>, declared at <code>kernel/src/platform/mpu.rs</code>:136, implemented at <code>mpu_v8m.rs</code>:421, <code>arch/cortex-m/src/mpu.rs</code>:405, <code>arch/riscv/src/pmp.rs</code>:1058 and <code>arch/x86/src/mpu.rs</code>:308, and called nowhere in the tree</li>
     <li>The older unit needing power-of-two sizes aligned to themselves, and using subregions when that fails &mdash; <code>arch/cortex-m/src/mpu.rs</code>:468&ndash;471, with the branch it opens running to :534</li>

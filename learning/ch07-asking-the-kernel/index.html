@@ -1350,9 +1350,9 @@ df02      svc 2            <span class="asm-c">// class 2: command</span>
     <li>Three classes a board's request filter is never shown &mdash; <code>kernel/src/kernel.rs</code>:761&ndash;771</li>
     <li>Five classes routed by driver number &mdash; the same file, :850&ndash;857</li>
     <li>The one line that reaches a driver's own code &mdash; <code>d.command(subdriver_number, arg0, arg1, process.processid())</code>, the same file, :1035</li>
-    <li>A driver number a board does not list &mdash; the same file, :1036, and the board's own lookup at <code>boards/raspberry_pi_pico_2/src/main.rs</code>:46&ndash;49, which names one and passes the rest to <code>boards/raspberry_pi_pico_2/src/lib.rs</code>:97&ndash;103, which names four</li>
+    <li>A driver number a board does not list &mdash; the same file, :1022, and the board's own lookup at <code>boards/raspberry_pi_pico_2/src/main.rs</code>:46&ndash;49, which names one and passes the rest to <code>boards/raspberry_pi_pico_2/src/lib.rs</code>:97&ndash;103, which names four</li>
     <li>Subscribe checking the pointer against the process's flash or its RAM &mdash; <code>kernel/src/kernel.rs</code>:903&ndash;911, and <code>is_valid_upcall_function_pointer</code>, <code>kernel/src/process_standard.rs</code>:1416&ndash;1422</li>
-    <li>Subscribe handing back whichever pointer was there before &mdash; <code>kernel/src/kernel.rs</code>:936, with the queued calls to the old one dropped at :1005&ndash;1011</li>
+    <li>Subscribe handing back whichever pointer was there before &mdash; <code>kernel/src/kernel.rs</code>:944, with the queued calls to the old one dropped at :1005&ndash;1011</li>
     <li>An unknown exit variant coming back as an error rather than a fault &mdash; the same file, :1411&ndash;1417</li>
     <li>The trait a driver implements, and its three methods &mdash; <code>kernel/src/syscall_driver.rs</code>:262&ndash;390: <code>command</code> at :268, <code>allow_userspace_readable</code> at :288, <code>allocate_grant</code> at :390</li>
     <li><code>allocate_grant</code> being the one with no default, "to help prevent accidentally forgetting to implement this function" &mdash; the same file, :312&ndash;313</li>
@@ -1361,9 +1361,9 @@ df02      svc 2            <span class="asm-c">// class 2: command</span>
     <li>The upcall's fourth argument being the word the process passed at subscribe time &mdash; <code>encode_upcall_trd104_ptr</code>, the same file, :649&ndash;663, and <code>argument3: self.appdata</code> at <code>kernel/src/upcall.rs</code>:188</li>
     <li>A driver scheduling a call by number, with three values &mdash; <code>schedule_upcall</code>, <code>kernel/src/grant.rs</code>:610&ndash;614</li>
     <li>The upcall being built and queued &mdash; <code>kernel/src/upcall.rs</code>:183&ndash;190, into <code>enqueue_task</code> at <code>kernel/src/process_standard.rs</code>:598, which returns out-of-memory on a full ring at :625&ndash;628</li>
-    <li>Ten slots &mdash; <code>CALLBACK_LEN</code>, the same file, :1729, the constant chapter 5 named</li>
+    <li>Ten slots &mdash; <code>CALLBACK_LEN</code>, the same file, :1738, the constant chapter 5 named</li>
     <li>Upcalls being delivered only to a process that has yielded &mdash; <code>kernel/src/kernel.rs</code>:602&ndash;628</li>
-    <li>Exactly one upcall per yield, because delivering it puts the process back into the running state &mdash; <code>set_process_function</code>, <code>kernel/src/process_standard.rs</code>:1483&ndash;1515, setting <code>State::Running</code> at :1514</li>
+    <li>Exactly one upcall per yield, because delivering it puts the process back into the running state &mdash; <code>set_process_function</code>, <code>kernel/src/process_standard.rs</code>:1483&ndash;1515, setting <code>State::Running</code> at :1523</li>
     <li>The frame being edited so the process resumes at the function &mdash; <code>set_process_function</code>, <code>arch/cortex-m/src/syscall.rs</code>:364&ndash;418, with "In effect, this converts <code>svc</code> into <code>bl callback</code>" at :375 and the writes at :404&ndash;418</li>
     <li>R12 being pushed and ignored &mdash; the same file, :393, "Stack offset 4 is R12, which the syscall interface ignores"</li>
     <li>The low bit on an address meaning Thumb rather than an odd address &mdash; the line above it, :392, "Instruction addresses require <code>|1</code> to indicate thumb code", and the two places it is written: <code>callback.pc.addr() | 1</code> and <code>state.yield_pc | 1</code> at :404&ndash;405</li>

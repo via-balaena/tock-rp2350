@@ -1510,14 +1510,14 @@ argument3: app_break,</pre></button>
     <li><code>_sappmem</code> beginning after the kernel's zeroed data, and <code>_eappmem</code> at the last byte of RAM &mdash; the same file, :350&ndash;366</li>
     <li>The seven boundaries in Figure 6 &mdash; the diagram above <code>memory_start</code>, <code>kernel/src/process_standard.rs</code>:449&ndash;473</li>
     <li>The three kernel structures reserved inside a process's allocation &mdash; <code>kernel/src/process_standard.rs</code>:1824&ndash;1829, drawn again at :1995&ndash;2015</li>
-    <li>Ten upcalls, and the constant that says so &mdash; <code>kernel/src/process_standard.rs</code>:1729</li>
+    <li>Ten upcalls, and the constant that says so &mdash; <code>kernel/src/process_standard.rs</code>:1737</li>
     <li>The control block reservation being <code>size_of::&lt;ProcessStandard&gt;()</code> plus its alignment &mdash; :1753 and :1755</li>
     <li>One grant pointer per grant, counted once at boot &mdash; :1811&ndash;1813 and :2108</li>
-    <li><code>app_break</code> starting <code>initial_process_app_brk_size()</code> above <code>memory_start</code> &mdash; :1841&ndash;1843 and :2083</li>
+    <li><code>app_break</code> starting <code>initial_process_app_brk_size()</code> above <code>memory_start</code> &mdash; :1850&ndash;1852 and :2092</li>
     <li>That size being 32 bytes, one Cortex-M exception frame &mdash; <code>arch/cortex-m/src/syscall.rs</code>:196 and :273&ndash;277</li>
     <li>The initially accessible bytes being zeroed, so a process cannot read what a previous one left &mdash; <code>kernel/src/process_standard.rs</code>:2054&ndash;2075</li>
     <li>The four arguments in Figure 9, and the entry point going in separately &mdash; <code>kernel/src/process_standard.rs</code>:2303&ndash;2343</li>
-    <li><code>memory_len</code> being the whole allocation, kernel structures included &mdash; :2046 and :2216</li>
+    <li><code>memory_len</code> being the whole allocation, kernel structures included &mdash; :2055 and :2225</li>
     <li>The four arguments landing in registers 0 to 3, and the entry point going into the program counter &mdash; <code>arch/cortex-m/src/syscall.rs</code>:404 and :410&ndash;413, in <code>set_process_function</code> at :376</li>
     <li>Fixed addresses as the alternative to being told, and the error when they cannot be met &mdash; <code>libraries/tock-tbf/src/types.rs</code>:204&ndash;213 and <code>kernel/src/process_loading.rs</code>:54&ndash;58</li>
     <li>The six states and the wording of each &mdash; <code>kernel/src/process.rs</code>:963&ndash;997</li>
@@ -1531,9 +1531,9 @@ argument3: app_break,</pre></button>
     <li>The hook that sits immediately before those six operations, and its empty default body &mdash; <code>kernel/src/platform/platform.rs</code>:189 and :193&ndash;194</li>
     <li>Applications being built out of tree, and arriving as a <code>.tbf</code> file &mdash; <code>boards/raspberry_pi_pico_2/README.md</code>:44&ndash;51</li>
     <li>The two <code>objcopy</code> lines that put one in the reserved section, and the <code>program</code> target that runs them &mdash; <code>boards/raspberry_pi_pico_2/Makefile</code>:33&ndash;39</li>
-    <li>That README naming the target <code>make flash-app</code>, which this board's Makefile does not define &mdash; <code>README.md</code>:50 against <code>Makefile</code>:33. Several other boards do define it; <code>boards/apollo3/redboard_artemis_nano/Makefile</code>:36 is one</li>
-    <li>The mounted-drive path <code>program</code> copies to, and why it does nothing on a Mac &mdash; <code>BOOTSEL_FOLDER?=/run/media/$(USER)/RP2350</code> at <code>Makefile</code>:13, tested at :30 and :40, which print a message when the directory is absent. That board's README gives the default as <code>/media/$(USER)/RP2350</code> at :41, which is a third path again</li>
-    <li><code>program-openocd</code> running the same two <code>objcopy</code> lines and pushing the result down a debug probe instead &mdash; <code>Makefile</code>:43&ndash;49, with <code>OPENOCD_INTERFACE=picoprobe</code> at :10 and the configuration it names at <code>openocd-picoprobe.cfg</code></li>
+    <li>That README naming the target <code>make flash-app</code>, which this board's Makefile does not define &mdash; <code>boards/raspberry_pi_pico_2/README.md</code>:50 against <code>Makefile</code>:33. Several other boards do define it; <code>boards/apollo3/redboard_artemis_nano/Makefile</code>:36 is one</li>
+    <li>The mounted-drive path <code>program</code> copies to, and why it does nothing on a Mac &mdash; <code>BOOTSEL_FOLDER?=/run/media/$(USER)/RP2350</code> at <code>boards/raspberry_pi_pico_2/Makefile</code>:17, tested at :34 and :44, which print a message when the directory is absent. That board's README gives the default as <code>/media/$(USER)/RP2350</code> at :41, which is a third path again</li>
+    <li><code>program-openocd</code> running the same two <code>objcopy</code> lines and pushing the result down a debug probe instead &mdash; <code>Makefile</code>:47&ndash;53, with <code>OPENOCD_INTERFACE=picoprobe</code> at :14 and the configuration it names at <code>openocd-picoprobe.cfg</code></li>
     <li>A capsule existing that lets an application write its own flash region, and this board not instantiating one &mdash; <code>capsules/extra/src/app_flash_driver.rs</code>:5&ndash;8 and :105, reaching it through <code>ProcessId::get_editable_flash_range</code> at <code>kernel/src/process.rs</code>:208</li>
     <li>The six operations wrapping every switch into a process &mdash; <code>kernel/src/kernel.rs</code>:536&ndash;562, where the fence is configured and enabled, the timer armed and disarmed either side of <code>switch_to</code>, and the fence disabled again</li>
     <li>The timer behind the timeslice being the Cortex-M SysTick, calibrated at 125&nbsp;MHz &mdash; <code>boards/raspberry_pi_pico_2/src/lib.rs</code>:404</li>
