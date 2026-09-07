@@ -358,9 +358,8 @@ instead of a pass mark.</p>
 
 <h2><span class="n">7</span>The change</h2>
 
-<p>Two lines in
-<a href="https://github.com/tock/tock/blob/2a7a40450/boards/raspberry_pi_pico/Makefile#L43-L48"><code>boards/raspberry_pi_pico/Makefile</code></a>,
-adding one step to the rule that builds the spliced ELF:</p>
+<p>One line per rule, and there are five of them &mdash; every place an RP2
+board splices an application into its kernel:</p>
 
 <pre> $(KERNEL_WITH_APP): $(KERNEL)
  ifeq ($(APP),)
@@ -368,14 +367,56 @@ adding one step to the rule that builds the spliced ELF:</p>
  endif
      arm-none-eabi-objcopy --set-section-flags .apps=LOAD,ALLOC $(KERNEL) $@
      arm-none-eabi-objcopy --update-section .apps=$(APP) $@
-<span class="add">+    # .stack is (NOLOAD) and reserves SRAM no image carries, but rewriting
-+    # .apps makes the linker lay the segments out again and give it a
-+    # non-zero p_filesz. Both UF2 converters then refuse the file.
-+    arm-none-eabi-objcopy -R .stack $@</span></pre>
+<span class="add">+    arm-none-eabi-objcopy -R .stack $@</span></pre>
 
-<p>The same rule is shared by <code>program-probe</code>, and
-<code>boards/raspberry_pi_pico_2</code> carries a copy of it with the same two
-steps, so whatever shape the fix takes should cover both boards.</p>
+<p>The section is removed only from <code>&lt;platform&gt;-app.elf</code>, the
+artifact that exists to be converted. The kernel ELF is a different file and
+keeps its symbols.</p>
+
+<figure id="f5">
+  <div class="instrument">
+    <p class="ititle">The same make target on every RP2 board, with the line and without it</p>
+    <div class="scroll">
+      <table class="grid">
+        <thead><tr>
+          <th>Board</th><th>Target</th><th>Converter</th>
+          <th>Without the line</th><th>With it</th>
+        </tr></thead>
+        <tbody>
+          <tr><td class="lbl">raspberry_pi_pico</td><td>program</td><td>elf2uf2-rs</td>
+            <td><span class="mark is-bad">rc=2, no UF2</span></td>
+            <td><span class="mark is-ok">rc=0, app at 0x10040000</span></td></tr>
+          <tr><td class="lbl">raspberry_pi_pico_2</td><td>program</td><td>picotool</td>
+            <td><span class="mark is-bad">rc=2, empty UF2</span></td>
+            <td><span class="mark is-ok">rc=0, app at 0x10040000</span></td></tr>
+          <tr><td class="lbl">pico_explorer_base</td><td>program</td><td>elf2uf2-rs</td>
+            <td><span class="mark is-bad">rc=2, no UF2</span></td>
+            <td><span class="mark is-ok">rc=0, app at 0x10040000</span></td></tr>
+          <tr><td class="lbl">nano_rp2040_connect</td><td>flash-app</td><td>elf2uf2-rs</td>
+            <td><span class="mark is-bad">rc=2, no UF2</span></td>
+            <td><span class="mark is-ok">rc=0, app at 0x10040000</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="verdict">All four fail today with the string from the issue, and
+    all four take the application afterwards &mdash; <b>16 blocks, 4,096 bytes,
+    at the address <code>_sapps</code> names</b>, decoded from the UF2 block
+    headers in every case.</p>
+  </div>
+  <figcaption><b>Figure 5.</b> Not the objcopy steps in isolation: this runs
+  each board's real <code>make</code> target with a 4,096-byte stand-in
+  <code>.tbf</code>, with the change applied and with it stashed. The fifth
+  rule, <code>raspberry_pi_pico_2</code>'s <code>program-openocd</code>, is
+  changed the same way and is not in the table &mdash; it hands the ELF to
+  openocd rather than a converter, and I have no board to run it
+  against.</figcaption>
+</figure>
+
+<p>The four boards carry five rules between them, because
+<code>raspberry_pi_pico_2</code> splices twice: once for <code>program</code>
+and once for <code>program-openocd</code>. <code>raspberry_pi_pico</code>'s
+<code>program-probe</code> shares the one rule with <code>program</code>, so it
+is fixed by the same line.</p>
 
 <h2><span class="n">8</span>Reproducing it</h2>
 
@@ -409,10 +450,13 @@ printed that. It needs <code>arm-none-eabi-objcopy</code>,
   <li><b>Not tested on hardware.</b> Everything above is measured on the files.
   A UF2 that converts and contains the app at the right address is not the same
   claim as a board that boots it.</li>
-  <li><b><code>program-probe</code> is untested.</b> It builds the same broken
-  ELF and hands it to <code>probe-rs</code> instead of a converter. Whether
-  <code>probe-rs</code> also rejects it, or writes 5,376 bytes into the stack
-  region and carries on, I have not checked.</li>
+  <li><b>The two rules that do not end in a converter are untested.</b>
+  <code>raspberry_pi_pico</code>'s <code>program-probe</code> and
+  <code>raspberry_pi_pico_2</code>'s <code>program-openocd</code> hand the ELF
+  to <code>probe-rs</code> and to openocd. Both build the same broken file
+  today, and both are fixed by the same line, but whether those tools reject it
+  or write 5,376 bytes into the stack region and carry on, I have not
+  checked.</li>
   <li><b>One toolchain.</b> GNU Binutils 2.47.20260726. The reporter hit the
   same failure on a different machine and a different binutils, so this is not
   version-specific, but I have only measured the variant matrix on mine.</li>

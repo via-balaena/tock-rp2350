@@ -146,6 +146,15 @@ tr.is-culprit .bar i{background:var(--bad)}
 .tag.is-ok{background:var(--ok-bg);color:var(--ok)}
 .tag.is-bad{background:var(--bad-bg);color:var(--bad)}
 .tag.is-flag{background:var(--flag-bg);color:var(--flag)}
+
+/* A value chip, not a status word: monospace and NOT uppercased. `.tag` is
+   uppercased, and putting a hex address in one renders 0x10040000 as
+   0X10040000 -- the same defect this project shipped once already, in a
+   chapter teaching what 0x means. drive.js now refuses it. */
+.mark{font-size:11px;font-family:var(--mono);padding:2px 8px;
+  border-radius:999px;white-space:nowrap}
+.mark.is-ok{background:var(--ok-bg);color:var(--ok)}
+.mark.is-bad{background:var(--bad-bg);color:var(--bad)}
 .detail{border-top:1px solid var(--line);margin-top:12px;padding-top:13px}
 .detail h4{margin:0 0 8px;font-size:.94rem}
 .detail p{font-size:.9rem;color:var(--ink-soft);margin:0 0 9px;max-width:70ch}

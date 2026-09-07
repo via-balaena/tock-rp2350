@@ -180,10 +180,18 @@ def check_private(html, problems):
 
 
 def check_refs(build, data, problems):
-    known = {p["number"] for p in data["prs"]} | {i["number"] for i in data["issues"]}
+    # Issues written up under findings/ are fetched too, and prose about a
+    # branch that fixes one names it. They are somebody else's issues, so
+    # they are not in the author-filtered `issues` list.
+    known = ({p["number"] for p in data["prs"]}
+             | {i["number"] for i in data["issues"]}
+             | {i["number"] for i in data.get("findings", [])})
     prose = [build.PROVOCATION["answer"], build.PROVOCATION["where"]]
     prose += [v.get("note", "") for v in build.WORK.values()]
     prose += [d[3] for d in build.DEFECTS] + [d[2] for d in build.DOWNSTREAM]
+    # INTENT's description and note are prose on the page too, and were
+    # not scanned until a deliberately bogus number in one went unnoticed.
+    prose += [text for entry in build.INTENT.values() for text in entry[1:]]
     prose += [n[1] for n in build.NOT_DONE] + [s[1] for s in build.SILICON]
     prose += [body for bullets in build.FACTS.values() for _, body in bullets]
     prose += [text for text, _ in build.BLOCK_CAVEAT.values()]

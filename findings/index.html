@@ -38,8 +38,10 @@
     content for RAM. Both converters are right to refuse it. The reported cause
     &mdash; that <code>elf2uf2-rs</code> cannot handle RAM &mdash; is not what is
     happening, and the workaround in the issue strips a section that is only
-    safe to strip by accident. Six candidate fixes measured; one line
-    changes.</p>
+    safe to strip by accident. Six candidate fixes measured; the one that works
+    is a single <code>objcopy</code> line, verified by running the real
+    <code>make</code> target on all four RP2 boards, with it and without
+    it.</p>
   </div>
 
   <div class="claim">

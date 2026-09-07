@@ -91,6 +91,7 @@ ask someone to read it, not about whether it is done.
 #   never    — a bench or teaching branch that will never be proposed
 INTENT = {
     "tock:rp2-pio-prep": ("upstream", "PIO cleanups.", None),
+    "tock:rp2-make-program-fix": ("upstream", "Fixes #4770: `make program` cannot flash an application on any RP2 board, because splicing one in gives the (NOLOAD) `.stack` segment file content for SRAM and both UF2 converters refuse the result. One `objcopy -R .stack` per rule, five rules, four boards.", "Ready, and the smallest thing here — four Makefiles, twenty-one added lines, no Rust. Answers an issue that has had no reply since April."),
     "tock:rp2-pad-controls": ("upstream", "Shared pad enums and the RP2350 pad controls.", None),
     "tock:pico2w-typed": ("upstream", "The Pico 2 W board and the radio.", None),
     "tock:rp2-pio-tests": ("upstream", "Five PIO fixes and the driver's first host tests.", None),
@@ -248,6 +249,14 @@ WORK = {
 # them are derived. Kept here so that the person writing the description and a
 # reviewer who goes looking are reading the same evidence.
 FACTS = {
+    "tock:rp2-make-program-fix": [
+        ("What it fixes", "`make program` fails on every RP2 board with `ELF contains memory contents for uninitialized memory at 20000000`, reported as #4770 in April and never answered. Rewriting `.apps` makes objcopy lay the program headers out again, and the `(NOLOAD)` `.stack` segment comes back with a non-zero `p_filesz` where the linked kernel had 0. Both UF2 converters are right to refuse it."),
+        ("Why nothing caught it", "The *section* stays `NOBITS` throughout — only the segment is wrong. Anything reading the section table sees a correct file, and UF2 converters go by segments. There is also no CI path that builds a kernel with an app spliced in."),
+        ("Evidence, before and after, on four boards", "Not the objcopy steps in isolation: each board's real `make` target run with a 4,096-byte stand-in `.tbf`, with the change and with it stashed. Without it all four fail and leave no usable UF2 — picotool leaves a zero-byte one. With it all four exit 0 and the application is in the image, 16 blocks at 0x10040000, decoded from the UF2 block headers rather than inferred from an exit status. That distinction is load-bearing: llvm-objcopy updates the section and leaves the program header alone, producing a UF2 that converts cleanly and contains no application."),
+        ("Why this spelling", "Six candidates measured. `alloc,contents` and `alloc,load,contents` behave exactly as `LOAD,ALLOC` does, so no wording of the first objcopy avoids it; `--set-section-flags .stack=noload` is worse, leaving the segment with its virtual address moved and its physical address behind. `-R .stack` is the only one that works, and it costs nothing — the section reserves stack and carries no bytes, and it is dropped only from `<platform>-app.elf`, not from the kernel ELF."),
+        ("What is not covered", "The two rules that end in openocd and probe-rs rather than a converter. Both build the same broken file today and both are fixed by the same line, but whether those tools reject it or write 5,376 bytes into the stack region has not been checked — that needs a board. Nothing here is tested on hardware; the claim is about the files."),
+        ("Written up", "The full measurement, including the six-candidate matrix and the script that produced it, is at /findings/4770/ on this site."),
+    ],
     "tock:rp2350-gpio-irq": [
         ("What it fixes", "`IO_IRQ_BANK0` is defined in the RP2350's `interrupts.rs` and referenced nowhere else in the crate, so `service_interrupt` returns false for it and the chip panics with \"unhandled interrupt 21\". The handler it should reach, `RPPins::handle_interrupt`, already exists; the RP2040 routes the same interrupt to the same place in the same three lines."),
         ("Why it is worth reading first", "An application can bring the kernel down with a legal syscall. The upstream `raspberry_pi_pico_2` board exposes the GPIO driver to userspace, so any process calling command 7 — enable interrupts — on any pin panics the board. That is a well-behaved process taking the system down rather than a misbehaving one being contained."),
@@ -524,7 +533,7 @@ FINDINGS = [
      "content for RAM. The reported cause is not what is happening, and the "
      "workaround in the issue strips a section that is only safe to strip by "
      "accident. Six candidate fixes measured against a kernel built from "
-     "upstream; one line changes."),
+     "upstream; the one that works is a single objcopy line, and it is A/B verified on all four RP2 boards by running their real make targets."),
     (5153, "5153", "EP0 IN is armed at bus reset and never taken back",
      "The RP2040 USB driver hands EP0's IN buffer to the controller during bus "
      "reset, with a length of 64 and a PID of DATA0 and nothing queued to send. "

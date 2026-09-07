@@ -22,6 +22,8 @@ const fs = require('fs');
 const path = require('path');
 
 const HERE = __dirname;
+const UPPERCASING = uppercasingSelectors(
+  fs.readFileSync(path.join(__dirname, 'style.css'), 'utf8'));
 // The landing page is driven too. It has no figures and no buttons, so most
 // of what follows is vacuous for it -- but the skeleton, the links and the
 // private-path scan are not, and that page is the one a trimmed URL lands on.
@@ -46,6 +48,26 @@ function classesInCss(css) {
        if (prelude.trim().startsWith('@')) return all;
        prelude.replace(/\.(-?[_a-zA-Z][_a-zA-Z0-9-]*)/g,
                        (m, name) => { found.add(name); return m; });
+       return all;
+     });
+  return found;
+}
+
+// Selectors whose rules uppercase their content, read from the stylesheet
+// rather than listed here, so a new one is covered the day it is written.
+// These are kept as whole selectors on purpose: an earlier version pulled the
+// class names out of them, so `.readout dt` was checked as `.readout` and
+// every hex value in a readout body came back a false positive.
+function uppercasingSelectors(css) {
+  const found = new Set();
+  css.replace(/\/\*[\s\S]*?\*\//g, '')
+     .replace(/([^{}]+)\{([^{}]*)\}/g, (all, prelude, body) => {
+       if (/text-transform\s*:\s*uppercase/.test(body)) {
+         prelude.split(',').forEach(sel => {
+           sel = sel.trim();
+           if (sel && !sel.startsWith('@')) found.add(sel);
+         });
+       }
        return all;
      });
   return found;
@@ -156,6 +178,20 @@ function drivePage(name) {
                  fs.existsSync(path.join(target, 'index.html'));
       check(at('link ' + href + ' points at something'), ok, target);
     }
+  });
+
+  // A class that uppercases its content must not be given a hex number.
+  // `0x10040000` renders as `0X10040000`, which this project has shipped
+  // before -- in the chapter explaining what `0x` means. Neither the markup
+  // nor the stylesheet looks wrong on its own, which is why it needs a check.
+  UPPERCASING.forEach(sel => {
+    let matches;
+    try { matches = [...doc.querySelectorAll(sel)]; } catch (e) { return; }
+    matches.forEach(el => {
+      const hex = el.textContent.match(/0x[0-9a-f]+/i);
+      check(at(sel + ' is uppercased, so it carries no hex'), !hex,
+            hex ? hex[0] + ' in "' + el.textContent.trim().slice(0, 34) + '"' : '');
+    });
   });
 
   // Nothing about the bench, and no path off this machine.

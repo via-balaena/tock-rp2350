@@ -691,6 +691,18 @@
         "on_remote": true,
         "unpushed": 0
       },
+      "rp2-make-program-fix": {
+        "ahead": 1,
+        "commits": [
+          "rp2: strip .stack from the ELF that make program flashes"
+        ],
+        "stat": "4 files changed, 21 insertions(+)",
+        "base": "upstream/master",
+        "base_sha": "2a7a40450",
+        "pushed": true,
+        "on_remote": true,
+        "unpushed": 0
+      },
       "rp2-pad-controls": {
         "ahead": 2,
         "commits": [
@@ -1346,6 +1358,51 @@
         "rp2xxx": {
           "adc": 253,
           "lib": 36,
+          "spi": 638
+        }
+      },
+      "rp2-make-program-fix": {
+        "rp2040": {
+          "adc": 240,
+          "chip": 246,
+          "clocks": 1419,
+          "deferred_calls": 33,
+          "dma": 606,
+          "gpio": 727,
+          "i2c": 729,
+          "interrupts": 30,
+          "lib": 109,
+          "mod": 5,
+          "pio": 1947,
+          "pio_gspi": 270,
+          "pio_pwm": 95,
+          "pio_spi": 572,
+          "pwm": 76,
+          "resets": 371,
+          "rtc": 448,
+          "spi": 36,
+          "sysinfo": 98,
+          "timer": 277,
+          "uart": 761,
+          "usb": 2484,
+          "watchdog": 129,
+          "xosc": 117
+        },
+        "rp2350": {
+          "chip": 175,
+          "clocks": 1530,
+          "gpio": 1555,
+          "interrupts": 56,
+          "lib": 118,
+          "resets": 400,
+          "spi": 36,
+          "ticks": 174,
+          "timer": 274,
+          "uart": 811,
+          "xosc": 125
+        },
+        "rp2xxx": {
+          "lib": 29,
           "spi": 638
         }
       },
@@ -13628,6 +13685,12 @@
         "chips/rp2350/src/lib.rs",
         "chips/rp2xxx/src/adc.rs",
         "chips/rp2xxx/src/lib.rs"
+      ],
+      "rp2-make-program-fix": [
+        "boards/nano_rp2040_connect/Makefile",
+        "boards/pico_explorer_base/Makefile",
+        "boards/raspberry_pi_pico/Makefile",
+        "boards/raspberry_pi_pico_2/Makefile"
       ],
       "rp2-pad-controls": [
         "chips/rp2040/src/gpio.rs",
