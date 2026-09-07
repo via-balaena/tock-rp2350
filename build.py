@@ -513,6 +513,28 @@ DEFECTS = [
      "The objcopy step gives the stack segment a file size it should not have; picotool then refuses the image and leaves a zero-byte UF2 behind."),
 ]
 
+# Write-ups under findings/. The slug is the directory, so a page and its
+# row cannot drift apart -- check.py refuses a row with no page and a page
+# with no row. The issue state is fetched rather than written down, because
+# an issue drawn as open after it is closed is the page lying.
+FINDINGS = [
+    (4770, "4770", "make program builds an ELF no UF2 tool will take",
+     "Splicing an app into the kernel makes objcopy lay the segments out again, "
+     "and the (NOLOAD) stack segment comes back claiming 5,376 bytes of file "
+     "content for RAM. The reported cause is not what is happening, and the "
+     "workaround in the issue strips a section that is only safe to strip by "
+     "accident. Six candidate fixes measured against a kernel built from "
+     "upstream; one line changes."),
+    (5153, "5153", "EP0 IN is armed at bus reset and never taken back",
+     "The RP2040 USB driver hands EP0's IN buffer to the controller during bus "
+     "reset, with a length of 64 and a PID of DATA0 and nothing queued to send. "
+     "A SETUP packet does not take it back, so the first control read can be "
+     "answered out of a buffer nobody filled. Two of the three claims in the "
+     "issue's own AI analysis hold up; the third points at a delay already in "
+     "the code. Not tested -- there is no RP2040 board here, and rp2350 has no "
+     "USB driver to stand in for one."),
+]
+
 SILICON = [
     ("Pico 2 W scans WiFi", "Firmware up over PIO and DMA, MAC read from the radio's OTP, scan completed."),
     ("SPI loopback", "A 32-byte pattern written and read back through the RP2350 SPI driver."),
@@ -1050,9 +1072,15 @@ def fetch():
         "issue", "list", "--repo", REPO, "--author", AUTHOR, "--state", "all",
         "--limit", "100", "--json", "number,title,state,createdAt,url",
     ])
+    findings = [
+        gh_json(["issue", "view", str(number), "--repo", REPO, "--json",
+                 "number,title,state,author,createdAt,url"])
+        for number, _, _, _ in FINDINGS
+    ]
     return {
         "fetched": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
         "prs": sorted(prs, key=lambda p: p["number"]),
+        "findings": sorted(findings, key=lambda i: i["number"]),
         "issues": sorted(issues, key=lambda i: i["number"]),
         "local": survey_local(),
         "chip": survey_chip(),
@@ -2875,6 +2903,21 @@ def render(data):
            ref_html(ref), e(detail))
         for name, st, ref, detail in DEFECTS
     )
+    fetched_findings = {i["number"]: i for i in data.get("findings", [])}
+    finding_rows = "".join(
+        '<li><span class="pill %s">%s</span>'
+        '<strong><a href="findings/%s/">#%d &mdash; %s</a></strong>'
+        '<span class="dd">%s</span>'
+        '<span class="dd">Reported by %s. '
+        '<a href="%s">The issue on GitHub</a>.</span></li>'
+        % ("review" if fetched_findings.get(number, {}).get("state") == "OPEN"
+           else "closed",
+           e(fetched_findings.get(number, {}).get("state", "unknown").lower()),
+           e(slug), number, e(title), e(blurb),
+           e(fetched_findings.get(number, {}).get("author", {}).get("login", "?")),
+           e(fetched_findings.get(number, {}).get(
+               "url", "https://github.com/tock/tock/issues/%d" % number)))
+        for number, slug, title, blurb in FINDINGS)
     silicon_rows = "".join("<li><strong>%s</strong><span class='dd'>%s</span></li>"
                            % (e(n), e(d)) for n, d in SILICON)
     downstream_rows = "".join(
@@ -3034,6 +3077,7 @@ def render(data):
         '<li><a href="#prs">Pull requests<span class="rn">%d</span></a></li>'
         '<li class="navgroup">The evidence</li>'
         '<li><a href="#defects">Defects<span class="rn">%d</span></a></li>'
+        '<li><a href="#findings">Findings<span class="rn">%d</span></a></li>'
         '<li><a href="#silicon">On silicon<span class="rn">%d</span></a></li>'
         '<li><a href="#plan">Test plan<span class="rn">%d</span></a></li>'
         '<li class="navgroup">Ahead</li>'
@@ -3041,7 +3085,8 @@ def render(data):
         '<li><a href="#downstream">Downstream<span class="rn">%d</span></a></li>'
         '<li><a href="#notdone">Not done<span class="rn">%d</span></a></li>'
         % (len(order), len(ready), len(overlaps), len(data["prs"]), len(DEFECTS),
-           len(SILICON), len(data["issues"]), len(DOWNSTREAM), len(NOT_DONE)))
+           len(FINDINGS), len(SILICON), len(data["issues"]), len(DOWNSTREAM),
+           len(NOT_DONE)))
 
     return """<!doctype html>
 <html lang="en">
@@ -3162,6 +3207,17 @@ def render(data):
   <ul class="plain">%(defects)s</ul>
 </section>
 
+<section id="findings">
+  <h2>Findings</h2>
+  <p class="lede">Open Pico issues somebody else reported, worked through far enough to
+  be useful to whoever fixes them. Each page pins its citations to a commit, ships the
+  script that produced any tool output it quotes, and ends with what it does
+  <em>not</em> establish &mdash; which for the USB one is most of it.</p>
+  <ul class="plain">%(findings)s</ul>
+  <p class="foot">Written with AI assistance, disclosed on each page, which is also why
+  the evidence is arranged to be checked rather than believed.</p>
+</section>
+
 <section id="silicon">
   <h2>Run on hardware</h2>
   <p class="lede">A Raspberry Pi flashes the board and holds its serial line, so the
@@ -3253,7 +3309,8 @@ def render(data):
         "chips": "".join(chips), "graph": graph, "verify": verify_rows,
         "overlaps": overlap_rows, "cards": "".join(cards),
         "nmerged": len(merged), "nopen": len(open_prs),
-        "defects": defect_rows, "silicon": silicon_rows, "issues": issue_rows,
+        "defects": defect_rows, "findings": finding_rows,
+        "silicon": silicon_rows, "issues": issue_rows,
         "policy": para(POLICY), "nreview": len(in_review), "nready": len(ready),
         "nfixed": len([d for d in DEFECTS if d[1] == "fixed-local"]),
         "nnever": len(never), "readyc": ready_commits,

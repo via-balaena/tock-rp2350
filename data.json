@@ -1,5 +1,5 @@
 {
-  "fetched": "2026-09-06",
+  "fetched": "2026-09-07",
   "prs": [
     {
       "additions": 1,
@@ -296,6 +296,34 @@
         "chips/rp2040/src/pio.rs",
         "chips/rp2040/src/pio_gspi.rs"
       ]
+    }
+  ],
+  "findings": [
+    {
+      "author": {
+        "id": "MDQ6VXNlcjk5MzAyNjM=",
+        "is_bot": false,
+        "login": "potto216",
+        "name": "Paul Otto"
+      },
+      "createdAt": "2026-04-01T13:22:19Z",
+      "number": 4770,
+      "state": "OPEN",
+      "title": "When building app for RPi Pico I get the error: \"ELF contains memory contents for uninitialized memory at 20000000\"",
+      "url": "https://github.com/tock/tock/issues/4770"
+    },
+    {
+      "author": {
+        "id": "MDQ6VXNlcjk5MzAyNjM=",
+        "is_bot": false,
+        "login": "potto216",
+        "name": "Paul Otto"
+      },
+      "createdAt": "2026-09-06T16:54:20Z",
+      "number": 5153,
+      "state": "OPEN",
+      "title": "The Raspberry PI Pico RP2040 USB CDC ACM serial port does not work with many machines",
+      "url": "https://github.com/tock/tock/issues/5153"
     }
   ],
   "issues": [

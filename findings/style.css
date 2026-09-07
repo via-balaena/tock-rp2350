@@ -1,0 +1,234 @@
+/* Shared by every page under findings/.
+ *
+ * The palette is the work map's, so a reader arriving from the front page
+ * stays in the same document. What is different here is the width: the map
+ * is a desktop instrument and sets `min-width:1040px`, and these pages get
+ * read on a phone by whoever followed a link out of a GitHub issue.
+ *
+ * Semantic colours are defined once, in both themes, and every pair used on
+ * --panel clears 4.5:1. Nothing below states a colour outside :root or a
+ * theme block, so a token can never be defined in only one theme.
+ */
+
+:root{
+  --bg:#fbfaf8; --panel:#fff; --ink:#16171a; --ink-soft:#4f5157;
+  --ink-faint:#6f7278; --line:#e4e2dd; --accent:#7a4b1e; --edge:#c6c3bc;
+  --bad:#a02d18; --bad-bg:#fdf1ee; --ok:#1a6b41; --ok-bg:#eef7f1;
+  --flag:#8a5a00; --flag-bg:#fdf5e6;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --measure:76ch; --wide:64rem;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#131316; --panel:#1b1c20; --ink:#edecea; --ink-soft:#b6b6ba;
+  --ink-faint:#8e8f95; --line:#2c2d33; --accent:#d9a273; --edge:#42444c;
+  --bad:#f0937c; --bad-bg:#2a1b17; --ok:#7ec79b; --ok-bg:#16251c;
+  --flag:#dcae5c; --flag-bg:#272016;
+}}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:16px/1.62 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  -webkit-text-size-adjust:100%}
+.wrap{max-width:var(--wide);margin:0 auto;padding:0 20px 80px}
+a{color:var(--accent)}
+code,kbd{font-family:var(--mono);font-size:.88em}
+p code,li code,td code,dd code{background:var(--bg);border:1px solid var(--line);
+  border-radius:4px;padding:.06em .32em}
+
+/* ---- masthead ---- */
+.top{border-bottom:1px solid var(--line);margin-bottom:34px;padding:18px 0 0}
+.crumb{display:flex;flex-wrap:wrap;gap:10px;align-items:baseline;
+  font-size:13px;margin-bottom:22px}
+.crumb a{text-decoration:none}
+.crumb a:hover{text-decoration:underline}
+.crumb .sep{color:var(--ink-faint)}
+h1{font-size:1.95rem;line-height:1.22;letter-spacing:-.018em;margin:0 0 12px;
+  max-width:24ch}
+.issue{display:inline-flex;align-items:center;gap:7px;font-size:13px;
+  font-family:var(--mono);color:var(--ink-faint);margin:0 0 16px}
+.issue a{font-weight:600}
+.state{border:1px solid var(--line);border-radius:999px;padding:1px 8px;
+  font-size:11px;letter-spacing:.04em;text-transform:uppercase}
+.lede{font-size:1.12rem;color:var(--ink-soft);max-width:var(--measure);
+  margin:0 0 26px}
+
+/* ---- prose ---- */
+h2{font-size:1.28rem;letter-spacing:-.012em;margin:52px 0 4px;
+  padding-top:18px;border-top:1px solid var(--line)}
+/* The masthead already draws a rule. Without this the first heading draws a
+   second one 86px below it, which renders as two lines with a gap. */
+main>h2:first-child{border-top:0;padding-top:0;margin-top:30px}
+h2 .n{font-family:var(--mono);font-size:.72em;color:var(--ink-faint);
+  margin-right:.6em}
+h3{font-size:1rem;margin:30px 0 6px}
+p{max-width:var(--measure)}
+ul.plain{list-style:none;padding:0;max-width:var(--measure)}
+ul.plain>li{padding-left:19px;position:relative;margin-bottom:9px}
+ul.plain>li::before{content:"";position:absolute;left:2px;top:.66em;
+  width:5px;height:5px;border-radius:50%;background:var(--edge)}
+blockquote{margin:0 0 20px;padding:14px 20px;border-left:3px solid var(--accent);
+  background:var(--panel);border-radius:0 8px 8px 0;color:var(--ink-soft);
+  max-width:var(--measure);font-size:.97rem}
+blockquote p{margin:0 0 8px}
+blockquote p:last-of-type{margin:0}
+blockquote cite{display:block;margin-top:10px;font-style:normal;font-size:.8rem;
+  color:var(--ink-faint)}
+
+/* ---- figures ---- */
+figure{margin:26px 0 30px;max-width:var(--wide)}
+figcaption{font-size:.83rem;color:var(--ink-faint);margin-top:9px;
+  max-width:var(--measure)}
+figcaption b{color:var(--ink-soft);font-weight:600}
+.instrument{background:var(--panel);border:1px solid var(--line);
+  border-radius:11px;padding:16px 17px}
+.ititle{font-size:11px;text-transform:uppercase;letter-spacing:.085em;
+  color:var(--ink-faint);margin:0 0 12px}
+.controls{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 14px}
+.controls button{font:inherit;font-size:13px;padding:5px 12px;cursor:pointer;
+  border:1px solid var(--line);border-radius:7px;background:var(--bg);
+  color:var(--ink-soft)}
+.controls button:hover{border-color:var(--edge);color:var(--ink)}
+.controls button[aria-pressed=true]{background:var(--accent);
+  border-color:var(--accent);color:var(--panel);font-weight:600}
+.panel[hidden]{display:none}
+
+/* ---- data tables ---- */
+.grid{width:100%;border-collapse:collapse;font-family:var(--mono);
+  font-size:12.5px}
+.grid th,.grid td{text-align:left;padding:6px 9px;border-bottom:1px solid var(--line);
+  white-space:nowrap}
+.grid thead th{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--ink-faint);font-weight:600;font-family:inherit}
+.grid tbody tr:last-child td{border-bottom:0}
+.grid .num{text-align:right}
+.grid .lbl{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+.scroll{overflow-x:auto;margin:0 -4px;padding:0 4px}
+
+.rgn{display:inline-block;font-size:10px;letter-spacing:.05em;padding:1px 6px;
+  border-radius:4px;border:1px solid var(--line);color:var(--ink-faint);
+  font-family:-apple-system,BlinkMacSystemFont,sans-serif}
+.rgn.is-ram{color:var(--flag);background:var(--flag-bg);border-color:transparent}
+
+tr.is-culprit td{background:var(--bad-bg)}
+tr.is-culprit .rgn.is-ram{color:var(--bad)}
+.was{color:var(--ink-faint);text-decoration:line-through;margin-right:.5em}
+.now{color:var(--bad);font-weight:700}
+.now.is-fine{color:var(--ink)}
+
+/* a FileSiz drawn against its own MemSiz */
+.bar{display:block;width:88px;height:9px;border:1px solid var(--edge);
+  border-radius:2px;overflow:hidden;background:transparent}
+.bar i{display:block;height:100%;background:var(--edge)}
+tr.is-culprit .bar{border-color:var(--bad)}
+tr.is-culprit .bar i{background:var(--bad)}
+.bar.is-empty{background:repeating-linear-gradient(135deg,transparent,
+  transparent 3px,var(--line) 3px,var(--line) 4px)}
+
+/* ---- verdict line under an instrument ---- */
+.verdict{margin:14px 0 0;padding:10px 13px;border-radius:8px;font-size:.9rem;
+  background:var(--ok-bg);color:var(--ok);max-width:none}
+.verdict.is-bad{background:var(--bad-bg);color:var(--bad)}
+.verdict b{font-weight:700}
+
+/* ---- the fix matrix ---- */
+.matrix{display:grid;grid-template-columns:minmax(0,1fr);gap:0}
+.mrow{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;
+  width:100%;text-align:left;font:inherit;font-size:13.5px;cursor:pointer;
+  padding:9px 11px;border:0;border-bottom:1px solid var(--line);
+  background:transparent;color:var(--ink-soft);border-radius:7px}
+.mrow:last-of-type{border-bottom:0}
+.mrow:hover{background:var(--bg)}
+.mrow[aria-pressed=true]{background:var(--bg);color:var(--ink);
+  box-shadow:inset 2px 0 0 var(--accent)}
+.mrow .cmd{font-family:var(--mono);font-size:12.5px}
+.tag{font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;
+  padding:2px 8px;border-radius:999px;white-space:nowrap;font-weight:600}
+.tag.is-ok{background:var(--ok-bg);color:var(--ok)}
+.tag.is-bad{background:var(--bad-bg);color:var(--bad)}
+.tag.is-flag{background:var(--flag-bg);color:var(--flag)}
+.detail{border-top:1px solid var(--line);margin-top:12px;padding-top:13px}
+.detail h4{margin:0 0 8px;font-size:.94rem}
+.detail p{font-size:.9rem;color:var(--ink-soft);margin:0 0 9px;max-width:70ch}
+.readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));
+  gap:9px;margin:0 0 12px}
+.readout div{background:var(--bg);border:1px solid var(--line);border-radius:7px;
+  padding:8px 10px}
+.readout dt{font-size:10px;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--ink-faint);margin:0 0 3px}
+.readout dd{margin:0;font-family:var(--mono);font-size:12.5px;color:var(--ink)}
+.readout dd.is-bad{color:var(--bad)}
+.readout dd.is-ok{color:var(--ok)}
+
+/* ---- code ---- */
+pre{background:var(--panel);border:1px solid var(--line);border-radius:9px;
+  padding:13px 15px;overflow-x:auto;font-family:var(--mono);font-size:12.5px;
+  line-height:1.55;margin:0 0 18px;max-width:var(--wide)}
+pre b{color:var(--bad);font-weight:700}
+pre i{color:var(--ink-faint);font-style:normal}
+pre .add{color:var(--ok)}
+pre .del{color:var(--bad)}
+.srcref{display:block;font-size:11.5px;color:var(--ink-faint);
+  font-family:var(--mono);margin:0 0 5px}
+.srcref a{color:var(--ink-faint)}
+
+/* ---- claim ledger ---- */
+.claims{display:grid;gap:11px;margin:0}
+.claim{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+  padding:13px 15px}
+.claim>p{margin:0 0 7px;max-width:74ch}
+.claim .said{color:var(--ink-soft);font-size:.93rem}
+.claim .said::before{content:"\201C"}
+.claim .said::after{content:"\201D"}
+.claim .found{font-size:.93rem;margin:0}
+.claim h3{margin:0 0 8px;font-size:.85rem;text-transform:uppercase;
+  letter-spacing:.06em;display:flex;gap:9px;align-items:center}
+
+/* ---- two implementations, side by side ---- */
+.evt{margin:0 0 13px;padding:9px 12px;background:var(--bg);
+  border:1px solid var(--line);border-radius:8px;font-size:.92rem;
+  color:var(--ink-soft);max-width:none}
+.evt b{color:var(--ink)}
+.tracks{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  gap:12px}
+.track{border:1px solid var(--line);border-radius:9px;padding:12px 13px}
+.track h4{margin:0 0 9px;font-size:.78rem;text-transform:uppercase;
+  letter-spacing:.07em;color:var(--ink-faint)}
+.owner{margin:0 0 10px;font-size:.9rem;font-weight:600;max-width:none}
+.owner.is-ok{color:var(--ok)}
+.owner.is-bad{color:var(--bad)}
+.ifnow{margin:0;font-size:.87rem;color:var(--ink-soft);max-width:none;
+  padding-top:9px;border-top:1px solid var(--line)}
+.ifnow b{color:var(--ink)}
+.ifnow.is-ok b{color:var(--ok)}
+.ifnow.is-bad b{color:var(--bad)}
+
+/* ---- a register drawn as its fields ---- */
+.reg{display:flex;gap:2px;margin:0 0 6px}
+.rfield{flex-basis:0;min-width:0;border:1px solid var(--edge);border-radius:4px;
+  padding:6px 4px;text-align:center;background:var(--bg);overflow:hidden}
+.rfield b{display:block;font-family:var(--mono);font-size:11px;color:var(--ink)}
+.rfield span{display:block;font-size:9.5px;letter-spacing:.02em;
+  color:var(--ink-faint);white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis}
+.rfield.is-muted{border-style:dashed;background:transparent}
+.rfield.is-set{border-color:var(--accent);background:var(--flag-bg)}
+.rfield.is-set b,.rfield.is-set span{color:var(--flag)}
+.reg+.reg{margin-bottom:14px}
+
+/* ---- footer ---- */
+footer{border-top:1px solid var(--line);margin-top:56px;padding-top:20px;
+  font-size:.86rem;color:var(--ink-faint);max-width:var(--measure)}
+footer a{color:var(--accent)}
+footer p{max-width:none}
+
+.skip{position:absolute;left:-9999px}
+.skip:focus{left:12px;top:12px;background:var(--panel);padding:9px 13px;
+  border-radius:7px;border:1px solid var(--accent);z-index:9}
+
+@media (max-width:640px){
+  body{font-size:15px}
+  .wrap{padding:0 15px 60px}
+  h1{font-size:1.55rem}
+  .mrow{grid-template-columns:1fr;gap:6px;align-items:start}
+  .tag{justify-self:start}
+}

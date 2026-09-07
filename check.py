@@ -360,6 +360,8 @@ def check_interactions(problems):
     that one throw took the search, the key bindings and the palette with it.
     """
     runs = [(ROOT / "drive.js", [str(ROOT / "index.html")])]
+    if (ROOT / "findings" / "drive.js").exists():
+        runs.append((ROOT / "findings" / "drive.js", []))
     course = sorted((ROOT / "read").glob("ch*/index.html"))
     if (ROOT / "drive-read.js").exists() and course:
         runs.append((ROOT / "drive-read.js",
@@ -381,6 +383,64 @@ def check_interactions(problems):
             if not run.stdout.strip():
                 problems.append("interactions: %s failed with no output" % driver.name)
     return None
+
+
+def check_findings(build, data, problems):
+    """A findings row and its page cannot exist without each other.
+
+    The write-ups under findings/ are hand-written pages, not generated ones,
+    so nothing else here would notice a row pointing at a directory that was
+    never created, or a page that stopped being listed. Both are the same
+    failure from a reader's side: a link that goes nowhere, followed out of a
+    GitHub issue by somebody who will not report it.
+
+    The issue number is checked against the page's own citation rather than
+    against the row, because the row is where a typo would be made.
+    """
+    root = ROOT / "findings"
+    if not root.exists():
+        if build.FINDINGS:
+            problems.append("findings: FINDINGS has rows and findings/ does not exist")
+        return
+
+    listed = {slug: number for number, slug, _, _ in build.FINDINGS}
+    for number, slug, _, _ in build.FINDINGS:
+        page = root / slug / "index.html"
+        if not page.exists():
+            problems.append(
+                f"findings: FINDINGS lists {slug!r} and {page.relative_to(ROOT)} "
+                f"is not there, so the row on the page links to nothing")
+            continue
+        url = f"https://github.com/tock/tock/issues/{number}"
+        if url not in page.read_text():
+            problems.append(
+                f"findings: findings/{slug}/ does not cite {url}, so the row "
+                f"and the page disagree about which issue this is")
+
+    for child in sorted(root.iterdir()):
+        if child.is_dir() and (child / "index.html").exists() \
+                and child.name not in listed:
+            problems.append(
+                f"findings: findings/{child.name}/ is a page that FINDINGS does "
+                f"not list, so it is reachable only by guessing the URL")
+
+    landing = root / "index.html"
+    if not landing.exists():
+        problems.append("findings: findings/index.html is missing, so trimming "
+                        "a page's URL gives a 404")
+    else:
+        text = landing.read_text()
+        for _, slug, _, _ in build.FINDINGS:
+            if f'href="{slug}/"' not in text:
+                problems.append(
+                    f"findings: the findings index does not link to {slug}/")
+
+    fetched = {i["number"] for i in data.get("findings", [])}
+    for number, slug, _, _ in build.FINDINGS:
+        if number not in fetched:
+            problems.append(
+                f"findings: #{number} has no fetched issue state, so the page "
+                f"cannot say whether it is still open — run ./build.py")
 
 
 def check_pins(build, data, problems):
@@ -594,12 +654,13 @@ def main():
     check_pinmaps(build, html, problems)
     check_bits(html, problems)
     check_queue(build, data, html, problems)
+    check_findings(build, data, problems)
     check_learning(problems)
     skipped = check_interactions(problems)
     if not args.offline:
         check_fresh(build, data, problems)
 
-    ran = (18 if args.offline else 19) + (0 if skipped else 1)
+    ran = (19 if args.offline else 20) + (0 if skipped else 1)
     if skipped:
         print(f"note: the interaction check did not run — {skipped}\n")
     if problems:

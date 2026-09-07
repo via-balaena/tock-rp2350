@@ -179,6 +179,41 @@ Each chapter pins an explicit commit, and the citation checks already skip when
 that commit cannot be found, so a machine without the clone loses those checks
 and nothing else.
 
+## The findings
+
+`findings/` holds write-ups of open Pico issues in the Tock tree that somebody
+else reported. They exist to be linked from a GitHub issue, which shapes them:
+they are standalone pages with their own skeleton, they are responsive because
+whoever follows the link may be on a phone, and every claim is arranged to be
+checked rather than believed.
+
+- Citations pin a commit and link to the line, so a claim about the source can
+  be verified without cloning anything.
+- Where a page quotes tool output, **the script that produced it ships beside
+  the page**. `findings/4770/reproduce.sh` is what printed the table on that
+  page, not a description of it.
+- Datasheet passages are quoted, never paraphrased and never reproduced in
+  bulk — both RP2 datasheets are CC BY-ND.
+- **Each page ends with what it does not establish.** For #5153 that is most of
+  it: there is no RP2040 board here, and `chips/rp2350` has no USB driver to
+  stand in for one.
+
+The rows on the front page come from `FINDINGS` in `build.py`, and each issue's
+open/closed state is **fetched** rather than written down — a page drawn as open
+after it is closed is the page lying, which is the same rule the queue follows.
+
+Two checks cover them. `findings` refuses a row whose page does not exist, a
+page no row lists, a page that cites a different issue number than its row, and
+a missing landing page — all of them the same failure from a reader's side, a
+link that goes nowhere. And `findings/drive.js` runs both pages in a real DOM:
+
+    node findings/drive.js
+
+It drives every toggle, asserts one panel shows at rest and exactly one after
+each click, checks that every anchor and relative link resolves, that figures
+are numbered in the order they appear, and that no path off this machine
+reached the HTML. Every one of its checks was tested by making it fail.
+
 ## Publishing
 
 The repository is set up to serve from its root:

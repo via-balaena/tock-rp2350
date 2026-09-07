@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Findings — open Pico issues in Tock</title>
+<meta name="description" content="Write-ups of open Raspberry Pi Pico issues in the Tock kernel: what was measured, what the reported cause turned out to be, and what is still untested.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to the list</a>
+<div class="wrap">
+
+<header class="top">
+  <nav class="crumb" aria-label="Breadcrumb">
+    <a href="../">Tock on the RP2350</a>
+    <span class="sep">/</span>
+    <span>Findings</span>
+  </nav>
+  <h1>Findings</h1>
+  <p class="lede">Open Pico issues in the Tock tree, worked through far enough
+  to be useful to whoever fixes them. Each page separates what was measured from
+  what was inferred, and ends with what it does <em>not</em> establish &mdash;
+  because for two of these the honest answer is that the fix is untested and
+  needs a board I do not have.</p>
+</header>
+
+<main id="main">
+
+<h2><span class="n">1</span>Open</h2>
+
+<div class="claims">
+  <div class="claim">
+    <h3><span class="tag is-flag">build tooling</span> <a href="4770/">#4770 &mdash; <code>make program</code> builds an ELF no UF2 tool will take</a></h3>
+    <p class="found">Splicing an application into the kernel makes
+    <code>objcopy</code> lay the segments out again, and the
+    <code>(NOLOAD)</code> stack segment comes back claiming 5,376 bytes of file
+    content for RAM. Both converters are right to refuse it. The reported cause
+    &mdash; that <code>elf2uf2-rs</code> cannot handle RAM &mdash; is not what is
+    happening, and the workaround in the issue strips a section that is only
+    safe to strip by accident. Six candidate fixes measured; one line
+    changes.</p>
+  </div>
+
+  <div class="claim">
+    <h3><span class="tag is-flag">chip driver</span> <a href="5153/">#5153 &mdash; EP0 IN is armed at bus reset and never taken back</a></h3>
+    <p class="found">The RP2040 USB driver hands EP0's IN buffer to the USB
+    controller during bus reset, with a length of 64 and a PID of DATA0 and
+    nothing queued to send. A SETUP packet does not take it back, so the first
+    control read can be answered out of a buffer nobody filled. Two of the three
+    claims in the issue's AI analysis hold up; the third points at a delay that
+    is already in the code.</p>
+  </div>
+</div>
+
+<h2><span class="n">2</span>How these are written</h2>
+
+<ul class="plain">
+  <li><b>Line numbers are pinned to a commit</b> and every citation links to it,
+  so a claim about the source can be checked without cloning anything.</li>
+  <li><b>Numbers come from commands, and the commands ship.</b> Where a page
+  quotes tool output, the script that produced it is beside the page.</li>
+  <li><b>Quotes from the datasheet are quoted</b>, not paraphrased. The RP2040
+  and RP2350 datasheets are CC&nbsp;BY-ND, so they are cited and never
+  reproduced here in bulk.</li>
+  <li><b>Each page ends with what it does not establish.</b> Untested is written
+  down as untested; a fix nobody has run on hardware says so.</li>
+  <li><b>Written with AI assistance</b>, which is disclosed on each page. That
+  is also why the evidence is arranged to be checkable rather than
+  believed.</li>
+</ul>
+
+</main>
+
+<footer>
+  <p>Part of <a href="../">a work map</a> of what Tock can drive on an RP2350,
+  alongside <a href="../read/">a nine-chapter course</a> on how the kernel
+  works.</p>
+</footer>
+
+</div>
+</body>
+</html>

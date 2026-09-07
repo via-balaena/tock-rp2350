@@ -1,0 +1,468 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>make program on the Pico builds an ELF no UF2 tool will take</title>
+<meta name="description" content="Why boards/raspberry_pi_pico's make program fails with &quot;ELF contains memory contents for uninitialized memory at 20000000&quot;, measured against tock/tock 2a7a40450, with every candidate fix tried.">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to the report</a>
+<div class="wrap">
+
+<header class="top">
+  <nav class="crumb" aria-label="Breadcrumb">
+    <a href="../../">Tock on the RP2350</a>
+    <span class="sep">/</span>
+    <a href="../">Findings</a>
+    <span class="sep">/</span>
+    <span>#4770</span>
+  </nav>
+  <h1><code>make program</code> builds an ELF that no UF2 tool will take</h1>
+  <p class="issue">
+    <a href="https://github.com/tock/tock/issues/4770">tock/tock#4770</a>
+    <span class="state">open when this was written</span>
+    <span>reported 2026-04-01 by potto216</span>
+  </p>
+  <p class="lede">The error names an address in RAM, which makes it look like a
+  limitation of <code>elf2uf2-rs</code>. It is not. The kernel ELF is fine; the
+  two <code>objcopy</code> steps that splice an application into it produce a
+  second ELF whose program headers claim 5,376 bytes of file content for memory
+  that has none, and both UF2 converters are right to refuse it.</p>
+</header>
+
+<main id="main">
+
+<h2><span class="n">1</span>What happens</h2>
+
+<p>Building any application into the Pico kernel fails at the last step:</p>
+
+<pre>$ APP=.../spi_controller_write_read.tbf make program
+<i>arm-none-eabi-objcopy --set-section-flags .apps=LOAD,ALLOC ... raspberry_pi_pico-app.elf
+arm-none-eabi-objcopy: ...: section .relocate lma 0x20000000 adjusted to 0x20001500
+arm-none-eabi-objcopy --update-section .apps=... raspberry_pi_pico-app.elf
+elf2uf2-rs ... raspberry_pi_pico-app.uf2</i>
+<b>Error: "ELF contains memory contents for uninitialized memory at 20000000"</b>
+make: *** [Makefile:48: program] Error 1</pre>
+
+<p>I reproduced that string exactly, with the reporter's own tool, on a kernel
+built from <a href="https://github.com/tock/tock/commit/2a7a40450">2a7a40450</a>.
+<code>picotool</code> refuses the same file for the same reason, exits 253 and
+leaves a zero-byte UF2 behind, so this is not one converter being fussy:</p>
+
+<pre>$ elf2uf2-rs raspberry_pi_pico-app.elf out.uf2
+<b>Error: "ELF contains memory contents for uninitialized memory at 20000000"</b>
+
+$ picotool uf2 convert raspberry_pi_pico-app.elf out.uf2
+<b>ERROR: ELF contains memory contents for uninitialized memory at 0x20000000</b></pre>
+
+<p>The suggested cause in the issue is that <code>elf2uf2-rs</code>
+<q>does not deal with RAM</q>. That reading is worth retiring early, because it
+sends you looking at the converter. The same converter takes the same kernel
+without complaint one step earlier &mdash; the control at the bottom of
+<a href="#f4">figure&nbsp;4</a> &mdash; and what it is objecting to is a real
+defect in the file it was handed.</p>
+
+<h2><span class="n">2</span>What the two objcopy steps do to the program headers</h2>
+
+<p><a href="https://github.com/tock/tock/blob/2a7a40450/boards/raspberry_pi_pico/Makefile#L43-L48">The
+rule</a> runs <code>objcopy</code> twice: once to give <code>.apps</code>
+contents, once to fill it with the <code>.tbf</code>. Both are needed &mdash;
+<code>--update-section</code> on its own fails with <i>section has no
+contents</i>, because <code>.apps</code> is declared <code>(NOLOAD)</code> in
+the linker script. Giving it contents is the intended change. Everything else
+in the table below is collateral.</p>
+
+<figure id="f1">
+  <div class="instrument">
+    <p class="ititle">The seven LOAD segments, before and after the objcopy</p>
+    <div class="controls" role="group" aria-label="Which ELF to show">
+      <button type="button" id="b-before" aria-pressed="true" aria-controls="p-before">The kernel as linked</button>
+      <button type="button" id="b-after" aria-pressed="false" aria-controls="p-after">After both objcopy steps</button>
+    </div>
+
+    <div class="scroll">
+      <div class="panel" id="p-before">
+        <table class="grid">
+          <thead><tr>
+            <th>Sections</th><th>Address</th><th>Region</th>
+            <th class="num">MemSiz</th><th class="num">FileSiz</th><th>File bytes</th>
+          </tr></thead>
+          <tbody>
+            <tr><td class="lbl">.text</td><td>0x10000000</td><td><span class="rgn">flash</span></td><td class="num">0x00100</td><td class="num">0x00100</td><td><span class="bar"><i style="width:100%"></i></span></td></tr>
+            <tr><td class="lbl">.text</td><td>0x10000100</td><td><span class="rgn">flash</span></td><td class="num">0x174a0</td><td class="num">0x174a0</td><td><span class="bar"><i style="width:100%"></i></span></td></tr>
+            <tr><td class="lbl">.ARM.exidx .storage</td><td>0x100175a0</td><td><span class="rgn">flash</span></td><td class="num">0x00a60</td><td class="num">0x00a60</td><td><span class="bar"><i style="width:100%"></i></span></td></tr>
+            <tr><td class="lbl">.stack</td><td>0x20000000</td><td><span class="rgn is-ram">SRAM</span></td><td class="num">0x01500</td><td class="num">0x00000</td><td><span class="bar is-empty"><i style="width:0"></i></span></td></tr>
+            <tr><td class="lbl">.apps</td><td>0x10040000</td><td><span class="rgn">flash</span></td><td class="num">0x00004</td><td class="num">0x00000</td><td><span class="bar is-empty"><i style="width:0"></i></span></td></tr>
+            <tr><td class="lbl">.relocate .sram</td><td>0x20001500</td><td><span class="rgn is-ram">SRAM</span></td><td class="num">0x02b8c</td><td class="num">0x00000</td><td><span class="bar is-empty"><i style="width:0"></i></span></td></tr>
+            <tr><td class="lbl">.attributes</td><td>0x10018000</td><td><span class="rgn">flash</span></td><td class="num">0x0002c</td><td class="num">0x0002c</td><td><span class="bar"><i style="width:100%"></i></span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="panel" id="p-after" hidden>
+        <table class="grid">
+          <thead><tr>
+            <th>Sections</th><th>Address</th><th>Region</th>
+            <th class="num">MemSiz</th><th class="num">FileSiz</th><th>File bytes</th>
+          </tr></thead>
+          <tbody>
+            <tr><td class="lbl">.text</td><td>0x10000000</td><td><span class="rgn">flash</span></td><td class="num">0x00100</td><td class="num">0x00100</td><td><span class="bar"><i style="width:100%"></i></span></td></tr>
+            <tr><td class="lbl">.text</td><td>0x10000100</td><td><span class="rgn">flash</span></td><td class="num">0x174a0</td><td class="num">0x174a0</td><td><span class="bar"><i style="width:100%"></i></span></td></tr>
+            <tr><td class="lbl">.ARM.exidx .storage</td><td>0x100175a0</td><td><span class="rgn">flash</span></td><td class="num">0x00a60</td><td class="num">0x00a60</td><td><span class="bar"><i style="width:100%"></i></span></td></tr>
+            <tr class="is-culprit"><td class="lbl">.stack</td><td>0x20000000</td><td><span class="rgn is-ram">SRAM</span></td><td class="num">0x01500</td><td class="num"><span class="was">0x00000</span><span class="now">0x01500</span></td><td><span class="bar"><i style="width:100%"></i></span></td></tr>
+            <tr><td class="lbl">.apps</td><td>0x10040000</td><td><span class="rgn">flash</span></td><td class="num">0x01000</td><td class="num"><span class="was">0x00000</span><span class="now is-fine">0x01000</span></td><td><span class="bar"><i style="width:100%"></i></span></td></tr>
+            <tr><td class="lbl">.relocate .sram</td><td>0x20001500</td><td><span class="rgn is-ram">SRAM</span></td><td class="num">0x02b8c</td><td class="num">0x00000</td><td><span class="bar is-empty"><i style="width:0"></i></span></td></tr>
+            <tr><td class="lbl">.attributes</td><td>0x10018000</td><td><span class="rgn">flash</span></td><td class="num">0x0002c</td><td class="num">0x0002c</td><td><span class="bar"><i style="width:100%"></i></span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <p class="verdict" id="v-before">Both SRAM segments carry <b>no</b> file
+    bytes, which is what a flash image requires: nothing in the file claims to
+    be the contents of memory that has none.</p>
+    <p class="verdict is-bad" id="v-after" hidden>One SRAM segment now carries
+    <b>0x1500 file bytes &mdash; 5,376 of them, for <code>.stack</code> at
+    0x20000000</b>. The <code>.apps</code> row changing was the point of the
+    exercise. The <code>.stack</code> row is the bug, and it is what both
+    converters refuse.</p>
+  </div>
+  <figcaption><b>Figure 1.</b> Program headers of
+  <code>raspberry_pi_pico.elf</code> and of the
+  <code>raspberry_pi_pico-app.elf</code> built from it, read with
+  <code>arm-none-eabi-readelf -lW</code>. The bar draws FileSiz against that
+  segment's own MemSiz, so a hatched bar is a segment that occupies memory and
+  takes up no room in the file. Kernel built from 2a7a40450; the two
+  <code>.text</code> sizes move with the build, the <code>.stack</code> row does
+  not.</figcaption>
+</figure>
+
+<h2><span class="n">3</span>The section itself never changed</h2>
+
+<p>This is the part that rules out the converter, and it is worth stating
+plainly because it is counter-intuitive: <code>.stack</code> is still
+<code>NOBITS</code> afterwards. Its <em>section</em> header is untouched. Only
+the <em>program</em> header changed, and UF2 converters read segments, not
+sections &mdash; correctly, since segments are what a loader uses.</p>
+
+<figure id="f2">
+  <div class="instrument">
+    <p class="ititle">Section headers, the same two files</p>
+    <div class="scroll">
+      <table class="grid">
+        <thead><tr><th>Section</th><th>Type, as linked</th><th>Type, after objcopy</th><th>Address</th><th class="num">Size</th></tr></thead>
+        <tbody>
+          <tr><td class="lbl">.stack</td><td>NOBITS</td><td>NOBITS</td><td>20000000</td><td class="num">001500</td></tr>
+          <tr><td class="lbl">.relocate</td><td>PROGBITS</td><td>REL</td><td>20001500</td><td class="num">000000</td></tr>
+          <tr><td class="lbl">.apps</td><td>NOBITS</td><td>PROGBITS</td><td>10040000</td><td class="num">001000</td></tr>
+          <tr><td class="lbl">.sram</td><td>NOBITS</td><td>NOBITS</td><td>20001500</td><td class="num">002b8c</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <figcaption><b>Figure 2.</b> <code>readelf -SW</code> on both files.
+  <code>.apps</code> going <code>NOBITS</code>&rarr;<code>PROGBITS</code> is the
+  requested change. <code>.stack</code> does not move, which is why nothing that
+  reads the section table can see this bug. <code>.relocate</code> is reported
+  as <code>REL</code> afterwards, which is odd, but it is a zero-length section
+  and nothing downstream reads it &mdash; noted rather than explained.</figcaption>
+</figure>
+
+<p>So the mechanism is: giving <code>.apps</code> contents forces BFD to lay the
+segments out again instead of copying the input's program headers, and in the
+new layout the <code>NOBITS</code> <code>.stack</code> is assigned a non-zero
+<code>p_filesz</code>. That is the whole defect.</p>
+
+<h2><span class="n">4</span>Every candidate fix, measured</h2>
+
+<p>Six variants, all run against the same kernel by
+<a href="reproduce.sh"><code>reproduce.sh</code></a>, which is the script that
+produced these numbers rather than a description of one. Pick a row.</p>
+
+<figure id="f3">
+  <div class="instrument">
+    <p class="ititle">What each candidate actually does</p>
+    <div class="matrix" role="group" aria-label="Candidate fixes">
+      <button type="button" class="mrow" id="m-0" aria-pressed="true" aria-controls="d-0">
+        <span class="cmd">the Makefile as it stands</span>
+        <span class="tag is-bad">refused</span></button>
+      <button type="button" class="mrow" id="m-1" aria-pressed="false" aria-controls="d-1">
+        <span class="cmd">objcopy -R .stack</span>
+        <span class="tag is-ok">works</span></button>
+      <button type="button" class="mrow" id="m-2" aria-pressed="false" aria-controls="d-2">
+        <span class="cmd">objcopy -R .stack -R .relocate -R .bss</span>
+        <span class="tag is-flag">works, with a trap</span></button>
+      <button type="button" class="mrow" id="m-3" aria-pressed="false" aria-controls="d-3">
+        <span class="cmd">--set-section-flags .stack=alloc,noload</span>
+        <span class="tag is-bad">refused</span></button>
+      <button type="button" class="mrow" id="m-4" aria-pressed="false" aria-controls="d-4">
+        <span class="cmd">--set-section-flags .stack=noload</span>
+        <span class="tag is-bad">refused</span></button>
+      <button type="button" class="mrow" id="m-5" aria-pressed="false" aria-controls="d-5">
+        <span class="cmd">--set-section-flags .apps=alloc,load,contents</span>
+        <span class="tag is-bad">refused</span></button>
+    </div>
+
+    <div class="detail">
+      <div class="panel" id="d-0">
+        <h4>The rule as it is today</h4>
+        <dl class="readout">
+          <div><dt>.stack FileSiz</dt><dd class="is-bad">0x01500</dd></div>
+          <div><dt>elf2uf2-rs</dt><dd class="is-bad">refused</dd></div>
+          <div><dt>app in the UF2</dt><dd>&mdash;</dd></div>
+          <div><dt>_estack symbol</dt><dd>kept</dd></div>
+        </dl>
+        <p>No UF2 is produced at all, so <code>make program</code> stops with a
+        non-zero status. It does not silently flash a kernel with no app.</p>
+      </div>
+
+      <div class="panel" id="d-1" hidden>
+        <h4>Drop the section from the flashing artifact</h4>
+        <dl class="readout">
+          <div><dt>.stack FileSiz</dt><dd class="is-ok">segment gone</dd></div>
+          <div><dt>elf2uf2-rs</dt><dd class="is-ok">converts</dd></div>
+          <div><dt>app in the UF2</dt><dd class="is-ok">16 blocks at 0x10040000</dd></div>
+          <div><dt>_estack symbol</dt><dd>lost</dd></div>
+        </dl>
+        <p><code>.stack</code> is <code>(NOLOAD)</code> and reserves space no
+        image ever needs to carry, so removing it costs the flashed bytes
+        nothing. It does drop <code>_sstack</code> and <code>_estack</code> from
+        the symbol table &mdash; but only from <code>-app.elf</code>, the
+        artifact that exists to be converted. The kernel ELF you would debug
+        with is a different file and is not touched, and the linker resolved
+        those symbols into the code long before this step.</p>
+      </div>
+
+      <div class="panel" id="d-2" hidden>
+        <h4>The workaround posted in the issue</h4>
+        <dl class="readout">
+          <div><dt>.stack FileSiz</dt><dd class="is-ok">segment gone</dd></div>
+          <div><dt>elf2uf2-rs</dt><dd class="is-ok">converts</dd></div>
+          <div><dt>app in the UF2</dt><dd class="is-ok">16 blocks at 0x10040000</dd></div>
+          <div><dt>_estack symbol</dt><dd>lost</dd></div>
+        </dl>
+        <p>Identical output to the row above, because the two extra removals do
+        nothing here &mdash; and one of them is a hazard rather than a no-op.
+        <a href="#s5">Section&nbsp;5</a> is about why.</p>
+      </div>
+
+      <div class="panel" id="d-3" hidden>
+        <h4>Ask for the section to stay unloaded</h4>
+        <dl class="readout">
+          <div><dt>.stack FileSiz</dt><dd class="is-bad">0x01500</dd></div>
+          <div><dt>elf2uf2-rs</dt><dd class="is-bad">refused</dd></div>
+          <div><dt>app in the UF2</dt><dd>&mdash;</dd></div>
+          <div><dt>_estack symbol</dt><dd>kept</dd></div>
+        </dl>
+        <p>No effect. The section was already <code>NOBITS</code>; saying so
+        again does not reach the program header, which is where the wrong number
+        is.</p>
+      </div>
+
+      <div class="panel" id="d-4" hidden>
+        <h4>The same, without <code>alloc</code></h4>
+        <dl class="readout">
+          <div><dt>.stack FileSiz</dt><dd class="is-bad">0x01500, remapped</dd></div>
+          <div><dt>elf2uf2-rs</dt><dd class="is-bad">refused</dd></div>
+          <div><dt>app in the UF2</dt><dd>&mdash;</dd></div>
+          <div><dt>_estack symbol</dt><dd>kept</dd></div>
+        </dl>
+        <p>Worse, and instructively so. The segment survives with its virtual
+        address moved to <code>0x20001500</code> while its physical address stays
+        at <code>0x20000000</code>, still carrying 0x1500 file bytes. The
+        converter refuses it for the same reason as before.</p>
+      </div>
+
+      <div class="panel" id="d-5" hidden>
+        <h4>A different spelling of the section flags</h4>
+        <dl class="readout">
+          <div><dt>.stack FileSiz</dt><dd class="is-bad">0x01500</dd></div>
+          <div><dt>elf2uf2-rs</dt><dd class="is-bad">refused</dd></div>
+          <div><dt>app in the UF2</dt><dd>&mdash;</dd></div>
+          <div><dt>_estack symbol</dt><dd>&mdash;</dd></div>
+        </dl>
+        <p><code>alloc,contents</code> and <code>alloc,load,contents</code> both
+        behave exactly as <code>LOAD,ALLOC</code> does. The trigger is
+        <code>.apps</code> acquiring file content at all, not how the request is
+        worded, so there is no spelling of this rule that avoids the
+        problem.</p>
+      </div>
+    </div>
+  </div>
+  <figcaption><b>Figure 3.</b> Each variant runs the Makefile's two steps and
+  then the candidate fix. Every value is read back off the resulting file:
+  the segment from <code>readelf&nbsp;-lW</code>, the app by decoding the UF2's
+  block headers, the symbol from <code>readelf&nbsp;-sW</code>.</figcaption>
+</figure>
+
+<h2 id="s5"><span class="n">5</span>The workaround in the issue has a trap in it</h2>
+
+<p>The issue's fix removes three sections:
+<code>-R&nbsp;.stack&nbsp;-R&nbsp;.relocate&nbsp;-R&nbsp;.bss</code>. It works,
+and I would not recommend copying it.</p>
+
+<ul class="plain">
+  <li><b><code>-R .relocate</code> is a live hazard.</b>
+  <a href="https://github.com/tock/tock/blob/2a7a40450/boards/build_scripts/tock_kernel_layout.ld#L254-L262"><code>.relocate</code></a>
+  holds kernel data that is initialised to a value: it is placed in flash, and
+  Tock copies it into SRAM at boot. Stripping it from the image would leave that
+  data uninitialised. It happens to be safe today only because the section is
+  <b>empty</b> &mdash; I measured <code>size&nbsp;0x0</code> on all four RP2040
+  boards in the tree. The day any kernel change introduces one initialised
+  static, this workaround starts producing a kernel with garbage in
+  <code>.data</code>, and nothing in the build will say so.</li>
+  <li><b><code>-R .bss</code> does nothing.</b> Tock's layout has no
+  <code>.bss</code> section; the kernel's zeroed memory is
+  <code>.sram</code>. There are zero matches for <code>.bss</code> in the
+  ELF.</li>
+</ul>
+
+<p><code>-R .stack</code> on its own is sufficient, and it is the only one of
+the three that addresses the segment the converter named.</p>
+
+<h2><span class="n">6</span>Converting is not the same as landing</h2>
+
+<p>One thing worth checking before trusting any fix to this: whether the
+application bytes are in the resulting UF2 at all. The failure mode above is
+loud, but a nearby one is silent.</p>
+
+<figure id="f4">
+  <div class="instrument">
+    <p class="ititle">Two UF2s from the same kernel</p>
+    <table class="grid">
+      <thead><tr><th>Input</th><th class="num">Bytes</th><th class="num">Blocks</th><th>Blocks carrying the app</th></tr></thead>
+      <tbody>
+        <tr><td class="lbl">the kernel alone, no objcopy</td><td class="num">204800</td><td class="num">400</td><td>none &mdash; correctly, there is no app in it</td></tr>
+        <tr><td class="lbl">after the fix, with a 4096-byte app</td><td class="num">212992</td><td class="num">416</td><td>400&ndash;415, at 0x10040000&ndash;0x10040f00</td></tr>
+      </tbody>
+    </table>
+    <p class="verdict">The application is sixteen blocks appended to four
+    hundred: <b>4,096 bytes, the whole of it, at exactly the address
+    <code>_sapps</code> names</b>. Decoded out of the UF2 block headers, not
+    inferred from an exit status.</p>
+  </div>
+  <figcaption><b>Figure 4.</b> The first row is also the control for
+  section&nbsp;1: the same converter takes the same kernel happily one step
+  earlier, so the converter is not the thing that is broken.</figcaption>
+</figure>
+
+<p>The reason to check this rather than trust an exit code:
+<b><code>llvm-objcopy</code> is not a drop-in here.</b> It updates the section
+but leaves the program header alone. The UF2 then converts with no error at
+all, and contains no application &mdash; a silent version of this bug, which
+costs more to find than the loud one. I hit that while working around this on a
+Pico&nbsp;2 and it is the reason figure&nbsp;3 has an "app in the UF2" column
+instead of a pass mark.</p>
+
+<h2><span class="n">7</span>The change</h2>
+
+<p>Two lines in
+<a href="https://github.com/tock/tock/blob/2a7a40450/boards/raspberry_pi_pico/Makefile#L43-L48"><code>boards/raspberry_pi_pico/Makefile</code></a>,
+adding one step to the rule that builds the spliced ELF:</p>
+
+<pre> $(KERNEL_WITH_APP): $(KERNEL)
+ ifeq ($(APP),)
+     $(error Please define the APP variable with the TBF file to flash an application)
+ endif
+     arm-none-eabi-objcopy --set-section-flags .apps=LOAD,ALLOC $(KERNEL) $@
+     arm-none-eabi-objcopy --update-section .apps=$(APP) $@
+<span class="add">+    # .stack is (NOLOAD) and reserves SRAM no image carries, but rewriting
++    # .apps makes the linker lay the segments out again and give it a
++    # non-zero p_filesz. Both UF2 converters then refuse the file.
++    arm-none-eabi-objcopy -R .stack $@</span></pre>
+
+<p>The same rule is shared by <code>program-probe</code>, and
+<code>boards/raspberry_pi_pico_2</code> carries a copy of it with the same two
+steps, so whatever shape the fix takes should cover both boards.</p>
+
+<h2><span class="n">8</span>Reproducing it</h2>
+
+<p>No board and no application are needed &mdash; the trigger is the section
+flags, so any 4,096 bytes stand in for a <code>.tbf</code>. Build the kernel,
+then:</p>
+
+<pre>$ cd boards/raspberry_pi_pico &amp;&amp; make
+$ ./reproduce.sh ../../target/thumbv6m-none-eabi/release/raspberry_pi_pico.elf
+
+VARIANT                        STACK-FILE/MEM  UF2      _ESTACK  APP
+-------                        --------------  ---      -------  ---
+Makefile as it stands          0x01500/0x01500 REFUSED  kept     -
+-R .stack                      removed         ok       lost     416 blocks, app in 16 at 0x10040000-0x10040f00
+-R .stack -R .relocate -R .bss removed         ok       lost     416 blocks, app in 16 at 0x10040000-0x10040f00
+set .stack=alloc,noload        0x01500/0x01500 REFUSED  kept     -
+set .stack=noload              removed         REFUSED  kept     -
+set .apps=alloc,load,contents  0x01500/0x01500 REFUSED  -        -
+
+The control: the same kernel with no objcopy at all.
+  converts, 400 blocks, app in 0 at nowhere</pre>
+
+<p><a href="reproduce.sh"><code>reproduce.sh</code></a> is the script that
+printed that. It needs <code>arm-none-eabi-objcopy</code>,
+<code>arm-none-eabi-readelf</code>, <code>elf2uf2-rs</code> and
+<code>python3</code>.</p>
+
+<h2><span class="n">9</span>What this does not establish</h2>
+
+<ul class="plain">
+  <li><b>Not tested on hardware.</b> Everything above is measured on the files.
+  A UF2 that converts and contains the app at the right address is not the same
+  claim as a board that boots it.</li>
+  <li><b><code>program-probe</code> is untested.</b> It builds the same broken
+  ELF and hands it to <code>probe-rs</code> instead of a converter. Whether
+  <code>probe-rs</code> also rejects it, or writes 5,376 bytes into the stack
+  region and carries on, I have not checked.</li>
+  <li><b>One toolchain.</b> GNU Binutils 2.47.20260726. The reporter hit the
+  same failure on a different machine and a different binutils, so this is not
+  version-specific, but I have only measured the variant matrix on mine.</li>
+  <li><b>Not a binutils bug report.</b> Whether BFD is wrong to assign a
+  <code>p_filesz</code> to a <code>NOBITS</code> segment, or whether the rule is
+  asking for something it should not, I have not established. The Makefile fix
+  does not depend on which it is.</li>
+</ul>
+
+</main>
+
+<footer>
+  <p>Measured against tock/tock
+  <a href="https://github.com/tock/tock/commit/2a7a40450"><code>2a7a40450</code></a>
+  on 2026-09-07. Written up while learning Tock on a Pico&nbsp;2; part of
+  <a href="../../">a work map</a> of what Tock can drive on an RP2350.</p>
+  <p>This page was written with AI assistance and every number on it was
+  produced by running the commands it shows. Corrections are welcome on the
+  issue.</p>
+</footer>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+  // Every sentence on this page is in the markup. This only moves `hidden`
+  // and `aria-pressed` around, so with scripting off the first panel of each
+  // figure is shown and nothing is lost but the switching.
+  function group(buttons) {
+    buttons.forEach(function (id) {
+      var button = document.getElementById(id[0]);
+      if (!button) { return; }
+      button.addEventListener("click", function () {
+        buttons.forEach(function (other) {
+          var b = document.getElementById(other[0]);
+          var on = other[0] === id[0];
+          if (b) { b.setAttribute("aria-pressed", on ? "true" : "false"); }
+          other.slice(1).forEach(function (panelId) {
+            var panel = document.getElementById(panelId);
+            if (panel) { panel.hidden = !on; }
+          });
+        });
+      });
+    });
+  }
+  group([["b-before", "p-before", "v-before"], ["b-after", "p-after", "v-after"]]);
+  group([["m-0", "d-0"], ["m-1", "d-1"], ["m-2", "d-2"],
+         ["m-3", "d-3"], ["m-4", "d-4"], ["m-5", "d-5"]]);
+}());
+</script>
+</body>
+</html>
