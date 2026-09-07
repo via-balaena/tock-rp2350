@@ -3716,6 +3716,42 @@ def index_checks(root, chapters):
             problems.append("index: color literals outside the token blocks: %s"
                             % ", ".join(literals))
 
+        # The cover is a page with its own stylesheet and script, and every
+        # hygiene check the chapters get applies to it. It had none of them:
+        # only palette, semantics, ids, charset and tag balance ran here, and
+        # a class planted on the cover with no rule went through untouched.
+        # Wiring these in found two real defects at once -- `.dothis` used
+        # without ever bringing its rule across, so the one instruction on the
+        # cover rendered as a plain paragraph, and eight dead rules for two
+        # components the page does not have.
+        #
+        # These three take the component CSS rather than the page. Passing the
+        # whole document instead returns clean, which is a false pass, so they
+        # go inside this block where `component` is already carved out.
+        problems.extend(focus_order_checks(component))
+        problems.extend(opacity_checks(component))
+        problems.extend(state_scope_checks(component))
+        try:
+            themes = [
+                ("light", _tokens(html[html.index(":root {"):
+                                       html.index("@media (prefers-color-scheme: dark)")])),
+                ("dark", _tokens(html[html.index("@media (prefers-color-scheme: dark)"):
+                                      html.index(':root[data-theme="dark"]')])),
+            ]
+        except ValueError:
+            themes = []
+        if themes:
+            problems.extend(same_rule_contrast_checks(component, themes))
+
+    # Whole-page checks, the same ones every chapter gets.
+    for check in (unstyled_class_checks, dead_css_checks, unstyled_block_checks,
+                  live_name_checks, orphan_comment_checks, flex_prose_checks,
+                  wired_checks, button_case_checks, run_order_checks,
+                  imperative_checks, figure_order_checks, figure_reachable_checks,
+                  glossary_use_checks, selected_in_markup_checks,
+                  boot_state_checks):
+        problems.extend(check(html))
+
     ids = re.findall(r'\bid="([^"]+)"', html)
     dupes = [k for k, v in collections.Counter(ids).items() if v > 1]
     if dupes:

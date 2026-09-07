@@ -125,29 +125,23 @@ h1 {
   margin: 0 0 2.4rem;
 }
 
-.premise {
-  border-left: 3px solid var(--accent);
-  padding: .2rem 0 .2rem 1.4rem;
-  max-width: var(--measure);
-  margin: 0 0 2rem;
+/* The chapters' "click this" line, which the cover used without ever bringing
+   the rule across, so it rendered as a plain paragraph. Deliberately not a
+   flex row: flex makes a flex item of every inline child, and the chapters
+   shipped an orphaned full stop that way for months. The arrow carries its
+   own spacing. */
+.dothis {
+  font-family: var(--display);
+  font-size: .9rem;
+  font-weight: 600;
+  letter-spacing: .02em;
+  color: var(--accent);
 }
-.premise p:last-child { margin-bottom: 0; }
-.premise em { font-style: italic; color: var(--ink); }
-
-/* ---------- the stance ---------- */
-
-.stance {
-  background: var(--surface);
-  border: 1px solid var(--rule);
-  border-radius: .5rem;
-  padding: 1.5rem 1.7rem;
-  box-shadow: var(--shadow);
-  margin: 0 0 4rem;
-  max-width: 46rem;
+.dothis::before {
+  content: "\2192";
+  font-weight: 700;
+  margin-right: .5rem;
 }
-.stance h2 { margin-top: 0; }
-.stance p { max-width: 44ch; }
-.stance p:last-child { margin-bottom: 0; }
 
 h2 {
   font-family: var(--display);
@@ -436,6 +430,7 @@ pre {
   <h2>Reading order is dependency order</h2>
   <p>Chapter&nbsp;1 defines the vocabulary; everything after inherits it.</p>
 
+  <noscript><style>.dothis { display: none; }</style></noscript>
   <figure class="depmap">
     <p class="dothis">Click a chapter to see what it stands on.</p>
     <div class="map-scroll">
