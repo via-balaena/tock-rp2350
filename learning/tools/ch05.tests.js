@@ -804,6 +804,16 @@ chk("and the third says which target suits which hardware",
     REG["inp-2"].textContent.indexOf("program-openocd") > -1, true);
 chk("it warns that the default path is a Linux one",
     REG["inp-2"].textContent.indexOf("Linux") > -1, true);
+// The panel used to describe make program as succeeding and then telling you
+// to set BOOTSEL_FOLDER. It does not get that far: the two objcopy lines above
+// give the (NOLOAD) .stack segment file content, and picotool refuses the
+// result. Measured on this board at the pinned commit, whose program rule is
+// byte-identical to master's. Without these two the correction could be
+// reverted and every other assertion here would still pass.
+chk("the third panel says the target fails today rather than succeeding",
+    REG["inp-2"].textContent.indexOf("uninitialized memory") > -1, true);
+chk("and it names the issue that tracks it",
+    REG["inp-2"].textContent.indexOf("#4770") > -1, true);
 chk("and the README's third target is in the note rather than lost",
     REG["in-note"].textContent.indexOf("flash-app") > -1, true);
 
