@@ -1355,7 +1355,7 @@ dfn {
     <li>Cutting a grant: size and alignment from the type, the pointer written into the table &mdash; <code>allocate_grant</code>, <code>kernel/src/process_standard.rs</code>:1213&ndash;1275, calling the region allocator at :1256</li>
     <li>A second grant for a driver number already in the table being refused &mdash; the same file, :1239&ndash;1251</li>
     <li>The bump itself: down by the size, aligned down, and never back up &mdash; <code>allocate_in_grant_region_internal</code>, the same file, :2583&ndash;2622, "Ensures that the allocation is of `size` bytes and aligned to `align` bytes"</li>
-    <li>The check that stops it reaching the process's own memory &mdash; the same file, :2604, comparing the would-be break against <code>app_break</code></li>
+    <li>The check that stops it reaching the process's own memory &mdash; the same file, :2604, comparing the would-be break against <code>app_break</code>, "let align = cmp::max(align, 2)"</li>
     <li>The same gap seen from the other side, where a process asking for heap is refused &mdash; the same file, :975&ndash;983</li>
     <li>Entering, and the panic when it is entered twice &mdash; <code>kernel/src/grant.rs</code>:1360&ndash;1400, "we panic!() to notify the developer that they tried to enter the same grant twice which is prohibited because it would result in two mutable references existing for the same memory"</li>
     <li>The loop over every process skipping an entered grant instead of panicking &mdash; the same file, :1261&ndash;1263, "If the grant is already entered silently skip it"</li>

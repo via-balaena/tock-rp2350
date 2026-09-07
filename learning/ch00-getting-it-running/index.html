@@ -1346,22 +1346,22 @@ $ openocd -f interface/cmsis-dap.cfg -f target/rp2350.cfg \
   <p>Every claim on this page about what a file says comes from the Tock tree at commit <code>83bad9388</code>. The build output in the second section is a real run on an Apple laptop, not a transcription.</p>
   <ul>
     <li>The pinned toolchain and the target list installed with it &mdash; <code>rust-toolchain.toml</code>:6&ndash;15</li>
-    <li>The target this board builds for &mdash; <code>boards/raspberry_pi_pico_2/.cargo/config.toml</code>:11</li>
+    <li>The target this board builds for &mdash; <code>boards/raspberry_pi_pico_2/.cargo/config.toml</code>:11, "target = "thumbv8m.main-none-eabi""</li>
     <li>The four flashing targets, in order &mdash; <code>boards/raspberry_pi_pico_2/Makefile</code>:23, :27, :32 and :42</li>
     <li>The folder the two copying routes test for, and its Linux path &mdash; the same file, :17, tested at :34 and :44</li>
     <li>The message those routes print instead of copying, and that they exit successfully after it &mdash; the same file, :34 and :44</li>
     <li>The two routes that need a separate converter to make a UF2 &mdash; the same file, :29 and :39</li>
     <li><code>program</code> refusing to run at all with no application given &mdash; the same file, :34&ndash;36</li>
-    <li>What <code>flash-openocd</code> actually runs: write, verify, reset, exit &mdash; the same file, :25. The form run on the bench was the split one below, which is that line with the config spelled out; the two are the same command because the config is only those two lines</li>
+    <li>What <code>flash-openocd</code> actually runs: write, verify, reset, exit &mdash; the same file, :25. The form run on the bench was the split one below, which is that line with the config spelled out; the two are the same command because the config is only those two lines, "install: flash"</li>
     <li>The whole of this board's OpenOCD configuration, which is two lines &mdash; <code>boards/raspberry_pi_pico_2/openocd-picoprobe.cfg</code>:5&ndash;6</li>
     <li>Tock's own hardware testing being built as small hosts beside real boards &mdash; <code>.github/workflows/treadmill-ci.yml</code>:5&ndash;8, "Treadmill is a distributed hardware testbed developed within the Tock OS project"</li>
     <li>Pin&nbsp;0 transmitting and pin&nbsp;1 receiving, and both being handed to the serial hardware &mdash; <code>boards/raspberry_pi_pico_2/src/lib.rs</code>:260&ndash;263</li>
-    <li>The console running at 115200 &mdash; the same file, :303</li>
-    <li>The banner, and where in start-up it is printed &mdash; <code>boards/raspberry_pi_pico_2/src/main.rs</code>:100</li>
+    <li>The console running at 115200 &mdash; the same file, :303, "let uart_mux = components::console::UartMuxComponent::new(&amp;peripherals.uart0, 115200)"</li>
+    <li>The banner, and where in start-up it is printed &mdash; <code>boards/raspberry_pi_pico_2/src/main.rs</code>:100, "kernel::debug!("Initialization complete. Enter main loop")"</li>
     <li>The second banner sitting after the first rather than replacing it, with the search for applications between them &mdash; the same file, :100, then <code>load_processes</code> at :117, then :132</li>
     <li>The prompt, and the header row <code>list</code> prints, both quoted as the process console writes them &mdash; <code>capsules/core/src/process_console.rs</code>:1036 for <code>tock$&nbsp;</code>, and :897&ndash;898 for the header</li>
     <li>The tree having five Pico directories, one of them a Pico 2&nbsp;W &mdash; <code>boards/</code> at that commit</li>
-    <li>Pin&nbsp;25 being the light the plain Pico&nbsp;2 hands to the light driver &mdash; <code>boards/raspberry_pi_pico_2/src/main.rs</code>:95</li>
+    <li>Pin&nbsp;25 being the light the plain Pico&nbsp;2 hands to the light driver &mdash; <code>boards/raspberry_pi_pico_2/src/main.rs</code>:95, "LedHigh::new(peripherals.pins.get_pin(RPGpio::GPIO25))"</li>
     <li>The Pico 2&nbsp;W crate having no light driver, and halting rather than blinking after a panic prints &mdash; <code>boards/raspberry_pi_pico_2_w/src/main.rs</code> and <code>boards/raspberry_pi_pico_2_w/src/io.rs</code></li>
     <li>The build taking 7.2 seconds of wall time, of which 5.64 were the compiler &mdash; measured on this machine with <code>/usr/bin/time</code>. The block above is that run, abridged: five <code>Compiling</code> lines and a trailing checksum are left out, and the size line's filename column is shortened from an absolute path. No number in it is altered</li>
     <li>A Mac having <code>screen</code> already, and <code>picocom</code> needing installing on Debian &mdash; checked on the machine these pages were written on, which had <code>screen</code> and neither of the other two</li>

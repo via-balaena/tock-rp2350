@@ -1524,7 +1524,7 @@ argument3: app_break,</pre></button>
     <li>A faulted process having to be terminated before it can run again &mdash; <code>kernel/src/process.rs</code>:959&ndash;962 and :989&ndash;992</li>
     <li>Seven fault policies existing &mdash; <code>capsules/system/src/process_policies.rs</code>, at :16, :25, :36, :49, :58, :75 and :100</li>
     <li>The Pico 2 choosing <code>PanicFaultPolicy</code> and imix choosing <code>StopFaultPolicy</code> &mdash; <code>boards/raspberry_pi_pico_2/src/main.rs</code>:32 and <code>boards/imix/src/main.rs</code>:95</li>
-    <li>Four process slots on this board &mdash; <code>boards/raspberry_pi_pico_2/src/lib.rs</code>:63</li>
+    <li>Four process slots on this board &mdash; <code>boards/raspberry_pi_pico_2/src/lib.rs</code>:63, "const NUM_PROCS: usize = 4"</li>
     <li>Each process taking its memory out of that one pool, in the order the applications were found in flash &mdash; the loop in <code>kernel/src/process_loading.rs</code>:203&ndash;250, which carries <code>remaining_memory</code> from one to the next</li>
     <li><code>ProcessStandard</code> being one implementation of a trait, and what the trait asks for &mdash; "a generic process that the Tock scheduler can schedule", <code>kernel/src/process.rs</code>:331&ndash;333</li>
     <li>libtock-c and libtock-rs being where applications come from &mdash; <code>doc/Getting_Started.md</code>:246&ndash;247</li>
@@ -1536,7 +1536,7 @@ argument3: app_break,</pre></button>
     <li><code>program-openocd</code> running the same two <code>objcopy</code> lines and pushing the result down a debug probe instead &mdash; <code>Makefile</code>:47&ndash;53, with <code>OPENOCD_INTERFACE=picoprobe</code> at :14 and the configuration it names at <code>openocd-picoprobe.cfg</code></li>
     <li>A capsule existing that lets an application write its own flash region, and this board not instantiating one &mdash; <code>capsules/extra/src/app_flash_driver.rs</code>:5&ndash;8 and :105, reaching it through <code>ProcessId::get_editable_flash_range</code> at <code>kernel/src/process.rs</code>:208</li>
     <li>The six operations wrapping every switch into a process &mdash; <code>kernel/src/kernel.rs</code>:536&ndash;562, where the fence is configured and enabled, the timer armed and disarmed either side of <code>switch_to</code>, and the fence disabled again</li>
-    <li>The timer behind the timeslice being the Cortex-M SysTick, calibrated at 125&nbsp;MHz &mdash; <code>boards/raspberry_pi_pico_2/src/lib.rs</code>:404</li>
+    <li>The timer behind the timeslice being the Cortex-M SysTick, calibrated at 125&nbsp;MHz &mdash; <code>boards/raspberry_pi_pico_2/src/lib.rs</code>:404, "systick: cortexm33::systick::SysTick::new_with_calibration(125_000_000)"</li>
   </ul>
   <p class="license">Text, diagrams and interactive figures &copy;&nbsp;Jon&nbsp;Hillesheim&nbsp;2026, licensed CC&nbsp;BY-SA&nbsp;4.0 &mdash; share and adapt freely with credit, under the same license. Tock source excerpts quoted above remain under their own Apache-2.0&nbsp;OR&nbsp;MIT license and are not relicensed here.</p>
 </section>
