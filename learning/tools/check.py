@@ -54,6 +54,18 @@ TOOLS = os.path.join(ROOT, "tools")
 # clone loses the citation checks and nothing else.
 TOCK = os.environ.get("TOCK_TREE") or os.path.expanduser("~/forge/tock")
 
+
+def tock_tree_present():
+    """Whether the kernel clone the citation checks need is really there.
+
+    Losing those checks is fine on a machine with no clone. Losing them
+    *quietly* is not: a citation pointing at line 99999 fails here with a tree
+    and passes without one, and until this was added the two runs printed the
+    same "all chapters passed". A check that did not run and a check that found
+    nothing look identical from the outside unless the output says so.
+    """
+    return os.path.isdir(os.path.join(TOCK, ".git"))
+
 JSC = ("/System/Library/Frameworks/JavaScriptCore.framework"
        "/Versions/A/Helpers/jsc")
 
@@ -625,6 +637,78 @@ def _spell(n):
     if n < 100:
         return _TENS[n // 10] + ("-" + _ONES[n % 10] if n % 10 else "")
     return None
+
+
+def build_size_checks(html, chapter_dir):
+    """`size` output a chapter prints, against a record of where it came from.
+
+    Chapter 0 prints the size line of a kernel build and calls the numbers
+    real. Nothing could recount them: unlike every other number here, they need
+    a compiled kernel rather than a file in the tree, so no check could be
+    cheap enough to run every time. A re-pin then moved the tree underneath
+    them and three of the five went stale -- text still matched, which is what
+    made it look fine, and bss, dec and hex did not.
+
+    So the chapter ships `build-sizes.json`, recording the numbers, the board,
+    the commit and the toolchain they were measured on. This compares the page
+    against that record, and -- the part that actually catches the staleness --
+    refuses a record whose commit is no longer the one the chapter pins. That
+    fires the moment somebody re-pins, without building anything.
+
+    It cannot tell you the recorded numbers were ever right. Only rebuilding
+    does that, and the record says which command to run.
+    """
+    record = os.path.join(chapter_dir, "build-sizes.json")
+    if not os.path.exists(record):
+        return []
+    if subprocess.run(["git", "check-ignore", "-q", record]).returncode == 0:
+        return ["build-sizes.json is ignored by git, so a clone would not have "
+                "it and this check would skip without saying so"]
+    try:
+        rec = json.loads(open(record).read())
+    except ValueError as err:
+        return ["build-sizes.json is not valid JSON: %s" % err]
+
+    text = html_module.unescape(re.sub(r"<[^>]+>", "", html))
+    line = re.search(r"^\s*(\d+)\s+(\d+)\s+(\d+)\s+(\d+)\s+([0-9a-f]+)\s+"
+                     + re.escape(rec["board"]) + r"\s*$", text, re.M)
+    if not line:
+        return ["build-sizes.json records %s but no size line for it is on the "
+                "page" % rec["board"]]
+
+    problems = []
+    got = dict(zip(("text", "data", "bss", "dec", "hex"), line.groups()))
+    for field in ("text", "data", "bss", "dec"):
+        if int(got[field]) != rec["size"][field]:
+            problems.append(
+                "the page prints %s=%s and build-sizes.json records %d, "
+                "measured at %s" % (field, got[field], rec["size"][field],
+                                    rec["commit"]))
+    if got["hex"] != rec["size"]["hex"]:
+        problems.append("the page prints hex=%s and build-sizes.json records %s"
+                        % (got["hex"], rec["size"]["hex"]))
+    if int(got["text"]) + int(got["data"]) + int(got["bss"]) != int(got["dec"]):
+        problems.append("the size line does not add up: %s + %s + %s is not %s"
+                        % (got["text"], got["data"], got["bss"], got["dec"]))
+
+    block = re.search(r'<section class="col sources">(.*?)</section>', html, re.S)
+    pin = re.search(r"commit <code>([0-9a-f]{7,40})</code>",
+                    block.group(1) if block else "")
+    if pin and not (pin.group(1).startswith(rec["commit"])
+                    or rec["commit"].startswith(pin.group(1))):
+        problems.append(
+            "the numbers were measured at %s and the chapter now pins %s, so "
+            "they need rebuilding: %s" % (rec["commit"], pin.group(1),
+                                          rec["command"]))
+
+    toolchain = os.path.join(TOCK, "rust-toolchain.toml")
+    if os.path.exists(toolchain):
+        asked = re.search(r'channel\s*=\s*"([^"]+)"', open(toolchain).read())
+        if asked and asked.group(1) != rec["toolchain"]:
+            problems.append(
+                "the numbers were measured on %s and the tree now asks for %s, "
+                "so they need rebuilding" % (rec["toolchain"], asked.group(1)))
+    return problems
 
 
 def compiled_size_checks(html, chapter_dir):
@@ -2756,6 +2840,7 @@ def static_checks(html, name):
     problems.extend(staticref_inventory_checks(html))
     problems.extend(shared_client_checks(html))
     problems.extend(figure_citation_checks(html))
+    problems.extend(build_size_checks(html, os.path.join(ROOT, name)))
     problems.extend(compiled_size_checks(html, os.path.join(ROOT, name)))
     problems.extend(live_name_checks(html))
     problems.extend(dead_css_checks(html))
@@ -4026,6 +4111,12 @@ def main():
         print("no chapter directories found under %s" % ROOT)
         return 1
 
+    if not tock_tree_present():
+        print("NOTE: no Tock clone at %s, so every citation check below is\n"
+              "      SKIPPED — the line numbers, the quoted source and the\n"
+              "      lockfile are not verified in this run. Set TOCK_TREE to a\n"
+              "      clone to check them.\n" % TOCK)
+
     broken = literal_scanner_checks()
     if broken:
         for problem in broken:
@@ -4157,8 +4248,11 @@ def main():
     for note in citation_opening_notes():
         print("  open  %s" % note)
 
-    print("\n%s" % ("all chapters passed" if not failures
-                    else "%d chapter(s) with failures" % failures))
+    caveat = ("" if tock_tree_present() else
+              " — but WITHOUT the citation checks, which need a Tock clone;"
+              " set TOCK_TREE")
+    print("\n%s%s" % ("all chapters passed" if not failures
+                      else "%d chapter(s) with failures" % failures, caveat))
     return 1 if failures else 0
 
 

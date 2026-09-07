@@ -728,9 +728,10 @@ pre {
 
 <section class="panel tail">
   <p class="kicker">Verifying</p>
-  <h2 id="s5">The series lives inside the tree it describes</h2>
-  <p>Keeping the chapters in a branch of the Tock repository means every citation can be checked against the exact commit the branch sits on &mdash; and when a rebase moves a line a chapter quoted, that is information rather than an inconvenience. The pages are interactive, so "it looks right" is not evidence. From the repository root:</p>
-  <pre>python3 learning/tools/check.py</pre>
+  <h2 id="s5">Every citation names a commit, and is checked against it</h2>
+  <p>Each chapter pins one commit of the Tock tree, so a citation is checked against the source as it stood there rather than against whatever master says today &mdash; and when the tree moves a line a chapter quoted, that is information rather than an inconvenience. The pages are interactive, so "it looks right" is not evidence. The chapters used to live in a branch of the kernel repository and now sit beside it, so the gate has to be told where that clone is:</p>
+  <pre>TOCK_TREE=/path/to/tock python3 learning/tools/check.py</pre>
+  <p>Without it every other check still runs, and the run says plainly that the citation checks were skipped rather than passing them in silence.</p>
 </section>
 
 <section class="panel begin">

@@ -1007,7 +1007,7 @@ dfn {
 $ make
     Finished `release` profile [optimized + debuginfo] target(s) in 5.64s
    text    data     bss     dec     hex filename
-  69164       0   19020   88184   15878 raspberry_pi_pico_2</pre>
+  69164       0   19828   88992   15ba0 raspberry_pi_pico_2</pre>
   <p>That is the whole build, and the numbers are real: 7.2 seconds of wall time on an Apple laptop, of which 5.64 were the compiler. A kernel is a small program, and this is one of the quiet pleasures of the work.</p>
   <p>The three numbers are worth a glance even now. Around 68&nbsp;kB of code, no initialised data, and about 19&nbsp;kB of space the kernel wants at runtime for variables that start out empty.</p>
 </section>

@@ -1,0 +1,15 @@
+{
+  "_why": "The chapter prints `size` output and calls the numbers real. Nothing could recount them without building a kernel, so a re-pin moved the tree underneath them and three of the five went stale unnoticed. This records what was measured and where; build_size_checks compares the page against it and refuses a record whose commit is no longer the one the chapter pins.",
+  "board": "raspberry_pi_pico_2",
+  "commit": "83bad9388",
+  "toolchain": "nightly-2026-07-21",
+  "measured": "2026-09-07",
+  "command": "cd boards/raspberry_pi_pico_2 && make",
+  "size": {
+    "text": 69164,
+    "data": 0,
+    "bss": 19828,
+    "dec": 88992,
+    "hex": "15ba0"
+  }
+}
