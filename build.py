@@ -1104,8 +1104,14 @@ def fetch():
         "deletions,changedFiles,url,reviewDecision,body",
     ])
     for pr in prs:
+        # GitHub's own closing-keyword set, and its two other accepted forms:
+        # an optional colon, and an explicit same-repo prefix. `\b` matters --
+        # without it "prefixes #123" and "affixes #99" both matched "fixes".
+        # A reference to another repository is deliberately not accepted: it
+        # closes something that is not ours and does not belong in this queue.
         pr["closes"] = sorted({int(n) for n in re.findall(
-            r"(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+#(\d+)",
+            r"\b(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s*:?\s+"
+            r"(?:tock/tock)?#(\d+)",
             pr.pop("body", "") or "", re.I)})
         detail = gh_json(["pr", "view", str(pr["number"]), "--repo", REPO,
                           "--json", "commits,files"])

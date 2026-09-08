@@ -410,11 +410,19 @@ def check_basis(build, data, problems):
     73af792ec" for eight branches that were not, two of them by 29 and 40
     commits.
 
-    The invariant below is deliberately NOT "recompute merge-base and compare".
-    That re-runs the same code and would have agreed with the bug. It asserts a
-    property the value must have however it was produced: a branch's basis is an
-    ancestor of that branch. The old value failed it on any branch that was
-    behind, which was most of them.
+    The two arms are not equally strong, and it is worth being honest about
+    which is which.
+
+    The basis check is INDEPENDENT: it does not recompute merge-base and
+    compare, because that re-runs the code that was wrong and would have agreed
+    with it. It asserts a property the value must have however it was produced
+    -- a branch's basis is an ancestor of that branch -- and the old value
+    failed it on any branch that was behind, which was most of them.
+
+    The `behind` check is only a STALENESS check. It re-runs the same rev-list
+    the survey ran, so it catches a data.json older than the clone and would not
+    catch a wrong formula. That is still worth having, since the number is
+    rendered, but it is not evidence the way the first one is.
     """
     for repo, (path, base) in build.LOCAL.items():
         if not path.exists():
