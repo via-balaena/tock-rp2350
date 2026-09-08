@@ -14,6 +14,7 @@
       "state": "MERGED",
       "title": "boards: declare all 520 kB of SRAM on Pico 2",
       "url": "https://github.com/tock/tock/pull/5086",
+      "closes": [],
       "commits": [
         {
           "messageHeadline": "boards: declare all 520 kB of SRAM on Pico 2"
@@ -36,6 +37,7 @@
       "state": "CLOSED",
       "title": "boards: remove dead boot-from-RAM layout",
       "url": "https://github.com/tock/tock/pull/5104",
+      "closes": [],
       "commits": [
         {
           "messageHeadline": "boards: remove dead boot-from-RAM layout"
@@ -62,6 +64,7 @@
       "state": "MERGED",
       "title": "boards: give the boot-from-RAM layout addresses that link",
       "url": "https://github.com/tock/tock/pull/5109",
+      "closes": [],
       "commits": [
         {
           "messageHeadline": "boards: give the boot-from-RAM layout addresses that link"
@@ -89,6 +92,7 @@
       "state": "MERGED",
       "title": "chips: rp2350: add SPI driver",
       "url": "https://github.com/tock/tock/pull/5112",
+      "closes": [],
       "commits": [
         {
           "messageHeadline": "chips: rp2040: move the PL022 SPI driver into a shared rp2xxx crate"
@@ -131,6 +135,7 @@
       "state": "OPEN",
       "title": "chips: rp2040: PIO cleanups",
       "url": "https://github.com/tock/tock/pull/5126",
+      "closes": [],
       "commits": [
         {
           "messageHeadline": "chips: rp2040: pio: retire the examples module"
@@ -156,6 +161,7 @@
       "state": "OPEN",
       "title": "chips: rp2xxx, rp2350: share the pad control enums, add the RP2350 pad controls",
       "url": "https://github.com/tock/tock/pull/5140",
+      "closes": [],
       "commits": [
         {
           "messageHeadline": "chips: rp2xxx: share the GPIO pad control enums"
@@ -184,6 +190,7 @@
       "state": "OPEN",
       "title": "boards: add Raspberry Pi Pico 2 W, with the CYW43439 radio working",
       "url": "https://github.com/tock/tock/pull/5141",
+      "closes": [],
       "commits": [
         {
           "messageHeadline": "chips: rp2040: pio: retire the examples module"
@@ -273,6 +280,7 @@
       "state": "CLOSED",
       "title": "chips: rp2040: five PIO fixes, and the driver's first host tests",
       "url": "https://github.com/tock/tock/pull/5150",
+      "closes": [],
       "commits": [
         {
           "messageHeadline": "chips: rp2040: fix the PIO RX FIFO join, which never happened"
@@ -310,6 +318,9 @@
       "state": "CLOSED",
       "title": "rp2: strip .stack from the ELF that make program flashes",
       "url": "https://github.com/tock/tock/pull/5154",
+      "closes": [
+        4770
+      ],
       "commits": [
         {
           "messageHeadline": "rp2: strip .stack from the ELF that make program flashes"
@@ -335,6 +346,9 @@
       "state": "OPEN",
       "title": "rp2: strip .stack from the ELF that make program flashes",
       "url": "https://github.com/tock/tock/pull/5156",
+      "closes": [
+        4770
+      ],
       "commits": [
         {
           "messageHeadline": "rp2: strip .stack from the ELF that make program flashes"
@@ -360,6 +374,7 @@
       "state": "OPEN",
       "title": "chips: rp2040: five PIO fixes, and the driver's first host tests",
       "url": "https://github.com/tock/tock/pull/5157",
+      "closes": [],
       "commits": [
         {
           "messageHeadline": "chips: rp2040: fix the PIO RX FIFO join, which never happened"
@@ -441,7 +456,7 @@
         "login": "bigmark222",
         "name": "Jon H"
       },
-      "body": "### Pull Request Overview\r\n\r\nFive PIO driver defects, none affecting in-tree callers today: `set_fifo_join` could never join RX FIFO and couldn't undo a join; `add_program` panicked above 16 instructions and on odd byte counts; three of four PIO interrupt lines were never dispatched; block IRQ flags went to the wrong client and could hang the kernel. Fixes all five; defect 5 (block IRQ flags) is the one to review.\r\n\r\n<details>\r\n<summary>AI-generated measurement data</summary>\r\n\r\nhttps://via-balaena.github.io/tock-rp2350/findings/5150/\r\n\r\n</details>\r\n\r\n### Testing Strategy\r\n\r\nSilicon A/B on defect 5 (Pico 2 W): SM1 raises irq 0, client registered on both SM0 and SM1.\r\n- unfixed: client on SM0 was called\r\n- fixed: block client called, flags=0b0001; board kept running and answered status (unfixed variant hung after two characters)\r\n\r\n19 host tests, all passing, 0.00s, in ci-job-chips. Miri clean under strict-provenance and tree-borrows.\r\n\r\nText unchanged, bss -48 bytes on all four RP2040 boards (pico 16528\u219216480, pico_w 20724\u219220676, explorer 72668\u219272620, nano 14368\u219214320).\r\n\r\n### TODO or Help Wanted\r\n\r\nNo RP2040 hardware here. Nothing ran on the chip the driver is named for. The gSPI path is the only in-tree PIO user and its client registration moved from per-state-machine to per-block. Could someone with a Pico W exercise it?\r\n\r\nAlso worth flagging to reviewers: #5126 deletes `mod examples` (273 lines) from the end of pio.rs while this adds `mod tests` (262 lines). Taking the deletion drops all 19 tests while build, clippy and all four boards still pass. Only `cargo test` reporting 0 passed reveals it.\r\n\r\n### Checklist\r\n\r\n- [x] Ran `make prepush`.\r\n\r\n### PR Contents\r\n\r\n#### Documentation\r\n\r\n- [ ] Updated the relevant files in `/docs` and the [Book](https://github.com/tock/book).\r\n- [x] No documentation updates are required.\r\n\r\n#### AI Use\r\n\r\n- [ ] No AI was used in this PR.\r\n- [x] AI was used in this PR. I have read [Tock's AI policy](https://github.com/tock/tock/blob/master/.github/CONTRIBUTING.md#ai-policy) and have properly disclosed my AI use below. This PR comment, and any subsequent PR interactions must not be generated using AI, except for under a `<details>` drawer.\r\n\r\nCode written with Claude Opus 5\n",
+      "body": "### Pull Request Overview\r\n\r\nFive PIO driver defects, none affecting in-tree callers today: `set_fifo_join` could never join RX FIFO and couldn't undo a join; `add_program` panicked above 16 instructions and on odd byte counts; three of four PIO interrupt lines were never dispatched; block IRQ flags went to the wrong client and could hang the kernel. Fixes all five; defect 5 (block IRQ flags) is the one to review.\r\n\r\n<details>\r\n<summary>AI-generated measurement data</summary>\r\n\r\nhttps://via-balaena.github.io/tock-rp2350/findings/5157/\r\n\r\n</details>\r\n\r\n### Testing Strategy\r\n\r\nSilicon A/B on defect 5 (Pico 2 W): SM1 raises irq 0, client registered on both SM0 and SM1.\r\n- unfixed: client on SM0 was called\r\n- fixed: block client called, flags=0b0001; board kept running and answered status (unfixed variant hung after two characters)\r\n\r\n19 host tests, all passing, 0.00s, in ci-job-chips. Miri clean under strict-provenance and tree-borrows.\r\n\r\nText unchanged, bss -48 bytes on all four RP2040 boards (pico 16528\u219216480, pico_w 20724\u219220676, explorer 72668\u219272620, nano 14368\u219214320).\r\n\r\n### TODO or Help Wanted\r\n\r\nNo RP2040 hardware here. Nothing ran on the chip the driver is named for. The gSPI path is the only in-tree PIO user and its client registration moved from per-state-machine to per-block. Could someone with a Pico W exercise it?\r\n\r\nAlso worth flagging to reviewers: #5126 deletes `mod examples` (273 lines) from the end of pio.rs while this adds `mod tests` (262 lines). Taking the deletion drops all 19 tests while build, clippy and all four boards still pass. Only `cargo test` reporting 0 passed reveals it.\r\n\r\n### Checklist\r\n\r\n- [x] Ran `make prepush`.\r\n\r\n### PR Contents\r\n\r\n#### Documentation\r\n\r\n- [ ] Updated the relevant files in `/docs` and the [Book](https://github.com/tock/book).\r\n- [x] No documentation updates are required.\r\n\r\n#### AI Use\r\n\r\n- [ ] No AI was used in this PR.\r\n- [x] AI was used in this PR. I have read [Tock's AI policy](https://github.com/tock/tock/blob/master/.github/CONTRIBUTING.md#ai-policy) and have properly disclosed my AI use below. This PR comment, and any subsequent PR interactions must not be generated using AI, except for under a `<details>` drawer.\r\n\r\nCode written with Claude Opus 5\r\n",
       "comments": [],
       "createdAt": "2026-09-08T18:44:11Z",
       "number": 5157,

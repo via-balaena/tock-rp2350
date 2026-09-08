@@ -490,8 +490,11 @@ BLOCK_CAVEAT = {
     "IO_BANK0": ("Pins work; pin interrupts panic the kernel. IO_IRQ_BANK0 is "
                  "defined on the RP2350 and routed nowhere, so a legal syscall "
                  "brings the board down. Four lines on rp2350-gpio-irq.", "rp2350-gpio-irq"),
-    "PIO": ("Four defects found by the driver's first host tests, all with "
-            "fixes proposed in #5150.", 5150),
+    "PIO": ("Five defects, all with fixes proposed in #5157. Four were found "
+            "by the driver's first host tests; the fifth came out of a security "
+            "pass and is the one demonstrated on silicon \u2014 a block interrupt "
+            "flag delivered to the wrong state machine's client, which can hang "
+            "the kernel.", 5157),
     "UART": ("An aborted receive tears down every other receive on the same "
              "multiplexer. Three defects, fix written on rp2-uart-abort-fix.",
              "rp2-uart-abort-fix"),
@@ -1098,9 +1101,12 @@ def fetch():
         "pr", "list", "--repo", REPO, "--author", AUTHOR, "--state", "all",
         "--limit", "100", "--json",
         "number,title,state,isDraft,createdAt,mergedAt,closedAt,additions,"
-        "deletions,changedFiles,url,reviewDecision",
+        "deletions,changedFiles,url,reviewDecision,body",
     ])
     for pr in prs:
+        pr["closes"] = sorted({int(n) for n in re.findall(
+            r"(?:close[sd]?|fix(?:e[sd])?|resolve[sd]?)\s+#(\d+)",
+            pr.pop("body", "") or "", re.I)})
         detail = gh_json(["pr", "view", str(pr["number"]), "--repo", REPO,
                           "--json", "commits,files"])
         pr["commits"] = [{"messageHeadline": c["messageHeadline"]}
@@ -1661,6 +1667,10 @@ border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:poi
 .chip:hover{border-color:var(--accent)}
 .chip .num{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-weight:600;color:var(--accent)}
 .chip .ct{color:var(--ink-faint);font-size:.78rem}
+/* A closing reference, not a mention: `Fixes #N` in the body, which is
+   what GitHub turns into a linked issue that closes on merge. A bare
+   "#N" only makes a timeline cross-reference and is not shown. */
+.chip .closes{color:var(--ink-soft);font-size:.72rem;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;border-left:1px solid var(--line);padding-left:9px}
 .chip[aria-pressed=true]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
 .hint{color:var(--ink-faint);font-size:.84rem;margin:0 0 16px}
 .canvas{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px;overflow-x:auto}
@@ -2899,8 +2909,11 @@ def render(data):
         chips.append(
             '<button class="chip" aria-pressed="false" data-pr="%d">'
             '<span class="num">#%d</span><span class="ct">%d commit%s</span>'
-            '<span class="pill %s">%s</span></button>'
-            % (pr["number"], pr["number"], n, "" if n == 1 else "s", st, e(label))
+            '%s<span class="pill %s">%s</span></button>'
+            % (pr["number"], pr["number"], n, "" if n == 1 else "s",
+               "".join('<span class="closes">closes #%d</span>' % c
+                       for c in pr.get("closes", [])),
+               st, e(label))
         )
 
     cards = []
