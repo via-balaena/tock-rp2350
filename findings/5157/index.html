@@ -220,6 +220,10 @@ nothing</b>, and both are more interesting than the count:</p>
   untouched. It now loops both blocks and all four state machines.</li>
 </ul>
 
+<p><b>Both descriptions are of versions that were fixed before these commits
+were made</b>, so neither is in the history and a reader cannot check them
+against the repository. What is checkable is the shape the tests have now.</p>
+
 <p><b>What survives the corruption is the honest part: the register writes.</b>
 A host test can call a function and inspect what it returns, and it cannot
 observe a write to a peripheral that is not there. Every surviving mutation is
@@ -281,6 +285,10 @@ that is no longer there.</p>
   survived review is one, and no amount of host testing changes that.</li>
   <li><b>The hang capture was not repeated.</b> The misrouting A/B was re-run on
   2026-09-08; the halted-core register readout above is from 2026-09-04.</li>
+  <li><b>The two tests that proved nothing cannot be inspected.</b> Both were
+  corrected before the commits were written, so the versions described in
+  <a href="#s4">Section&nbsp;4</a> exist in no revision of this branch. What
+  they became is in the diff; what they were is a claim about the work.</li>
   <li><b>The mutation review is not reproducible as a number.</b> The harness
   was not kept, and two records of the totals disagree by one. What it found is
   written down; the count is not evidence anyone can check.</li>
