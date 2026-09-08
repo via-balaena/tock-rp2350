@@ -27,9 +27,17 @@ const UPPERCASING = uppercasingSelectors(
 // The landing page is driven too. It has no figures and no buttons, so most
 // of what follows is vacuous for it -- but the skeleton, the links and the
 // private-path scan are not, and that page is the one a trimmed URL lands on.
+// A redirect stub is not a page anyone reads -- it exists so a URL published
+// before a write-up moved still lands somewhere. Almost every assertion below
+// is meaningless for one (no h1, no viewport, no prose), so they are excluded
+// here and check.py verifies separately that each stub points somewhere real.
+const isStub = file =>
+  /<meta[^>]+http-equiv=["']refresh["']/i.test(fs.readFileSync(file, 'utf8'));
+
 const PAGES = ['.'].concat(
   fs.readdirSync(HERE)
     .filter(name => fs.existsSync(path.join(HERE, name, 'index.html')))
+    .filter(name => !isStub(path.join(HERE, name, 'index.html')))
     .sort());
 
 const passed = [], failed = [];

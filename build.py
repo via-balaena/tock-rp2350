@@ -547,7 +547,7 @@ FINDINGS = [
      "workaround in the issue strips a section that is only safe to strip by "
      "accident. Six candidate fixes measured against a kernel built from "
      "upstream; the one that works is a single objcopy line, and it is A/B verified on all four RP2 boards by running their real make targets."),
-    (5157, "5150", "a PIO interrupt flag delivered to the wrong client",
+    (5157, "5157", "a PIO interrupt flag delivered to the wrong client",
      "A PIO block raises eight IRQ flags that belong to the block, and the "
      "driver delivered flag n to state machine n's client -- an association the "
      "hardware does not have and the datasheet invites by naming those bits "

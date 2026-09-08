@@ -470,11 +470,26 @@ def check_findings(build, data, problems):
                 f"and the page disagree about which issue this is")
 
     for child in sorted(root.iterdir()):
-        if child.is_dir() and (child / "index.html").exists() \
-                and child.name not in listed:
+        if not (child.is_dir() and (child / "index.html").exists()):
+            continue
+        if child.name in listed:
+            continue
+        # A directory FINDINGS does not list is allowed only as a redirect
+        # stub: a write-up whose address changed, kept alive because the old
+        # URL is already published in a GitHub thread that cannot be edited.
+        # It has to actually point at a page that exists, or it is just a
+        # slower dead link.
+        text = (child / "index.html").read_text()
+        target = re.search(r'url=\.\./([A-Za-z0-9_-]+)/', text)
+        if not re.search(r'http-equiv=["\']refresh["\']', text) or not target:
             problems.append(
                 f"findings: findings/{child.name}/ is a page that FINDINGS does "
                 f"not list, so it is reachable only by guessing the URL")
+        elif target.group(1) not in listed:
+            problems.append(
+                f"findings: findings/{child.name}/ redirects to "
+                f"{target.group(1)}/, which FINDINGS does not list — a dead "
+                f"link with an extra hop")
 
     landing = root / "index.html"
     if not landing.exists():
