@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>A PIO interrupt flag delivered to the wrong client</title>
+<meta name="description" content="Why the RP2040 PIO driver hands a block IRQ flag to the wrong state machine's client, and how that hangs the kernel — measured against tock/tock 2a7a40450 and demonstrated on a Pico 2 W, with the fix run on the same board.">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to the report</a>
+<div class="wrap">
+
+<header class="top">
+  <nav class="crumb" aria-label="Breadcrumb">
+    <a href="../../">Tock on the RP2350</a>
+    <span class="sep">/</span>
+    <a href="../">Findings</a>
+    <span class="sep">/</span>
+    <span>#5150</span>
+  </nav>
+  <h1>A PIO interrupt flag delivered to the wrong client</h1>
+  <p class="issue">
+    <a href="https://github.com/tock/tock/issues/5150">tock/tock#5150</a>
+    <span class="state">closed when this was written</span>
+    <span>five defects, found 2026-09-04</span>
+  </p>
+  <p class="lede">The RP2040 PIO block raises eight IRQ flags that belong to the
+  block. The driver delivered flag <i>n</i> to state machine <i>n</i>'s client
+  &mdash; an association the hardware does not have, and which the datasheet
+  invites by naming those bits <code>SM0</code>&ndash;<code>SM3</code>. It has
+  never misbehaved in the tree because the only user sits on the diagonal.</p>
+</header>
+
+<main id="main">
+
+<div class="short">
+  <dl>
+    <dt>Defect</dt>
+    <dd>Five in the RP2040 PIO driver. The one that matters delivers a block
+    IRQ flag to the wrong state machine's client, and a flag whose state machine
+    has no client is never cleared &mdash; so the peripheral keeps asserting and
+    the kernel spins.</dd>
+    <dt>Fix</dt>
+    <dd>The client moves to the block, where the flags are, and the driver
+    clears before dispatching. Five commits, <b>+502 &minus;263</b>, four files.</dd>
+    <dt>Status</dt>
+    <dd><span class="tag is-ok">demonstrated on silicon</span> Both the
+    misrouting and the fix were run on a Pico&nbsp;2&nbsp;W over a Debug Probe
+    &mdash; <a href="#s3">Section&nbsp;3</a>. No RP2040 board here, so nothing
+    ran on the chip the driver is named for.</dd>
+  </dl>
+</div>
+
+<h2><span class="n">1</span>The five defects</h2>
+
+<p>None of them reaches an in-tree caller today, which is why the driver has
+carried them. Each was found by writing a test that failed against unmodified
+upstream.</p>
+
+<figure id="f1">
+  <div class="instrument">
+    <p class="ititle">What each one is, and why nothing hit it</p>
+    <div class="scroll">
+      <table class="grid">
+        <thead><tr><th>Defect</th><th>Mechanism</th><th>Why no caller reaches it</th></tr></thead>
+        <tbody>
+          <tr><td class="lbl">RX FIFO join never happened</td>
+            <td><code>PioFifoJoinRx</code> is 2 and <code>FJOIN_RX</code> is one
+            bit wide, so <code>.val(2)</code> masked to 0. <code>PioFifoJoinNone</code>
+            did nothing either, so a join could not be undone.</td>
+            <td>No in-tree caller sets a FIFO join.</td></tr>
+          <tr><td class="lbl"><code>add_program</code> panicked above 16 instructions</td>
+            <td>The buffer was <code>[u16; NUMBER_INSTR_MEMORY_LOCATIONS / 2]</code>.
+            That constant is 32 and counts <i>instructions</i>, so the division
+            left 16 slots for 32.</td>
+            <td>The only caller passes <code>[u8; 14]</code>, and it is never
+            reached &mdash; see below.</td></tr>
+          <tr><td class="lbl"><code>add_program</code> panicked on odd byte counts</td>
+            <td>Two bytes make one instruction; an odd length ran off the end.
+            Now <code>ProgramError::NotInstructionAligned</code>.</td>
+            <td>Same caller, an even 14.</td></tr>
+          <tr><td class="lbl">Three of four interrupt lines never dispatched</td>
+            <td><code>chip.rs</code> handled <code>PIO0_IRQ_0</code> and nothing
+            else. <code>service_pending_interrupts</code> panics on an
+            interrupt nobody claims.</td>
+            <td><code>push</code> enables <code>irq_lines[Irq0]</code> only, and
+            no board constructs PIO1.</td></tr>
+          <tr class="is-culprit"><td class="lbl">Block IRQ flags went to the wrong client</td>
+            <td><code>handle_interrupt</code> zipped the four state machines
+            against INTE/INTS bits 8&ndash;11, which are IRQ flags 0&ndash;3 and
+            belong to the block.</td>
+            <td>The sole user, the Pico&nbsp;W gSPI radio path, uses SM0 and
+            flag 0 &mdash; the diagonal, where wrong and right agree.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="verdict">Counted rather than asserted: upstream
+    <code>chips/rp2040/src/chip.rs</code> at <code>2a7a40450</code> matches
+    <b>exactly one</b> of the four PIO interrupt numbers. The only
+    <code>add_program</code> caller is <code>pio_pwm.rs</code>, whose program is
+    a literal <code>[u8; 14]</code>, and <code>PioPwm</code> is constructed at
+    <code>pico_explorer_base/src/main.rs:739</code> and never started.</p>
+  </div>
+  <figcaption><b>Figure 1.</b> The five defects, and the reason each has
+  survived. Read against <code>tock/tock</code> <code>2a7a40450</code>.</figcaption>
+</figure>
+
+<h2 id="s2"><span class="n">2</span>Why the fifth one can hang the kernel</h2>
+
+<p>A PIO block has eight IRQ flags of its own. Any state machine can set any of
+them, and the datasheet says so. What it also does is name the enable bits for
+the first four <code>SM0</code>&ndash;<code>SM3</code>, sitting directly beside
+<code>SMn_TXNFULL</code> and <code>SMn_RXNEMPTY</code>, which genuinely
+<i>are</i> per state machine.</p>
+
+<p>The driver read them correctly in one place and incorrectly in another. It
+mapped <code>InterruptSources::Interrupt0</code> to <code>IRQ_INTE::SM0</code>
+and cleared it with <code>interrupt_clear(0)</code> &mdash; flag semantics. Then
+<code>handle_interrupt</code> walked the four state machines alongside those
+same four bits and called state machine <i>n</i>'s client for flag <i>n</i>.</p>
+
+<p><b>The hang needs no misbehaving client.</b> If the flag's state machine has
+no registered client, nothing clears the flag. The peripheral goes on asserting,
+the pending bit stays latched, and the kernel's interrupt loop finds work
+forever without making progress.</p>
+
+<p>Two smaller things were wrong in the same area. <code>interrupt_clear</code>
+used <code>modify()</code> on a <b>write-one-to-clear</b> register, which reads
+the other seven flags and writes them back &mdash; clearing flags nobody asked
+about. And the six interrupt registers were six bitfield blocks of twelve
+fields where three would do; collapsing them to
+<code>irq_lines: [IrqReg; 2]</code> indexed by a two-variant enum made a whole
+class of mistake unrepresentable rather than merely tested.</p>
+
+<h2 id="s3"><span class="n">3</span>On silicon</h2>
+
+<p>Both halves were run on a Pico&nbsp;2&nbsp;W over a Debug Probe, against
+the RP2350 port of the same driver. A two-instruction PIO program &mdash;
+<code>irq 0</code>, then a jump to itself, so the flag is raised exactly once
+&mdash; runs on <b>SM1</b>, with a client registered on <b>both</b> SM0 and SM1
+under distinct names. The console says which one the driver actually called.</p>
+
+<figure id="f2">
+  <div class="instrument">
+    <p class="ititle">The same board, the same program, the driver before and after</p>
+    <div class="scroll">
+      <table class="grid">
+        <thead><tr><th>Driver</th><th>Console</th><th>Outcome</th></tr></thead>
+        <tbody>
+          <tr><td class="lbl">unfixed</td>
+            <td><code>[defect5] SM1 is the state machine raising irq 0</code><br>
+                <code>[defect5] the client on SM0 was called</code></td>
+            <td><span class="mark is-bad">wrong client</span></td></tr>
+          <tr><td class="lbl">fixed</td>
+            <td><code>[fixed] SM1 is the state machine raising irq 0</code><br>
+                <code>[fixed] the block client was called, flags=0b0001</code></td>
+            <td><span class="mark is-ok">flag mask, no client to pick</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="verdict">The state machine that raised the flag never heard about
+    it, and the one that did not, did. After the fix there is no wrong client to
+    choose, because state machines are not part of the dispatch at all &mdash;
+    the client is handed the mask.</p>
+  </div>
+  <figcaption><b>Figure 2.</b> Re-run 2026-09-08 on the same board, from the
+  patches kept at <code>learning/bench/</code>. The fix is PR #5150's change
+  ported onto the RP2350's copy of the driver, which is what made it runnable
+  here at all.</figcaption>
+</figure>
+
+<p><b>The second property is the one worth having.</b> In the fixed run the demo
+client clears nothing, and the board carried on and answered the process console
+afterwards. Under the unfixed driver an identically careless client produced two
+characters of output and stopped. <b>The driver clearing before it dispatches is
+what makes a careless client harmless.</b></p>
+
+<p>That hang was caught in the act, halted over SWD:</p>
+
+<pre>PC                        kernel/src/kernel.rs   (the main loop)
+PIO0 irq  (0x50200030)    0x00000001   flag 0 set, never cleared
+PIO0 INTR (0x5020016c)    0x000001f0   idle TXNFULL bits, plus bit 8
+PIO0 INTS0(0x50200178)    0x00000100   asserted through to the NVIC
+NVIC ISPR (0xe000e200)    0x02008000   bit 15 = PIO0_IRQ_0 pending
+NVIC ISER (0xe000e100)    0x00000001   and NOT NVIC-enabled</pre>
+
+<p>The last pair is the mechanism: the pending bit latches whether or not the
+interrupt is enabled, so the kernel's scan finds it and spins. <b>That capture
+is from 2026-09-04 and was not repeated in the 2026-09-08 re-run</b>, which
+covered the misrouting on both arms.</p>
+
+<h2 id="s4"><span class="n">4</span>The tests, and what they cannot see</h2>
+
+<p>Nineteen host tests, in a <code>#[cfg(test)]</code> module that is not in any
+shipped image. They run under <code>ci-job-chips</code> and need no new
+dependency and no hardware. They pass under Miri with strict provenance and
+tree borrows.</p>
+
+<p>The tests were then reviewed by corrupting the file deliberately and checking
+that something failed. That found two tests which were <b>passing while proving
+nothing</b>, and both are more interesting than the count:</p>
+
+<ul class="plain">
+  <li><b>A wrap test that masked away the wrap.</b> It asserted on
+  <code>wrapped[0] &amp; 0x1f</code> &mdash; the low five bits &mdash; while the
+  behaviour under test was that a jump target wraps within those five bits.
+  Deleting the <code>% 32</code> from the driver still passed. It now compares
+  the whole instruction.</li>
+  <li><b>A map test that checked one of eight.</b> The FIFO address test read a
+  single block/state-machine pair, so "ignore which PIO block" survived
+  untouched. It now loops both blocks and all four state machines.</li>
+</ul>
+
+<p><b>What survives the corruption is the honest part: the register writes.</b>
+A host test can call a function and inspect what it returns, and it cannot
+observe a write to a peripheral that is not there. Every surviving mutation is
+one of those. That is the ceiling on this kind of testing, and it is the reason
+<a href="https://github.com/tock/tock/issues/5152">#5152</a> exists.</p>
+
+<h2 id="s5"><span class="n">5</span>It is smaller, and the arithmetic says why</h2>
+
+<figure id="f3">
+  <div class="instrument">
+    <p class="ititle">All four RP2040 boards, built from both trees</p>
+    <div class="scroll">
+      <table class="grid">
+        <thead><tr><th>Board</th><th class="num">text before</th><th class="num">text after</th><th class="num">bss before</th><th class="num">bss after</th></tr></thead>
+        <tbody>
+          <tr><td class="lbl">raspberry_pi_pico</td><td class="num">98348</td><td class="num">98348</td><td class="num">16528</td><td class="num">16480</td></tr>
+          <tr><td class="lbl">raspberry_pi_pico_w</td><td class="num">352300</td><td class="num">352300</td><td class="num">20724</td><td class="num">20676</td></tr>
+          <tr><td class="lbl">pico_explorer_base</td><td class="num">102444</td><td class="num">102444</td><td class="num">72668</td><td class="num">72620</td></tr>
+          <tr><td class="lbl">nano_rp2040_connect</td><td class="num">94252</td><td class="num">94252</td><td class="num">14368</td><td class="num">14320</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="verdict">Text identical on every board; <b>bss down 48 bytes on
+    every board</b>. The arithmetic matches the change exactly: eight fat
+    pointers removed and two added, across two PIO blocks, at 8 bytes each on a
+    32-bit target.</p>
+  </div>
+  <figcaption><b>Figure 3.</b> Both trees built and compared on 2026-09-08.
+  A number that matches a mechanism is worth more than a number that is merely
+  smaller.</figcaption>
+</figure>
+
+<h2 id="s6"><span class="n">6</span>A merge hazard worth knowing about</h2>
+
+<p><a href="https://github.com/tock/tock/pull/5126">#5126</a> deletes
+<code>mod examples</code>, 273 lines, from the end of <code>pio.rs</code>. This
+change adds <code>#[cfg(test)] mod tests</code>, 262 lines, to the end of the
+same file. To git that is one region against another, and it cannot tell them
+apart.</p>
+
+<p><b>Taking the deletion drops all nineteen tests, and everything still looks
+fine.</b> The crate builds, clippy is clean, all four boards build at their
+expected sizes. The only thing that says otherwise is <code>cargo test</code>
+reporting <code>0 passed</code>. <b>After resolving a conflict, run the tests
+rather than the build</b> &mdash; a build proves nothing about a test module
+that is no longer there.</p>
+
+<h2 id="s7"><span class="n">7</span>What this does not establish</h2>
+
+<ul class="plain">
+  <li><b>Nothing ran on an RP2040.</b> The silicon work is all RP2350, on the
+  port of the same driver. The defects are in the RP2040 driver and the two
+  chips share the design, but that is an argument, not a measurement.</li>
+  <li><b>The gSPI path was not exercised.</b> It is the only in-tree PIO user,
+  and its client registration is exactly what moved &mdash; from per state
+  machine to per block. Someone with a Pico&nbsp;W running the radio would close
+  the most important remaining gap.</li>
+  <li><b>Host tests cannot see a register write.</b> Every mutation that
+  survived review is one, and no amount of host testing changes that.</li>
+  <li><b>The hang capture was not repeated.</b> The misrouting A/B was re-run on
+  2026-09-08; the halted-core register readout above is from 2026-09-04.</li>
+  <li><b>The mutation review is not reproducible as a number.</b> The harness
+  was not kept, and two records of the totals disagree by one. What it found is
+  written down; the count is not evidence anyone can check.</li>
+</ul>
+
+</main>
+
+<footer>
+  <p>Measured against tock/tock
+  <a href="https://github.com/tock/tock/commit/2a7a40450"><code>2a7a40450</code></a>,
+  the RP2040 datasheet, and a Pico&nbsp;2&nbsp;W on a Debug Probe. Part of
+  <a href="../../">a work map</a> of what Tock can drive on an RP2350.</p>
+  <p>This page was written with AI assistance. Every number on it was produced
+  by running the commands or the board, and the console transcripts are quoted
+  rather than summarised, so it can be checked without trusting it. Corrections
+  are welcome on the pull request.</p>
+</footer>
+
+</div>
+</body>
+</html>

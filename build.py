@@ -547,6 +547,14 @@ FINDINGS = [
      "workaround in the issue strips a section that is only safe to strip by "
      "accident. Six candidate fixes measured against a kernel built from "
      "upstream; the one that works is a single objcopy line, and it is A/B verified on all four RP2 boards by running their real make targets."),
+    (5150, "5150", "a PIO interrupt flag delivered to the wrong client",
+     "A PIO block raises eight IRQ flags that belong to the block, and the "
+     "driver delivered flag n to state machine n's client -- an association the "
+     "hardware does not have and the datasheet invites by naming those bits "
+     "SM0-SM3. A flag whose state machine has no client is never cleared, so "
+     "the peripheral keeps asserting and the kernel spins. Invisible in the "
+     "tree because the only user sits on the diagonal. Four more defects "
+     "alongside it, and the misrouting plus its fix were both run on silicon."),
     (5153, "5153", "EP0 IN is armed at bus reset and never taken back",
      "The RP2040 USB driver hands EP0's IN buffer to the controller during bus "
      "reset, with a length of 64 and a PID of DATA0 and nothing queued to send. "
