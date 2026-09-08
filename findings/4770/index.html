@@ -177,7 +177,7 @@ segments out again instead of copying the input's program headers, and in the
 new layout the <code>NOBITS</code> <code>.stack</code> is assigned a non-zero
 <code>p_filesz</code>. That is the whole defect.</p>
 
-<h2><span class="n">4</span>Every candidate fix, measured</h2>
+<h2 id="s4"><span class="n">4</span>Every candidate fix, measured</h2>
 
 <p>Six variants, all run against the same kernel by
 <a href="reproduce.sh"><code>reproduce.sh</code></a>, which is the script that
@@ -415,8 +415,9 @@ keeps its symbols.</p>
   <code>.tbf</code>, with the change applied and with it stashed. The fifth
   rule, <code>raspberry_pi_pico_2</code>'s <code>program-openocd</code>, is
   changed the same way and is not in the table &mdash; it hands the ELF to
-  openocd rather than a converter, and I have no board to run it
-  against.</figcaption>
+  openocd rather than a converter, so there is no UF2 to decode. It has since
+  been run on a board, and it fails differently:
+  <a href="#s8">Section&nbsp;8</a>.</figcaption>
 </figure>
 
 <p>The four boards carry five rules between them, because
@@ -425,7 +426,92 @@ and once for <code>program-openocd</code>. <code>raspberry_pi_pico</code>'s
 <code>program-probe</code> shares the one rule with <code>program</code>, so it
 is fixed by the same line.</p>
 
-<h2><span class="n">8</span>Reproducing it</h2>
+<h2 id="s8"><span class="n">8</span>Confirmed on hardware, on two chips</h2>
+
+<p>Everything above is measured on files, and a UF2 that converts and holds the
+application at the right address is not yet a board that boots it. Two runs on
+real silicon have since closed that gap. Different chips, different people,
+different flashing routes &mdash; and the same output.</p>
+
+<div class="claims">
+  <div class="claim">
+    <h3><span class="tag is-ok">confirmed</span> The reporter, on an RP2040</h3>
+    <p class="said">that change worked at least for the RP2040</p>
+    <p class="found">potto216, who filed the issue, put the line into
+    <code>raspberry_pi_pico</code>'s <code>program</code> rule, converted with
+    <code>elf2uf2-rs</code> on his own machine and his own binutils, and flashed
+    the result over BOOTSEL. Not one leg of that path is the one measured
+    above.</p>
+  </div>
+</div>
+
+<pre>RP2040 Revision 2 ASIC
+tock$ Initialization complete. Enter main loop
+Hello world!
+
+tock$ list
+ PID    ShortID    Name                Quanta  Syscalls  Restarts  Grants  State
+ 0      Unique     console                  0        10         0   0/ 9   Terminated</pre>
+
+<p>The second run is the fifth rule, <code>program-openocd</code>, on an RP2350
+over SWD &mdash; the one this page could not reach when it was written. It is
+broken today too, and it breaks in a third way that neither converter shows.</p>
+
+<figure id="f6">
+  <div class="instrument">
+    <p class="ititle">The board's own <code>program-openocd</code> rule, with the line and without it</p>
+    <div class="scroll">
+      <table class="grid">
+        <thead><tr>
+          <th>Rule as it is</th><th><code>make</code></th><th>openocd</th>
+          <th>The board afterwards</th>
+        </tr></thead>
+        <tbody>
+          <tr><td class="lbl">Without the line</td><td class="num">rc=2</td>
+            <td><span class="mark is-bad">exits 1 at <code>verify_image</code></span></td>
+            <td><span class="mark is-bad">halted, console silent</span></td></tr>
+          <tr><td class="lbl">With it</td><td class="num">rc=0</td>
+            <td><span class="mark is-ok">programs and verifies clean</span></td>
+            <td><span class="mark is-ok">resets itself, application runs</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="verdict is-bad">openocd does not refuse the ELF the way a UF2
+    converter does. <code>program</code> writes the flash segments and
+    <b>skips the SRAM one</b> &mdash;
+    <code>Warn : no flash bank found for address 0x20000000</code> &mdash; so
+    <code>.stack</code> is never written. <code>verify_image</code> then checks
+    every segment, that one included, against SRAM nothing wrote, and gives up:
+    <code>Error: checksum mismatch</code>, then 128 diffs beginning
+    <code>diff 0 address 0x20000000. Was 0x88 instead of 0x00</code>. It exits
+    before reaching the <code>reset</code>, which is why the board is left
+    halted instead of running.</p>
+  </div>
+  <figcaption><b>Figure 6.</b> The board's real <code>make program-openocd</code>
+  target, <code>APP=console.tbf</code>, on a Pico&nbsp;2&nbsp;W through a Debug
+  Probe. The Makefile is unmodified; only <code>OPENOCD=</code> is pointed at a
+  shim that ships the ELF to the machine holding the probe and runs the real
+  openocd there. The application region was erased between the two runs, so the
+  second row's result is its own.</figcaption>
+</figure>
+
+<p><b>The flash was correct the whole time.</b> Read back over SWD after the
+failing run, <code>0x10040000</code> is byte-identical to the <code>.tbf</code>
+that went in &mdash; a power cycle would have booted it. This rule fails at the
+verify, not at the write, and the board looking dead afterwards is the part a
+user would report.</p>
+
+<pre>Initialization complete. Enter main loop
+Hello world!
+tock$ list
+ PID    ShortID    Name                Quanta  Syscalls  Restarts  Grants  State
+ 0      Unique     console                  0        10         0   0/ 4   Terminated</pre>
+
+<p>Same application, same ten syscalls, same clean exit, on two chips reached
+two different ways. The <code>Grants</code> column differs because the two
+boards expose different numbers of drivers.</p>
+
+<h2><span class="n">9</span>Reproducing it</h2>
 
 <p>No board and no application are needed &mdash; the trigger is the section
 flags, so any 4,096 bytes stand in for a <code>.tbf</code>. Save
@@ -452,24 +538,30 @@ printed that. It needs <code>arm-none-eabi-objcopy</code>,
 <code>arm-none-eabi-readelf</code>, <code>elf2uf2-rs</code> and
 <code>python3</code>.</p>
 
-<h2><span class="n">9</span>What this does not establish</h2>
+<h2><span class="n">10</span>What this does not establish</h2>
 
 <ul class="plain">
-  <li><b>Not tested on hardware.</b> Everything above is measured on the files.
-  A UF2 that converts and contains the app at the right address is not the same
-  claim as a board that boots it.</li>
-  <li><b>The two rules that do not end in a converter are untested.</b>
-  <code>raspberry_pi_pico</code>'s <code>program-probe</code> and
-  <code>raspberry_pi_pico_2</code>'s <code>program-openocd</code> hand the ELF
-  to <code>probe-rs</code> and to openocd. Both build the same broken file
-  today, and both are fixed by the same line, but whether those tools reject it
-  or write the stack segment into SRAM and carry on, I have not checked. It is
-  not the same number on each: <code>.stack</code> is 0x1500 on the Pico and
+  <li><b>Two boards, not four.</b> <a href="#s8">Section&nbsp;8</a> covers
+  <code>raspberry_pi_pico</code> on an RP2040 and
+  <code>raspberry_pi_pico_2</code> on an RP2350.
+  <code>pico_explorer_base</code> and <code>nano_rp2040_connect</code> are
+  measured on the files only. They are RP2040 boards carrying the same rule, so
+  the remaining risk is small &mdash; but small is not none, and nobody has put
+  an application on one.</li>
+  <li><b><code>program-probe</code> is still untested.</b>
+  <code>raspberry_pi_pico</code>'s <code>program-probe</code> hands the ELF to
+  <code>probe-rs</code>. It builds the same broken file today and the same line
+  fixes it, but whether probe-rs refuses the image, writes the stack segment
+  into SRAM and carries on, or fails at a verify the way openocd does, I have
+  not checked: no RP2040 board here and no probe-rs. The number is not the same
+  on each board either &mdash; <code>.stack</code> is 0x1500 on the Pico and
   0x3000 on the Pico&nbsp;2, so 5,376 bytes on one and 12,288 on the
   other.</li>
-  <li><b>One toolchain.</b> GNU Binutils 2.47.20260726. The reporter hit the
-  same failure on a different machine and a different binutils, so this is not
-  version-specific, but I have only measured the variant matrix on mine.</li>
+  <li><b>One toolchain for the variant matrix.</b> GNU Binutils
+  2.47.20260726. The reporter hit the same failure, and confirmed the same fix,
+  on a different machine and a different binutils &mdash; so neither the bug nor
+  the fix is version-specific. The six-candidate matrix in
+  <a href="#s4">Section&nbsp;4</a> is the part only ever run on mine.</li>
   <li><b>Not a binutils bug report.</b> Whether BFD is wrong to assign a
   <code>p_filesz</code> to a <code>NOBITS</code> segment, or whether the rule is
   asking for something it should not, I have not established. The Makefile fix

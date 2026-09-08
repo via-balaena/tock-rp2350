@@ -242,6 +242,11 @@ WORK = {
         "short": "Scope the irq flag to the block",
         "verify": "host",
     },
+    "rp2: strip .stack from the ELF that make program flashes": {
+        "short": "Strip .stack from the flashed ELF",
+        "verify": "silicon",
+        "note": "Fixes #4770. PR #5154 was closed for want of a written description. The change itself is confirmed on hardware twice over: the reporter ran it on an RP2040, and program-openocd was A/B'd on an RP2350.",
+    },
 }
 
 # The facts a pull request description would rest on, per unsent branch.
@@ -1081,11 +1086,16 @@ def fetch():
         "issue", "list", "--repo", REPO, "--author", AUTHOR, "--state", "all",
         "--limit", "100", "--json", "number,title,state,createdAt,url",
     ])
-    findings = [
-        gh_json(["issue", "view", str(number), "--repo", REPO, "--json",
-                 "number,title,state,author,createdAt,url,body"])
-        for number, _, _, _ in FINDINGS
-    ]
+    findings = []
+    for number, _, _, _ in FINDINGS:
+        # Comments come along because the pages quote them: a finding gets
+        # confirmed or disputed in the thread, not in the opening post, and a
+        # quotation nobody can check is the one that drifts.
+        issue = gh_json(["issue", "view", str(number), "--repo", REPO, "--json",
+                         "number,title,state,author,createdAt,url,body,comments"])
+        issue["comments"] = [{"author": c["author"]["login"], "body": c["body"]}
+                             for c in issue.get("comments", [])]
+        findings.append(issue)
     return {
         "fetched": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
         "prs": sorted(prs, key=lambda p: p["number"]),

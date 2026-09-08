@@ -465,7 +465,13 @@ def check_quotes(build, data, problems):
     Nothing else is: an apostrophe swapped for a straight one, a numeral
     dropped, a word tidied, all fail.
     """
-    bodies = {i["number"]: re.sub(r"\s+", " ", i.get("body") or "")
+    # A page may quote the opening post or anything said in the thread since,
+    # so both are searched. The reporter confirming a fix is a comment, and it
+    # is the quotation most worth checking: they are not here to correct it.
+    bodies = {i["number"]: re.sub(
+        r"\s+", " ", " \u241f ".join(
+            [i.get("body") or ""] + [c.get("body") or ""
+                                     for c in i.get("comments", [])]))
               for i in data.get("findings", [])}
     for number, slug, _, _ in build.FINDINGS:
         page = ROOT / "findings" / slug / "index.html"

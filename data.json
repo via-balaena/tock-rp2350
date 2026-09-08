@@ -1,5 +1,5 @@
 {
-  "fetched": "2026-09-07",
+  "fetched": "2026-09-08",
   "prs": [
     {
       "additions": 1,
@@ -263,14 +263,14 @@
     {
       "additions": 502,
       "changedFiles": 4,
-      "closedAt": null,
+      "closedAt": "2026-09-07T19:11:14Z",
       "createdAt": "2026-09-04T22:04:57Z",
       "deletions": 263,
       "isDraft": true,
       "mergedAt": null,
       "number": 5150,
       "reviewDecision": "REVIEW_REQUIRED",
-      "state": "OPEN",
+      "state": "CLOSED",
       "title": "chips: rp2040: five PIO fixes, and the driver's first host tests",
       "url": "https://github.com/tock/tock/pull/5150",
       "commits": [
@@ -296,6 +296,31 @@
         "chips/rp2040/src/pio.rs",
         "chips/rp2040/src/pio_gspi.rs"
       ]
+    },
+    {
+      "additions": 21,
+      "changedFiles": 4,
+      "closedAt": "2026-09-07T19:04:14Z",
+      "createdAt": "2026-09-07T14:53:26Z",
+      "deletions": 0,
+      "isDraft": true,
+      "mergedAt": null,
+      "number": 5154,
+      "reviewDecision": "REVIEW_REQUIRED",
+      "state": "CLOSED",
+      "title": "rp2: strip .stack from the ELF that make program flashes",
+      "url": "https://github.com/tock/tock/pull/5154",
+      "commits": [
+        {
+          "messageHeadline": "rp2: strip .stack from the ELF that make program flashes"
+        }
+      ],
+      "files": [
+        "boards/nano_rp2040_connect/Makefile",
+        "boards/pico_explorer_base/Makefile",
+        "boards/raspberry_pi_pico/Makefile",
+        "boards/raspberry_pi_pico_2/Makefile"
+      ]
     }
   ],
   "findings": [
@@ -307,6 +332,20 @@
         "name": "Paul Otto"
       },
       "body": "When building app for RPi Pico I get the error: \"ELF contains memory contents for uninitialized memory at 20000000\". An example is:\n```bash\n(tools) user@rpi05-dev001:~/tockos/tock/boards/raspberry_pi_pico $ APP=/home/user/tockos/libtock-rs/target/raspberry_pi_pico/thumbv6m-none-eabi/release/examples/spi_controller_write_read.tbf  make program\n    Finished `release` profile [optimized + debuginfo] target(s) in 0.12s\n   text    data     bss     dec     hex filename\n  98348       0   14364  112712   1b848 /home/user/tockos/tock/target/thumbv6m-none-eabi/release/raspberry_pi_pico\narm-none-eabi-objcopy --set-section-flags .apps=LOAD,ALLOC /home/user/tockos/tock/target/thumbv6m-none-eabi/release/raspberry_pi_pico.elf /home/user/tockos/tock//target/thumbv6m-none-eabi/release/raspberry_pi_pico-app.elf\narm-none-eabi-objcopy: /home/user/tockos/tock//target/thumbv6m-none-eabi/release/raspberry_pi_pico-app.elf: section .relocate lma 0x20000000 adjusted to 0x20001500\narm-none-eabi-objcopy --update-section .apps=/home/user/tockos/libtock-rs/target/raspberry_pi_pico/thumbv6m-none-eabi/release/examples/spi_controller_write_read.tbf /home/user/tockos/tock//target/thumbv6m-none-eabi/release/raspberry_pi_pico-app.elf\nelf2uf2-rs /home/user/tockos/tock//target/thumbv6m-none-eabi/release/raspberry_pi_pico-app.elf /home/user/tockos/tock/target/thumbv6m-none-eabi/release/raspberry_pi_pico-app.uf2\nError: \"ELF contains memory contents for uninitialized memory at 20000000\"\nmake: *** [Makefile:48: program] Error 1\n```\n\nGemini suggested root cause of elf2uf2-rs tool's error message \"uninitialized memory at 20000000\" is that the elf2uf2-rs utility is designed to create a flashable image and does not deal with RAM which starts at 0x20000000 on the Raspberry Pi Pico.\n\nIts suggested solution worked for me, which is:\n```bash\nAPP=/home/user/tockos/libtock-rs/target/raspberry_pi_pico/thumbv6m-none-eabi/release/examples/spi_controller_write_read.tbf make /home/user/tockos/tock/target/thumbv6m-none-eabi/release/raspberry_pi_pico-app.elf\n\narm-none-eabi-objcopy -R .stack -R .relocate -R .bss /home/user/tockos/tock/target/thumbv6m-none-eabi/release/raspberry_pi_pico-app.elf /home/user/tockos/tock/target/thumbv6m-none-eabi/release/raspberry_pi_pico-app.elf\n\nelf2uf2-rs /home/user/tockos/tock/target/thumbv6m-none-eabi/release/raspberry_pi_pico-app.elf /home/user/tockos/tock/target/thumbv6m-none-eabi/release/raspberry_pi_pico-app.uf2\n\ncp /home/user/tockos/tock/target/thumbv6m-none-eabi/release/raspberry_pi_pico-app.uf2 /media/user/RPI-RP2/\n```\nThen I was able to verify the application ran with `tockloader listen --board raspberry_pi_pico --openocd`\n",
+      "comments": [
+        {
+          "author": "bigmark222",
+          "body": "  https://via-balaena.github.io/tock-rp2350/findings/4770/"
+        },
+        {
+          "author": "potto216",
+          "body": "Thanks @bigmark222 that change worked at least for the RP2040. When I compiled with the added line in the MakeFile using the libtock-rs console app I got:\n```bash\n(tools) user@ubuntu-node-01:~/workspace/tockos/tock/boards/raspberry_pi_pico$ APP=\"${REPO_LIBTOCK_RS_ROOT}/target/raspberry_pi_pico/thumbv6m-none-eabi/release/examples/${APP_NAME}.tbf\" make program\n    Finished `release` profile [optimized + debuginfo] target(s) in 0.09s\n   text    data     bss     dec     hex filename\n  98348       0   16528  114876   1c0bc /home/user/workspace/tockos/tock/target/thumbv6m-none-eabi/release/raspberry_pi_pico\narm-none-eabi-objcopy --set-section-flags .apps=LOAD,ALLOC /home/user/workspace/tockos/tock/target/thumbv6m-none-eabi/release/raspberry_pi_pico.elf /home/user/workspace/tockos/tock//target/thumbv6m-none-eabi/release/raspberry_pi_pico-app.elf\narm-none-eabi-objcopy: /home/user/workspace/tockos/tock//target/thumbv6m-none-eabi/release/raspberry_pi_pico-app.elf: section .relocate lma 0x20000000 adjusted to 0x20001500\narm-none-eabi-objcopy --update-section .apps=/home/user/workspace/tockos/libtock-rs/target/raspberry_pi_pico/thumbv6m-none-eabi/release/examples/console.tbf /home/user/workspace/tockos/tock//target/thumbv6m-none-eabi/release/raspberry_pi_pico-app.elf\narm-none-eabi-objcopy -R .stack /home/user/workspace/tockos/tock//target/thumbv6m-none-eabi/release/raspberry_pi_pico-app.elf\nelf2uf2-rs /home/user/workspace/tockos/tock//target/thumbv6m-none-eabi/release/raspberry_pi_pico-app.elf /home/user/workspace/tockos/tock/target/thumbv6m-none-eabi/release/raspberry_pi_pico-app.uf2\n\n\nPlease edit the BOOTSEL_FOLDER variable to point to you Raspberry Pi Pico Flash Drive Folder\nYou can download and flash /home/user/workspace/tockos/tock/target/thumbv6m-none-eabi/release/raspberry_pi_pico-app.uf2\n(tools) user@ubuntu-node-01:~/workspace/tockos/tock/boards/raspberry_pi_pico$\n```\nThen after flashing with `raspberry_pi_pico-app.uf2` the Tock console shows\n```\nRP2040 Revision 2 ASIC\ntock$ Initialization complete. Enter main loop\nHello world!\n\ntock$ list\n PID    ShortID    Name                Quanta  Syscalls  Restarts  Grants  State\n 0      Unique     console                  0        10         0   0/ 9   Terminated\ntock$ boot console\ntock$ Hello world!\n```\nI had a different program on the RP2040 so it worked and eliminates the error. I'll test this week with the RP2350. Are you going to do a PR?"
+        },
+        {
+          "author": "bigmark222",
+          "body": "@potto216 #5154 "
+        }
+      ],
       "createdAt": "2026-04-01T13:22:19Z",
       "number": 4770,
       "state": "OPEN",
@@ -321,6 +360,12 @@
         "name": "Paul Otto"
       },
       "body": "The Raspberry PI Pico RP2040 USB CDC ACM serial port does not work with many machines\n\n# Description\nThe Raspberry PI Pico RP2040 Tock USB CDC ACM serial port implementation does not work with many machines. All Windows 11 Dell and HP Envy laptops I tried reported a Unknown USB Device (Set Address Failed). Their firmware is up to date. It does work with a Windows 11 GMKtec mini PC. It is randomly recognized by a Raspberry Pi 4 and once recognized works fine as a serial port. It does not work with the Raspberry Pi 5. I applied the eeprom updates for the Raspberry Pi. \n\nOn all machines the RP 2040's firmware programming mode with the USB drive always works.\n\n<img width=\"400\" height=\"455\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/763224bb-a2ed-44fa-a127-7283ea2c287b\" />\n\nWhen I capture the physical USB line traffic between the RP 2040 and most computers (Windows/Raspberry Pi) I see a violation of the USB 2.0 control-transfer data-toggle rules, specifically Sections 8.5.3 and 8.6.1 (I'm looking at Revision 2.0 April 27, 2000). For a control read/write as shown in Figure 8-37 after a valid SETUP transaction for the IN transaction DATA must be toggled by the device to DATA1. But as shown below the RP2040 is incorrectly using DATA0. Additionally the RP2040 sends the wrong amount of data for the GET_DESCRIPTOR request. The RP2040 should only send 18 bytes as specified by the spec (Table 9-8. Standard Device Descriptor), but instead it is sending 64 bytes on the first IN transaction. Then it sends a second IN with the correct 18 bytes. This happens on the Windows 11 machines and on the Raspberry Pis when they fail.\n\n<img width=\"1158\" height=\"867\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/5afe4bec-17b5-42ce-a524-3b5c0896a3e7\" />\n\nExpanded 2nd IN with correct 18 bytes:\n\n<img width=\"1436\" height=\"138\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/b94973ba-9ad0-41c4-a595-32b7264e4716\" />\n\nThis matches when the GET_DESCRIPTION does work and both DATA1 is correct and only one IN is correctly sent (below)\n\n<img width=\"1225\" height=\"331\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/40e07b78-0364-4b9d-8538-069b92833f96\" />\n\nDoes anyone have any thoughts on this. I'm not familiar with developing or debugging device side USB interfaces. Currently I'm debugging the issue based on OpenAI's analysis below but I don't have the skill to judge if it is reasonable or not. thanks!\n\n\n# OpenAI analysis\n\nThe Pico sends a 64-byte DATA0 packet on endpoint zero immediately after the SETUP transaction. Two details make this a smoking gun:\n\n1. The first data or status packet after a control SETUP must use DATA1, not DATA0.\n2. The packet length of exactly 64 bytes matches a hard-coded value in Tock\u2019s RP2040 bus-reset handler.\n\nThe host ACKs the DATA0 packet but apparently discards it as having the wrong data toggle, then retries the IN transaction. That behavior is consistent with duplicate/wrong-toggle handling: the receiver ACKs so the sender does not retransmit forever, but does not accept the packet as the expected DATA1 transaction.\n\nTock\u2019s current RP2040 USB driver does this during bus reset:\n```rust\nself.dpsram.ep_buf_ctrl[0].ep_in_buf_ctrl.modify(\n    EP_BUFFER_CONTROL::AVAILABLE0::SET\n        + EP_BUFFER_CONTROL::TRANSFER_LENGTH0.val(64)\n        + EP_BUFFER_CONTROL::DATA_PID0::CLEAR,\n);\n```\nThat gives the RP2040 USB controller ownership of EP0 IN with:\n```\nAVAILABLE = 1\nlength    = 64\nPID       = DATA0\n```\nThat is exactly what appears in packet 140:\n\nDATA0-BAD Data(64 bytes)\n\nThe setup-request path subsequently tries to configure the first control-read packet as DATA1. It sets next_pid_in to 1 and calls transmit_in_ep0(). The transmission function then attempts to replace the length and PID and finally sets AVAILABLE.\n\nBut AVAILABLE was already set by handle_bus_reset(). The USB controller already owns that buffer and can read it concurrently while the CPU modifies the length, PID, and contents.\n\nThe RP2040 datasheet explicitly warns against this. It says USB DPRAM is asynchronous and non-atomic, and software must:\n\n1. write the buffer information;\n2. wait enough system-clock cycles for a USB-clock cycle;\n3. set AVAILABLE separately and last.\n\nThis ensures that the controller cannot observe AVAILABLE=1 with stale length or PID information.\n\nThe capture appears to show that exact race: the controller observes the old reset values\u201464 bytes and DATA0\u2014instead of the newly prepared descriptor response\u2014probably 18 bytes and DATA1.\n",
+      "comments": [
+        {
+          "author": "bigmark222",
+          "body": "  https://via-balaena.github.io/tock-rp2350/findings/5153/"
+        }
+      ],
       "createdAt": "2026-09-06T16:54:20Z",
       "number": 5153,
       "state": "OPEN",
