@@ -346,6 +346,43 @@
         "boards/raspberry_pi_pico/Makefile",
         "boards/raspberry_pi_pico_2/Makefile"
       ]
+    },
+    {
+      "additions": 502,
+      "changedFiles": 4,
+      "closedAt": null,
+      "createdAt": "2026-09-08T18:44:11Z",
+      "deletions": 263,
+      "isDraft": false,
+      "mergedAt": null,
+      "number": 5157,
+      "reviewDecision": "REVIEW_REQUIRED",
+      "state": "OPEN",
+      "title": "chips: rp2040: five PIO fixes, and the driver's first host tests",
+      "url": "https://github.com/tock/tock/pull/5157",
+      "commits": [
+        {
+          "messageHeadline": "chips: rp2040: fix the PIO RX FIFO join, which never happened"
+        },
+        {
+          "messageHeadline": "chips: rp2040: stop add_program panicking on half of its own range"
+        },
+        {
+          "messageHeadline": "chips: rp2040: test the PIO arithmetic that has no other check"
+        },
+        {
+          "messageHeadline": "chips: rp2040: service every PIO interrupt line, not one of four"
+        },
+        {
+          "messageHeadline": "chips: rp2040: an irq flag belongs to the block, not a state machine"
+        }
+      ],
+      "files": [
+        "boards/raspberry_pi_pico_w/src/pio_gspi_component.rs",
+        "chips/rp2040/src/chip.rs",
+        "chips/rp2040/src/pio.rs",
+        "chips/rp2040/src/pio_gspi.rs"
+      ]
     }
   ],
   "findings": [
@@ -379,26 +416,6 @@
     },
     {
       "author": {
-        "id": "U_kgDODlBQIA",
-        "is_bot": false,
-        "login": "bigmark222",
-        "name": "Jon H"
-      },
-      "body": "(AI generated rough draft pr body)\r\n\r\n**Full context:**\r\nhttps://via-balaena.github.io/tock-rp2350/\r\n\r\n### Pull Request Overview\r\n\r\nThis PR fixes five bugs in the rp2040 PIO driver. It also makes the driver smaller.\r\n\r\nThe driver code in `pio.rs` goes from 1947 lines to 1909 \u2014 that's -38 lines. The other +262 lines are tests. They're inside a `#[cfg(test)]` module that disappears from shipped images. Text is unchanged on all four boards. BSS shrinks by 48 bytes.\r\n\r\nNone of the five bugs affect any in-tree caller today. I found each one by writing a test that failed on unmodified upstream.\r\n\r\n**The bugs:**\r\n\r\n1. `set_fifo_join` couldn't join the RX FIFO. `PioFifoJoinRx` is 2. `FJOIN_RX` is one bit wide. So `.val(2)` masked to 0 and did nothing. `PioFifoJoinNone` also did nothing, so you could never undo a join. No in-tree caller uses this.\r\n\r\n2. `add_program` panicked on programs with more than 16 instructions. The buffer was `[u16; NUMBER_INSTR_MEMORY_LOCATIONS / 2]`. `NUMBER_INSTR_MEMORY_LOCATIONS` is 32 and counts instructions. Dividing by 2 gave 16 slots for 32 instructions. The only caller passes 14 bytes.\r\n\r\n3. `add_program` panicked on odd byte counts. I added `NotInstructionAligned` to handle this.\r\n\r\n4. Three of four PIO interrupt lines were never dispatched. `chip.rs` handled one line. `service_pending_interrupts` panics on unclaimed interrupts.\r\n\r\n5. Block IRQ flags went to the wrong client, which could hang the kernel. INTE/INTS bits 8-11 are IRQ flags 0-3. They're not tied to specific state machines. The datasheet makes this easy to miss: it calls them `SM0`-`SM3` right next to `SMn_TXNFULL` and `SMn_RXNEMPTY`, which *are* per-state-machine. The explanation is in prose elsewhere. This only worked before because the sole user (Pico W gSPI) uses SM0 and flag 0.\r\n\r\nDefects 1-3 exist unchanged in #5141 (`chips/rp2xxx/src/pio.rs`). Defects 4-5 are also there, and are wider: RP2350 has six PIO interrupt lines, not four.\r\n\r\n---\r\n\r\n### Testing Strategy\r\n\r\nI wrote 19 host tests. They run in `ci-job-chips` on every PR. No new infrastructure or dependencies.\r\n\r\nTo see how well the tests catch mistakes, I deliberately corrupted the file 35 times. The tests caught 25. The compiler caught 3. The 7 that survived are all register writes \u2014 host tests can't observe those. That's the real limit.\r\n\r\nI also ran:\r\n- `cargo miri test` with strict provenance and tree-borrows (clean)\r\n- `cargo doc --no-deps` (clean)\r\n- Exhaustive checks where possible: 8 opcodes \u00d7 32 addresses \u00d7 32 origins for relocation; every byte length from 0 to 69 for program conversion\r\n\r\n`make prepush`, `make ci-job-format`, and `make ci-job-chips` all pass. Every commit passes `cargo test` on its own.\r\n\r\nI added zero `unsafe`.\r\n\r\nI don't have an RP2040 board, so nothing ran on that hardware.\r\n\r\nI did test on RP2350 (Pico 2 W with a Debug Probe). I verified the IRQ register layout by writing INTF and reading INTS. I also observed defect 5, then confirmed the fix:\r\n\r\n- Unfixed: the client on SM0 was called\r\n- Fixed: the block client was called, flags=0b0001\r\n\r\nI mention this because reviewers probably don't have the hardware either. `doc/CodeReview.md` says chip review \"often relies on visual inspection.\"\r\n\r\n---\r\n\r\n### TODO or Help Wanted\r\n\r\nThe full testing plan is #5152 \u2014 this PR is its tier 1, and tier 2 there is a list of six hardware tests, any one of which stands alone.\r\n\r\nThe most useful single thing for this PR is someone with an RP2040 board exercising the Pico W gSPI path. That's the only in-tree PIO user, and the client registration moved from per-state-machine to per-block.\r\n\r\n---\r\n\r\n### Checklist\r\n\r\n- [x] Ran `make prepush`.\r\n\r\n---\r\n\r\n### PR Contents\r\n\r\n#### Documentation\r\n\r\n- [ ] Updated the relevant files in `/docs` and the [Book](https://github.com/tock/book).\r\n- [x] No documentation updates are required.\r\n\r\nNothing in `doc/` or the book references the changed API.\r\n\r\n#### AI Use\r\n\r\n- [ ] No AI was used in this PR.\r\n- [x] AI was used in this PR. I have read [Tock's AI policy](https://github.com/tock/tock/blob/master/.github/CONTRIBUTING.md#ai-policy) and have properly disclosed my AI use below. This PR comment, and any subsequent PR interactions must not be generated using AI, except for under a `<details>` drawer.\r\n\r\n**Disclosure:**\r\n\r\n- **Tool:** Claude Opus 5, via Claude Code. Commits show Co-Authored-By.\r\n\r\n- **What AI wrote:** Essentially all the code and commit messages. The design decisions were mine: fixing defect 5 instead of documenting it, choosing the block-level client, keeping the PR whole rather than splitting it. This description is mine.\r\n\r\n- **How I reviewed it:** Nine passes, each with a different focus. 35 corruptions to test the tests. Every register offset and bit re-derived from the RP2040 datasheet \u2014 not from the code's own comments. Observed the defect and fix on RP2350 silicon.\r\n\r\n- **What I personally did:** Read the diff. Checked every line count and build output. Watched the test suite run. Watched the hardware observations. I have not run this on RP2040 hardware.\r\n\r\n---\r\n\r\n### Merge Order\r\n\r\nThis should land before #5141. That PR moves the driver to `chips/rp2xxx/src/pio.rs` and leaves rp2040's as a shim. If #5141 goes first, these commits conflict. Landing this first makes #5141 smaller.\r\n\r\nWatch out for #5126. It's approved and touches the same files. It deletes `mod examples` (273 lines) from the end of `pio.rs`. This PR adds a 262-line test module to the same place. Git will show one 535-line deletion. If you take that, the test suite vanishes. Everything still compiles, clippy passes, and boards link. Only `cargo test` saying \"0 passed\" reveals the problem. Keep the test module, drop the examples.",
-      "comments": [
-        {
-          "author": "lschuermann",
-          "body": "@bigmark222 \r\n\r\nYou, or a tool under your control, explicitly checked this box:\r\n\r\n> This PR comment, and any subsequent PR interactions must not be generated using AI, except for under a `<details>` drawer.\r\n\r\nThis cannot be ignored simply because this is a draft PR. Please re-open or re-create after you polished and tested these changes, and write up a concise description of them yourself."
-        }
-      ],
-      "createdAt": "2026-09-04T22:04:57Z",
-      "number": 5150,
-      "state": "CLOSED",
-      "title": "chips: rp2040: five PIO fixes, and the driver's first host tests",
-      "url": "https://github.com/tock/tock/pull/5150"
-    },
-    {
-      "author": {
         "id": "MDQ6VXNlcjk5MzAyNjM=",
         "is_bot": false,
         "login": "potto216",
@@ -416,6 +433,21 @@
       "state": "OPEN",
       "title": "The Raspberry PI Pico RP2040 USB CDC ACM serial port does not work with many machines",
       "url": "https://github.com/tock/tock/issues/5153"
+    },
+    {
+      "author": {
+        "id": "U_kgDODlBQIA",
+        "is_bot": false,
+        "login": "bigmark222",
+        "name": "Jon H"
+      },
+      "body": "### Pull Request Overview\r\n\r\nFive PIO driver defects, none affecting in-tree callers today: `set_fifo_join` could never join RX FIFO and couldn't undo a join; `add_program` panicked above 16 instructions and on odd byte counts; three of four PIO interrupt lines were never dispatched; block IRQ flags went to the wrong client and could hang the kernel. Fixes all five; defect 5 (block IRQ flags) is the one to review.\r\n\r\n<details>\r\n<summary>AI-generated measurement data</summary>\r\n\r\nhttps://via-balaena.github.io/tock-rp2350/findings/5150/\r\n\r\n</details>\r\n\r\n### Testing Strategy\r\n\r\nSilicon A/B on defect 5 (Pico 2 W): SM1 raises irq 0, client registered on both SM0 and SM1.\r\n- unfixed: client on SM0 was called\r\n- fixed: block client called, flags=0b0001; board kept running and answered status (unfixed variant hung after two characters)\r\n\r\n19 host tests, all passing, 0.00s, in ci-job-chips. Miri clean under strict-provenance and tree-borrows.\r\n\r\nText unchanged, bss -48 bytes on all four RP2040 boards (pico 16528\u219216480, pico_w 20724\u219220676, explorer 72668\u219272620, nano 14368\u219214320).\r\n\r\n### TODO or Help Wanted\r\n\r\nNo RP2040 hardware here. Nothing ran on the chip the driver is named for. The gSPI path is the only in-tree PIO user and its client registration moved from per-state-machine to per-block. Could someone with a Pico W exercise it?\r\n\r\nAlso worth flagging to reviewers: #5126 deletes `mod examples` (273 lines) from the end of pio.rs while this adds `mod tests` (262 lines). Taking the deletion drops all 19 tests while build, clippy and all four boards still pass. Only `cargo test` reporting 0 passed reveals it.\r\n\r\n### Checklist\r\n\r\n- [x] Ran `make prepush`.\r\n\r\n### PR Contents\r\n\r\n#### Documentation\r\n\r\n- [ ] Updated the relevant files in `/docs` and the [Book](https://github.com/tock/book).\r\n- [x] No documentation updates are required.\r\n\r\n#### AI Use\r\n\r\n- [ ] No AI was used in this PR.\r\n- [x] AI was used in this PR. I have read [Tock's AI policy](https://github.com/tock/tock/blob/master/.github/CONTRIBUTING.md#ai-policy) and have properly disclosed my AI use below. This PR comment, and any subsequent PR interactions must not be generated using AI, except for under a `<details>` drawer.\r\n\r\nCode written with Claude Opus 5\n",
+      "comments": [],
+      "createdAt": "2026-09-08T18:44:11Z",
+      "number": 5157,
+      "state": "OPEN",
+      "title": "chips: rp2040: five PIO fixes, and the driver's first host tests",
+      "url": "https://github.com/tock/tock/pull/5157"
     }
   ],
   "issues": [
@@ -859,8 +891,8 @@
         ],
         "stat": "4 files changed, 502 insertions(+), 263 deletions(-)",
         "base": "upstream/master",
-        "base_sha": "2a7a40450",
-        "behind": 5,
+        "base_sha": "73af792ec",
+        "behind": 0,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0

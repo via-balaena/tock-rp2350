@@ -21,9 +21,14 @@
   </nav>
   <h1>A PIO interrupt flag delivered to the wrong client</h1>
   <p class="issue">
-    <a href="https://github.com/tock/tock/issues/5150">tock/tock#5150</a>
-    <span class="state">closed when this was written</span>
+    <a href="https://github.com/tock/tock/issues/5157">tock/tock#5157</a>
+    <span class="state">open when this was written</span>
     <span>five defects, found 2026-09-04</span>
+  </p>
+  <p class="issue">
+    <a href="https://github.com/tock/tock/issues/5150">#5150</a>
+    <span class="state">closed, superseded</span>
+    <span>this page keeps its original address</span>
   </p>
   <p class="lede">The RP2040 PIO block raises eight IRQ flags that belong to the
   block. The driver delivered flag <i>n</i> to state machine <i>n</i>'s client
@@ -48,7 +53,10 @@
     <dd><span class="tag is-ok">demonstrated on silicon</span> Both the
     misrouting and the fix were run on a Pico&nbsp;2&nbsp;W over a Debug Probe
     &mdash; <a href="#s3">Section&nbsp;3</a>. No RP2040 board here, so nothing
-    ran on the chip the driver is named for.</dd>
+    ran on the chip the driver is named for. Proposed as
+    <a href="https://github.com/tock/tock/pull/5157">#5157</a>; the first
+    attempt, #5150, was closed for its description rather than its
+    contents.</dd>
   </dl>
 </div>
 
