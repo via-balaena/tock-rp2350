@@ -335,6 +335,20 @@ RUNTIME_CLASSES = {"on", "here", "rel", "lit", "filtered", "kind"}
 # deliberately not styling hooks, so they have no rules and are not dead.
 STRUCTURAL_CLASSES = {"lanes", "laneheads", "edges", "qheads", "qedges"}
 
+# Classes drawn only when the fetched data has a particular state. They are not
+# dead rules; they are rules whose condition is false today. Distinguishing them
+# matters, because otherwise the gate reports a defect every time the upstream
+# state moves, and a check that cries wolf on a normal Tuesday gets ignored.
+#
+#   l-draft  a pull request lane, drawn while a PR is an OPEN draft. Both drafts
+#            were closed on 2026-09-07 and a closed draft renders as `closed`.
+#   closes   a chip's "closes #N", read out of a body's closing keyword. Present
+#            only while some open PR uses one; it goes when those merge.
+#
+# Each needs a reason written down. Adding a name here without one turns the
+# whole check off by degrees.
+STATE_CLASSES = {"l-draft", "closes"}
+
 
 def check_styles(build, html, problems):
     """Every class in the markup has a rule, and every rule has markup.
@@ -355,7 +369,8 @@ def check_styles(build, html, problems):
         defined |= set(re.findall(r"\.(-?[A-Za-z_][\w-]*)", selector))
     for name in sorted(used - defined - RUNTIME_CLASSES - STRUCTURAL_CLASSES):
         problems.append(f"styles: the markup uses class {name!r} and no rule matches it")
-    for name in sorted(defined - used - RUNTIME_CLASSES - STRUCTURAL_CLASSES):
+    for name in sorted(defined - used - RUNTIME_CLASSES - STRUCTURAL_CLASSES
+                       - STATE_CLASSES):
         problems.append(f"styles: the stylesheet has a rule for {name!r} and no markup uses it")
 
 
