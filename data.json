@@ -321,6 +321,31 @@
         "boards/raspberry_pi_pico/Makefile",
         "boards/raspberry_pi_pico_2/Makefile"
       ]
+    },
+    {
+      "additions": 21,
+      "changedFiles": 4,
+      "closedAt": null,
+      "createdAt": "2026-09-08T16:57:59Z",
+      "deletions": 0,
+      "isDraft": false,
+      "mergedAt": null,
+      "number": 5156,
+      "reviewDecision": "APPROVED",
+      "state": "OPEN",
+      "title": "rp2: strip .stack from the ELF that make program flashes",
+      "url": "https://github.com/tock/tock/pull/5156",
+      "commits": [
+        {
+          "messageHeadline": "rp2: strip .stack from the ELF that make program flashes"
+        }
+      ],
+      "files": [
+        "boards/nano_rp2040_connect/Makefile",
+        "boards/pico_explorer_base/Makefile",
+        "boards/raspberry_pi_pico/Makefile",
+        "boards/raspberry_pi_pico_2/Makefile"
+      ]
     }
   ],
   "findings": [
@@ -343,7 +368,7 @@
         },
         {
           "author": "bigmark222",
-          "body": "@potto216 #5154 "
+          "body": "@potto216 #5156"
         }
       ],
       "createdAt": "2026-04-01T13:22:19Z",
@@ -1419,6 +1444,51 @@
         "rp2xxx": {
           "adc": 253,
           "lib": 36,
+          "spi": 638
+        }
+      },
+      "rp2-doc-fixes": {
+        "rp2040": {
+          "adc": 240,
+          "chip": 246,
+          "clocks": 1419,
+          "deferred_calls": 33,
+          "dma": 606,
+          "gpio": 727,
+          "i2c": 729,
+          "interrupts": 30,
+          "lib": 109,
+          "mod": 5,
+          "pio": 1947,
+          "pio_gspi": 270,
+          "pio_pwm": 95,
+          "pio_spi": 572,
+          "pwm": 76,
+          "resets": 371,
+          "rtc": 448,
+          "spi": 36,
+          "sysinfo": 98,
+          "timer": 277,
+          "uart": 761,
+          "usb": 2484,
+          "watchdog": 129,
+          "xosc": 117
+        },
+        "rp2350": {
+          "chip": 175,
+          "clocks": 1530,
+          "gpio": 1555,
+          "interrupts": 56,
+          "lib": 118,
+          "resets": 400,
+          "spi": 36,
+          "ticks": 174,
+          "timer": 274,
+          "uart": 811,
+          "xosc": 125
+        },
+        "rp2xxx": {
+          "lib": 29,
           "spi": 638
         }
       },
@@ -13746,6 +13816,12 @@
         "chips/rp2350/src/lib.rs",
         "chips/rp2xxx/src/adc.rs",
         "chips/rp2xxx/src/lib.rs"
+      ],
+      "rp2-doc-fixes": [
+        "boards/pico_explorer_base/README.md",
+        "boards/raspberry_pi_pico_2/README.md",
+        "capsules/core/src/gpio.rs",
+        "doc/syscalls/00005_adc.md"
       ],
       "rp2-make-program-fix": [
         "boards/nano_rp2040_connect/Makefile",
