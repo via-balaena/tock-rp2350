@@ -92,7 +92,7 @@ ask someone to read it, not about whether it is done.
 INTENT = {
     "tock:rp2-pio-prep": ("upstream", "PIO cleanups.", None),
     "tock:rp2-make-program-fix": ("upstream", "Fixes #4770: `make program` cannot flash an application on any RP2 board, because splicing one in gives the (NOLOAD) `.stack` segment file content for SRAM and both UF2 converters refuse the result. One `objcopy -R .stack` per rule, five rules, four boards.", "**Open as #5156**, ready for review, rebased onto master as `d5b5f7cbc`. The first attempt, #5154, was closed the same day it was opened -- for a placeholder description, not for the change -- and could not be reopened afterwards because the branch had been force-pushed. Its evidence is the reporter's own RP2040 run plus a `program-openocd` A/B on RP2350 silicon. Four Makefiles, twenty-one added lines, no Rust. Touches `boards/raspberry_pi_pico_2/Makefile`, which #5141 also edits -- different regions of the file, so it merges cleanly either order."),
-    "tock:rp2-doc-fixes": ("upstream", "Three places the documentation disagrees with the code: two RP2 board READMEs name a `make` target that does not exist, the ADC syscall document never states the left-justification the HIL guarantees, and the GPIO capsule's pull encoding is rotated by one from the enum it translates into. Four files, +16 -3.", "Ready. The cheapest thing in the queue to review — no behaviour change anywhere, and the README half fails for a reader today."),
+    "tock:rp2-doc-fixes": ("upstream", "Three places the documentation disagrees with the code: two RP2 board READMEs name a `make` target that does not exist, the ADC syscall document never states the left-justification the HIL guarantees, and the GPIO capsule's pull encoding is rotated by one from the enum it translates into. Four files, +16 -3.", "**Open as #5158 and APPROVED by lschuermann** within the hour, head `6319b0ca4`. Two commits now, not three: he objected to the GPIO comment and was right — `FloatingState` has no `#[repr()]`, integer-to-enum `as` does not compile (E0605), and `unsafe` is banned in capsules outright, so the hazard that comment described was unreachable. Dropped rather than defended. The ADC commit was also amended before opening: it said the HIL promises left-justification three times, and it is seven, across all three of its traits."),
     "tock:rp2-pad-controls": ("upstream", "Shared pad enums and the RP2350 pad controls.", None),
     "tock:pico2w-typed": ("upstream", "The Pico 2 W board and the radio.", None),
     "tock:rp2-pio-tests": ("upstream", "Five PIO fixes and the driver's first host tests. Four defects demonstrated by tests that fail on unmodified upstream; one of them panics the kernel.", "**Was #5150, closed 2026-09-07** -- for a PR body written by AI under a checkbox promising it would not be, which is the one part of that close not worth contesting. **STILL REOPENABLE, and fragile: force-pushing this branch would end that permanently**, as it did to #5154. Reopen first, rebase after. Needs a description in Jon's own words; the existing one is 5,714 characters against a house median near 1,200."),
@@ -242,6 +242,16 @@ WORK = {
     "chips: rp2040: an irq flag belongs to the block, not a state machine": {
         "short": "Scope the irq flag to the block",
         "verify": "host",
+    },
+    "boards: rp2: name a make target that exists in the README": {
+        "short": "Name a make target that exists",
+        "verify": "build",
+        "note": "Two RP2 READMEs told a reader to flash an application with `make flash-app`, which neither board has -- make itself says so. It is `program` on both, and each README already said that in its other flashing section.",
+    },
+    "doc: syscalls: adc: say that samples are left-justified": {
+        "short": "Say ADC samples are left-justified",
+        "verify": "none",
+        "note": "The HIL promises left-justification seven times across its three traits; the syscall document an application author reads never said it, which invites scaling the value by the wrong constant. Nothing automated reaches a sentence in a document.",
     },
     "rp2: strip .stack from the ELF that make program flashes": {
         "short": "Strip .stack from the flashed ELF",
