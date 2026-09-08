@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Check that the published page is still true, still current and still legible.
 
-Nineteen checks, and a twentieth that runs when node and jsdom are there. Each one exists because it has already caught something, or because
+Twenty checks, and a twenty-first that runs when node and jsdom are there. Each one exists because it has already caught something, or because
 it guards a mistake that was actually made here:
 
   drift       index.html is not what build.py would produce from data.json,
@@ -16,6 +16,11 @@ it guards a mistake that was actually made here:
               the dropdown a reviewer opens would be empty.
   refs        a "#1234" written by hand in the prose names a pull request or
               issue that does not exist. A typo here is invisible on the page.
+  basis       a branch's recorded base is not an ancestor of that branch, or
+              its "behind" count is wrong. Sits in the gap between drift and
+              fresh -- neither of those looks at the clones, which is where
+              base_sha rotted into the tip of upstream instead of the branch's
+              own merge-base, on eight of ten branches.
   private     an address, MAC, serial path or home directory reached the HTML.
   contrast    a text-on-surface pair fell below 4.5:1. Two colours have already
               shipped below it, both found this way and neither by looking.
@@ -394,6 +399,44 @@ def check_interactions(problems):
     return None
 
 
+def check_basis(build, data, problems):
+    """Every derived fact about a local branch is re-derived, not trusted.
+
+    Nothing else here looks at the clones. `drift` compares the HTML to
+    data.json and `fresh` compares data.json to GitHub, so the local survey sat
+    between them unchecked -- and that is exactly where it rotted: `base_sha`
+    was `rev-parse upstream/master`, the tip of the base rather than where the
+    branch left it, and the page rendered "Cut from upstream/master at
+    73af792ec" for eight branches that were not, two of them by 29 and 40
+    commits.
+
+    The invariant below is deliberately NOT "recompute merge-base and compare".
+    That re-runs the same code and would have agreed with the bug. It asserts a
+    property the value must have however it was produced: a branch's basis is an
+    ancestor of that branch. The old value failed it on any branch that was
+    behind, which was most of them.
+    """
+    for repo, (path, base) in build.LOCAL.items():
+        if not path.exists():
+            continue
+        for branch, info in sorted(data.get("local", {}).get(repo, {}).items()):
+            sha = info.get("base_sha")
+            if not sha:
+                continue
+            if build.git(path, "merge-base", "--is-ancestor", sha, branch) is None:
+                problems.append(
+                    f"basis: {repo}:{branch} records base_sha {sha}, which is "
+                    f"not an ancestor of the branch — so \"Cut from\" names a "
+                    f"commit the branch was not cut from")
+                continue
+            want = int(build.git(path, "rev-list", "--count",
+                                 f"{branch}..{base}") or 0)
+            if int(info.get("behind", 0)) != want:
+                problems.append(
+                    f"basis: {repo}:{branch} says {info.get('behind')} commits "
+                    f"behind {base}, and it is {want} — run ./build.py")
+
+
 def check_findings(build, data, problems):
     """A findings row and its page cannot exist without each other.
 
@@ -703,6 +746,7 @@ def main():
     check_pinmaps(build, html, problems)
     check_bits(html, problems)
     check_queue(build, data, html, problems)
+    check_basis(build, data, problems)
     check_findings(build, data, problems)
     check_quotes(build, data, problems)
     check_learning(problems)
@@ -710,7 +754,7 @@ def main():
     if not args.offline:
         check_fresh(build, data, problems)
 
-    ran = (20 if args.offline else 21) + (0 if skipped else 1)
+    ran = (21 if args.offline else 22) + (0 if skipped else 1)
     if skipped:
         print(f"note: the interaction check did not run — {skipped}\n")
     if problems:
