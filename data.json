@@ -391,7 +391,7 @@
         ],
         "stat": "3 files changed, 190 insertions(+), 1 deletion(-)",
         "base": "upstream/master",
-        "base_sha": "2a7a40450",
+        "base_sha": "73af792ec",
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -425,7 +425,7 @@
         ],
         "stat": "46 files changed, 5446 insertions(+), 2771 deletions(-)",
         "base": "upstream/master",
-        "base_sha": "2a7a40450",
+        "base_sha": "73af792ec",
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -437,7 +437,7 @@
         ],
         "stat": "2 files changed, 35 insertions(+), 9 deletions(-)",
         "base": "upstream/master",
-        "base_sha": "2a7a40450",
+        "base_sha": "73af792ec",
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -447,7 +447,7 @@
         "commits": [],
         "stat": "",
         "base": "upstream/master",
-        "base_sha": "2a7a40450",
+        "base_sha": "73af792ec",
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -459,7 +459,7 @@
         ],
         "stat": "5 files changed, 30 deletions(-)",
         "base": "upstream/master",
-        "base_sha": "2a7a40450",
+        "base_sha": "73af792ec",
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -658,7 +658,7 @@
         ],
         "stat": "48 files changed, 4913 insertions(+), 3812 deletions(-)",
         "base": "upstream/master",
-        "base_sha": "2a7a40450",
+        "base_sha": "73af792ec",
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -668,7 +668,7 @@
         "commits": [],
         "stat": "",
         "base": "upstream/master",
-        "base_sha": "2a7a40450",
+        "base_sha": "73af792ec",
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -697,7 +697,7 @@
         ],
         "stat": "48 files changed, 5032 insertions(+), 3812 deletions(-)",
         "base": "upstream/master",
-        "base_sha": "2a7a40450",
+        "base_sha": "73af792ec",
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -719,7 +719,7 @@
         ],
         "stat": "38 files changed, 4423 insertions(+), 2550 deletions(-)",
         "base": "upstream/master",
-        "base_sha": "2a7a40450",
+        "base_sha": "73af792ec",
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -733,7 +733,21 @@
         ],
         "stat": "8 files changed, 431 insertions(+), 238 deletions(-)",
         "base": "upstream/master",
-        "base_sha": "2a7a40450",
+        "base_sha": "73af792ec",
+        "pushed": true,
+        "on_remote": true,
+        "unpushed": 0
+      },
+      "rp2-doc-fixes": {
+        "ahead": 3,
+        "commits": [
+          "capsules: gpio: warn that the pull encoding is not the enum's order",
+          "doc: syscalls: adc: say that samples are left-justified",
+          "boards: rp2: name a make target that exists in the README"
+        ],
+        "stat": "4 files changed, 16 insertions(+), 3 deletions(-)",
+        "base": "upstream/master",
+        "base_sha": "73af792ec",
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -745,7 +759,7 @@
         ],
         "stat": "4 files changed, 21 insertions(+)",
         "base": "upstream/master",
-        "base_sha": "2a7a40450",
+        "base_sha": "73af792ec",
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -758,7 +772,7 @@
         ],
         "stat": "4 files changed, 51 insertions(+), 19 deletions(-)",
         "base": "upstream/master",
-        "base_sha": "2a7a40450",
+        "base_sha": "73af792ec",
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -770,7 +784,7 @@
         ],
         "stat": "4 files changed, 136 insertions(+), 280 deletions(-)",
         "base": "upstream/master",
-        "base_sha": "2a7a40450",
+        "base_sha": "73af792ec",
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -786,7 +800,7 @@
         ],
         "stat": "4 files changed, 502 insertions(+), 263 deletions(-)",
         "base": "upstream/master",
-        "base_sha": "2a7a40450",
+        "base_sha": "73af792ec",
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -800,7 +814,7 @@
         ],
         "stat": "4 files changed, 57 insertions(+), 13 deletions(-)",
         "base": "upstream/master",
-        "base_sha": "2a7a40450",
+        "base_sha": "73af792ec",
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -812,7 +826,7 @@
         ],
         "stat": "1 file changed, 4 insertions(+)",
         "base": "upstream/master",
-        "base_sha": "2a7a40450",
+        "base_sha": "73af792ec",
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -825,7 +839,7 @@
         ],
         "stat": "4 files changed, 698 insertions(+), 4 deletions(-)",
         "base": "upstream/master",
-        "base_sha": "2a7a40450",
+        "base_sha": "73af792ec",
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -839,7 +853,7 @@
         ],
         "stat": "5 files changed, 487 insertions(+)",
         "base": "upstream/master",
-        "base_sha": "2a7a40450",
+        "base_sha": "73af792ec",
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1066,7 +1080,7 @@
     "ok": true,
     "upstream_ref": "upstream/master",
     "fork_ref": "bench/stepper-pico2w",
-    "head": "2a7a40450",
+    "head": "73af792ec",
     "resets": {
       "rp2040": {
         "USBCTRL": 24,
