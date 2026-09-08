@@ -34,6 +34,24 @@
 
 <main id="main">
 
+<div class="short">
+  <dl>
+    <dt>Bug</dt>
+    <dd>Splicing an application into the kernel gives the <code>(NOLOAD)</code>
+    <code>.stack</code> segment file content for SRAM that has none, so
+    <code>make program</code> fails on every RP2 board.</dd>
+    <dt>Fix</dt>
+    <dd>One <code>objcopy -R .stack</code> per splice rule &mdash; five rules,
+    four Makefiles, +21 &minus;0. Proposed as
+    <a href="https://github.com/tock/tock/pull/5154">tock/tock#5154</a>.</dd>
+    <dt>Status</dt>
+    <dd><span class="tag is-ok">confirmed on hardware</span> The reporter ran
+    the fix on an RP2040 and <code>program-openocd</code> was A/B'd on an
+    RP2350 &mdash; <a href="#s8">Section&nbsp;8</a>. Two boards of four and
+    <code>program-probe</code> are still file-level only.</dd>
+  </dl>
+</div>
+
 <h2><span class="n">1</span>What happens</h2>
 
 <p>Building any application into the Pico kernel fails at the last step:</p>

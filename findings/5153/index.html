@@ -36,6 +36,23 @@
 
 <main id="main">
 
+<div class="short">
+  <dl>
+    <dt>Defect</dt>
+    <dd><code>handle_bus_reset</code> arms EP0 IN and never takes it back, so
+    the data stage's first packet leaves as DATA0 carrying 64 bytes where the
+    standard requires DATA1 and the descriptor is 18.</dd>
+    <dt>Fix</dt>
+    <dd>One line clearing the endpoint's buffer control at reset
+    &mdash; <a href="#s7">Section&nbsp;7</a>.</dd>
+    <dt>Status</dt>
+    <dd><span class="tag is-flag">not tested, no pull request</span> Read from
+    source, the datasheet and the reporter's capture; there is no RP2040 board
+    here. Nobody should merge it on this page's strength &mdash; it needs
+    someone with a Pico, an analyser and a failing host.</dd>
+  </dl>
+</div>
+
 <h2><span class="n">1</span>What was measured</h2>
 
 <p>On the wire, after a bus reset, the host's first
@@ -377,7 +394,7 @@ still armed when the request arrives.</p>
 data it is meant to send, and never read-modify-writes one. Tock does both, on
 EP0 IN, from reset until the first descriptor goes out.</p>
 
-<h2><span class="n">7</span>The change</h2>
+<h2 id="s7"><span class="n">7</span>The change</h2>
 
 <p>The minimal fix is to stop giving the buffer away. There is nothing to send
 at bus reset, and the endpoint NAKing until there is, is the correct

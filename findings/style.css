@@ -35,6 +35,28 @@ code,kbd{font-family:var(--mono);font-size:.88em}
 p code,li code,td code,dd code{background:var(--bg);border:1px solid var(--line);
   border-radius:4px;padding:.06em .32em}
 
+/* ---- the short answer, above the report ----
+   Both pages are long on purpose: they are the measurement, not the summary.
+   A reader arriving from a GitHub issue needs three facts before deciding to
+   read on -- what broke, what fixes it, and what state it is in -- and until
+   this box existed they had to reach section 7 or 8 for the last two. The
+   worst case was #5153, where "nobody should merge this, it is untested" sat
+   in the final section. Nothing here is new: it is the page's own conclusions
+   hoisted to where they are read first. */
+.short{background:var(--panel);border:1px solid var(--line);
+  border-left:3px solid var(--accent);border-radius:10px;
+  padding:15px 19px;margin:0 0 34px}
+.short dl{display:grid;grid-template-columns:auto 1fr;gap:9px 16px;margin:0}
+.short dt{font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;
+  color:var(--ink-faint);font-weight:700;padding-top:.35em}
+.short dd{margin:0;max-width:70ch}
+.short .tag{margin-right:7px;vertical-align:1px}
+@media (max-width:560px){
+  .short dl{grid-template-columns:1fr;gap:3px 0}
+  .short dt{padding-top:.6em}
+  .short dd{margin-bottom:4px}
+}
+
 /* ---- masthead ---- */
 .top{border-bottom:1px solid var(--line);margin-bottom:34px;padding:18px 0 0}
 .crumb{display:flex;flex-wrap:wrap;gap:10px;align-items:baseline;
