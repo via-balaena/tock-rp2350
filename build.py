@@ -688,7 +688,15 @@ def survey_local():
                 "commits": commits,
                 "stat": stat.strip(),
                 "base": base,
-                "base_sha": (git(path, "rev-parse", "--short", base) or ""),
+                # The MERGE-BASE, not the tip of `base`. Rendered as "Cut from
+                # <base> at <sha>", which is a claim about where this branch
+                # actually diverged -- and `rev-parse base` answered a different
+                # question, so the page asserted every branch was cut from the
+                # current upstream tip. That was false for eight of ten, by up
+                # to 40 commits.
+                "base_sha": ((git(path, "merge-base", branch, base) or "")[:9]),
+                "behind": int(git(path, "rev-list", "--count",
+                                  f"{branch}..{base}") or 0),
                 "pushed": pushed,
                 "on_remote": bool(held),
                 "unpushed": unpushed,
@@ -1404,6 +1412,7 @@ def queue_rows(data):
                 "repo": repo, "branch": branch, "ahead": info["ahead"],
                 "commits": info["commits"], "stat": info.get("stat", ""),
                 "base": info.get("base", ""), "base_sha": info.get("base_sha", ""),
+                "behind": info.get("behind", 0),
                 "pushed": info["pushed"], "intent": intent, "note": note,
                 # .get for both: a data.json cached before these existed still
                 # renders under --offline rather than raising.
@@ -2266,8 +2275,11 @@ def facts_html(r):
                     % (len(r["commits"]) - len(shown)))
     base = ""
     if r.get("base"):
-        base = ("<p class=\"basis\">Cut from <code>%s</code> at <code>%s</code>%s</p>"
+        behind = r.get("behind") or 0
+        base = ("<p class=\"basis\">Cut from <code>%s</code> at <code>%s</code>%s%s</p>"
                 % (e(r["base"]), e(r["base_sha"]),
+                   ", %d commit%s behind" % (behind, "" if behind == 1 else "s")
+                   if behind else "",
                    " &middot; " + e(r["stat"]) if r.get("stat") else ""))
     return (
         '<details class="facts"><summary>Evidence for a pull request '
