@@ -407,14 +407,14 @@
     {
       "additions": 7,
       "changedFiles": 3,
-      "closedAt": null,
+      "closedAt": "2026-09-09T16:08:52Z",
       "createdAt": "2026-09-08T21:21:45Z",
       "deletions": 3,
       "isDraft": false,
-      "mergedAt": null,
+      "mergedAt": "2026-09-09T16:08:52Z",
       "number": 5158,
       "reviewDecision": "APPROVED",
-      "state": "OPEN",
+      "state": "MERGED",
       "title": "docs: rp2: two places the documentation disagrees with the code",
       "url": "https://github.com/tock/tock/pull/5158",
       "closes": [],
@@ -572,7 +572,7 @@
         "stat": "3 files changed, 190 insertions(+), 1 deletion(-)",
         "base": "upstream/master",
         "base_sha": "0c6e7b184",
-        "behind": 14,
+        "behind": 17,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -607,7 +607,7 @@
         "stat": "46 files changed, 5446 insertions(+), 2771 deletions(-)",
         "base": "upstream/master",
         "base_sha": "479b61829",
-        "behind": 43,
+        "behind": 46,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -620,7 +620,7 @@
         "stat": "2 files changed, 35 insertions(+), 9 deletions(-)",
         "base": "upstream/master",
         "base_sha": "b3234a172",
-        "behind": 3601,
+        "behind": 3604,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -631,7 +631,7 @@
         "stat": "",
         "base": "upstream/master",
         "base_sha": "0b5b4753e",
-        "behind": 97,
+        "behind": 100,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -644,7 +644,7 @@
         "stat": "5 files changed, 30 deletions(-)",
         "base": "upstream/master",
         "base_sha": "08894c2e0",
-        "behind": 112,
+        "behind": 115,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -844,7 +844,7 @@
         "stat": "48 files changed, 4913 insertions(+), 3812 deletions(-)",
         "base": "upstream/master",
         "base_sha": "8e7431d08",
-        "behind": 68,
+        "behind": 71,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -855,7 +855,7 @@
         "stat": "",
         "base": "upstream/master",
         "base_sha": "38e3744f4",
-        "behind": 83,
+        "behind": 86,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -885,7 +885,7 @@
         "stat": "48 files changed, 5032 insertions(+), 3812 deletions(-)",
         "base": "upstream/master",
         "base_sha": "8e7431d08",
-        "behind": 68,
+        "behind": 71,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -908,7 +908,7 @@
         "stat": "38 files changed, 4423 insertions(+), 2550 deletions(-)",
         "base": "upstream/master",
         "base_sha": "479b61829",
-        "behind": 43,
+        "behind": 46,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -923,21 +923,18 @@
         "stat": "8 files changed, 431 insertions(+), 238 deletions(-)",
         "base": "upstream/master",
         "base_sha": "e2ec78ff5",
-        "behind": 0,
+        "behind": 3,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
       },
       "rp2-doc-fixes": {
-        "ahead": 2,
-        "commits": [
-          "doc: syscalls: adc: say that samples are left-justified",
-          "boards: rp2: name a make target that exists in the README"
-        ],
-        "stat": "3 files changed, 7 insertions(+), 3 deletions(-)",
+        "ahead": 0,
+        "commits": [],
+        "stat": "",
         "base": "upstream/master",
-        "base_sha": "73af792ec",
-        "behind": 3,
+        "base_sha": "6319b0ca4",
+        "behind": 4,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -950,7 +947,7 @@
         ],
         "stat": "9 files changed, 159 insertions(+), 126 deletions(-)",
         "base": "upstream/master",
-        "base_sha": "e2ec78ff5",
+        "base_sha": "52aa1b684",
         "behind": 0,
         "pushed": true,
         "on_remote": true,
@@ -964,7 +961,7 @@
         "stat": "4 files changed, 21 insertions(+)",
         "base": "upstream/master",
         "base_sha": "73af792ec",
-        "behind": 3,
+        "behind": 6,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -978,7 +975,7 @@
         "stat": "4 files changed, 51 insertions(+), 19 deletions(-)",
         "base": "upstream/master",
         "base_sha": "834bbbc26",
-        "behind": 32,
+        "behind": 35,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -991,7 +988,7 @@
         "stat": "4 files changed, 136 insertions(+), 280 deletions(-)",
         "base": "upstream/master",
         "base_sha": "479b61829",
-        "behind": 43,
+        "behind": 46,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1008,7 +1005,7 @@
         "stat": "4 files changed, 502 insertions(+), 263 deletions(-)",
         "base": "upstream/master",
         "base_sha": "73af792ec",
-        "behind": 3,
+        "behind": 6,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1023,7 +1020,7 @@
         "stat": "4 files changed, 57 insertions(+), 13 deletions(-)",
         "base": "upstream/master",
         "base_sha": "e2ec78ff5",
-        "behind": 0,
+        "behind": 3,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1036,7 +1033,7 @@
         "stat": "1 file changed, 4 insertions(+)",
         "base": "upstream/master",
         "base_sha": "e2ec78ff5",
-        "behind": 0,
+        "behind": 3,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1050,7 +1047,7 @@
         "stat": "4 files changed, 698 insertions(+), 4 deletions(-)",
         "base": "upstream/master",
         "base_sha": "65608d717",
-        "behind": 98,
+        "behind": 101,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1065,7 +1062,7 @@
         "stat": "5 files changed, 487 insertions(+)",
         "base": "upstream/master",
         "base_sha": "e2ec78ff5",
-        "behind": 0,
+        "behind": 3,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1303,7 +1300,7 @@
     "ok": true,
     "upstream_ref": "upstream/master",
     "fork_ref": "bench/stepper-pico2w",
-    "head": "e2ec78ff5",
+    "head": "52aa1b684",
     "resets": {
       "rp2040": {
         "USBCTRL": 24,
@@ -14060,11 +14057,7 @@
         "chips/rp2xxx/src/adc.rs",
         "chips/rp2xxx/src/lib.rs"
       ],
-      "rp2-doc-fixes": [
-        "boards/pico_explorer_base/README.md",
-        "boards/raspberry_pi_pico_2/README.md",
-        "doc/syscalls/00005_adc.md"
-      ],
+      "rp2-doc-fixes": [],
       "rp2-local-board": [
         "boards/nano_rp2040_connect/Makefile",
         "boards/nano_rp2040_connect/README.md",

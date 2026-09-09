@@ -243,7 +243,11 @@ to be asked about.</p>
   <figcaption><b>Figure 2.</b> Pico&nbsp;2&nbsp;W on a Debug&nbsp;Probe,
   2026-09-09, kernel built from <code>e2ec78ff5</code>. <b>All three ways of
   putting the image on the board were run</b> &mdash; SWD, the bootloader, and
-  probe-rs. The process list is the board's own process console answering
+  probe-rs. They were run under the target names this change carried before it
+  was reworked; the openocd line <code>flash-openocd</code> executes is
+  byte-identical to the one <code>program-openocd</code> did, and what differs
+  is the prerequisite, which now writes the kernel and leaves applications to
+  <code>tockloader install</code>. The process list is the board's own process console answering
   <code>list</code> over the UART. Transcripts are quoted, not
   summarised.</figcaption>
 
@@ -251,11 +255,14 @@ to be asked about.</p>
 </figure>
 
 <p><b>And two applications at once, which the route it replaces cannot do at
-all.</b> <code>--update-section .apps=</code> takes one file.
-<code>tockloader install --local-board</code> put <code>leak_claim</code> at
+all.</b> <code>--update-section .apps=</code> takes one file. Two were
+installed into a 274,433-byte image &mdash; <code>leak_claim</code> at
 <code>0x10040080</code> and <code>leak_observe</code> at <code>0x10041080</code>
-&mdash; a 274,433-byte image &mdash; and the kernel listed both, loaded over SWD
-and again through the bootloader. The two have to want different addresses:
+&mdash; and the kernel listed both, loaded over SWD and again through the
+bootloader. <code>tockloader install</code> takes <code>[tab ...]</code>, so one
+call carries both; <b>that shape is read off the rule and the tool's signature,
+not off a saved transcript</b>, which is a weaker claim than the two processes
+in the list beside it. The two have to want different addresses:
 these are built for adjacent slots, and two applications compiled for the same
 one are refused with <code>Could not meet fixed address requirements</code>.
 That requirement comes from an optional TBF header, not from this route
@@ -455,7 +462,12 @@ really a question about two programs, and both are here.</p>
           <tr><td class="lbl">tockloader becomes required</td>
             <td>For a route that needs none of it today. It is what installs
             an application now &mdash; there is no <code>APP</code> variable to
-            redefine, because there is no longer one at all.</td>
+            redefine, because there is no longer one at all. Without it
+            <code>make flash</code> stops at <code>write-kernel</code>:
+            <code>tockloader: command not found</code>,
+            <code>Error 127</code>, exit 2 &mdash; <b>loudly</b>, which is worth
+            saying because one recipe already in the tree swallows the same 127
+            and exits 0.</td>
             <td><span class="tag is-flag">normal for Tock</span></td></tr>
         </tbody>
       </table>
@@ -531,12 +543,15 @@ and the order they land in costs nothing either way.</p>
   one that removes the conditions rather than patching them.</figcaption>
 </figure>
 
-<p><b>And #5158, which is half caught up in this.</b> That pull request is two
-commits: one renames a <code>make</code> target in two RP2 READMEs, and one says
-in the ADC syscall document that samples are left-justified. This rewrites the
-same two README lines, so that commit is subsumed whichever way round they land.
-The ADC commit has nothing to do with flashing and survives either order.
-<b>Whichever goes second drops one commit, not the pull request.</b></p>
+<p><b>#5158 went first, and the collision cost one line.</b> That pull request
+was two commits: one renamed a <code>make</code> target in two RP2 READMEs, and
+one said in the ADC syscall document that samples are left-justified. It merged
+on 2026-09-09, and this change was rebased onto it the same day. Both conflicts
+were the same shape &mdash; #5158's corrected <code>make program</code> against
+the <code>tockloader install</code> lines that replace the whole block &mdash;
+and both resolved by keeping the replacement. <b>The ADC commit is untouched.</b>
+This is what the queue's dependency arrows are for: the hold was recorded before
+either landed, and the resolution was a rebase rather than a surprise.</p>
 
 <h2 id="s7"><span class="n">7</span>What this does not establish</h2>
 
@@ -552,8 +567,11 @@ could not make. What follows is what nothing here could close.</p>
   emulated boards are RISC-V and x86. The image assembles, begins with that
   board's own kernel binary byte for byte, and converts to the right family with
   a valid TBF header at the application address &mdash; but nothing was booted
-  from it. <a href="#f5">Figure&nbsp;5</a> argues it would behave as it does
-  today; it does not observe it.</li>
+  from it. <code>make init</code> and <code>make flash</code> do run end to end
+  on <code>raspberry_pi_pico</code>, with tockloader 1.18.1 and picotool doing
+  the work, so what is untested is the boot and not the rules.
+  <a href="#f5">Figure&nbsp;5</a> argues it would behave as it does today; it
+  does not observe it.</li>
   <li><b>probe-rs ran, but not against the chip the rule names.</b> The
   invocation in <a href="#f2">Figure&nbsp;2</a> used
   <code>--chip RP235x</code>, because that is the board here.
@@ -565,6 +583,12 @@ could not make. What follows is what nothing here could close.</p>
   on this hardware. What is shown is that the byte's presence decides the
   outcome, not which of the two does the work &mdash; and for the route it makes
   no difference, since both make the old header unreadable.</li>
+  <li><b>No kernel-only image has been booted from this route.</b> Collapsing
+  <code>program</code> into <code>flash</code> means <code>flash</code> converts
+  the image rather than the ELF, and with nothing installed that image is a
+  dense 262,144 bytes where the ELF was sparse. Every block it adds is zero and
+  every block the two share is identical &mdash; but the with-application case
+  is the one that was put on a board.</li>
   <li><b>The stale-slot A/B was run over SWD only.</b> A UF2 was written through
   the bootloader in <a href="#s3">Section&nbsp;3</a>, but not as an arm of that
   comparison. The bootloader erases a sector before writing into it, so the same
