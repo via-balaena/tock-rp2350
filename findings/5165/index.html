@@ -295,11 +295,31 @@ microseconds later &mdash; that needs the condition to still be asserted then.
 After an openocd reset it evidently is, every time. After a probe-rs reset it
 usually is not, and <strong>why has not been established.</strong></p>
 
-<p>One caveat on the probe-rs row: <code>gdb --reset-halt</code> attaches before
-it resets, and whether that is the same sequence as a plain
-<code>probe-rs reset</code> &mdash; the one the rates were measured with &mdash;
-has not been checked. None of this changes the defect, which is that the kernel
-panics on a pending bit nobody owns however it got there.</p>
+<p>That the probe-rs row is the right one to compare was checked in probe-rs's
+own source at the tagged version, since <code>gdb --reset-halt</code> is not the
+command the rates were measured with. <code>probe-rs reset</code> calls
+<code>core.reset()</code>; <code>--reset-halt</code> calls
+<code>core.reset_and_halt()</code>. In the Armv8-M core both run the identical
+line:</p>
+
+<pre>self.sequence.reset_system(&amp;mut *self.memory, CoreType::Armv8m, None)?;
+</pre>
+
+<p>Same function, same arguments, so whatever that does for this chip, both
+paths do it. <code>reset_and_halt</code> adds only a DEMCR vector-catch write
+before it &mdash; a debug register, described in the code's own comment as
+&ldquo;this will halt the core after reset&rdquo; &mdash; and a wait for the
+halt afterwards. <strong>The stimulus is the same by construction.</strong></p>
+
+<p>What both rows do share as a limit: the core is halted while the USB
+controller keeps running, so these are the registers shortly after each reset
+rather than frozen at the instant of it. A behavioural check &mdash; resume from
+the vector and see whether the panic rate matches a plain reset &mdash; was
+attempted and came back inconclusive, the console staying silent on four
+iterations of six.</p>
+
+<p>None of this changes the defect, which is that the kernel panics on a pending
+bit nobody owns however it got there.</p>
 
 <h2><span class="n">5</span>Four theories, and one of them was right all along</h2>
 
