@@ -281,6 +281,18 @@ observations, not one: the kernel came up from the dense image, and an erased
 region really is empty rather than quietly holding something the loader would
 find.</p>
 
+<p><b>The byte does the work, not the erase it triggers.</b> That distinction
+looked unresolvable: the route writes the terminator through a programming path
+that erases the sector first, so the two always arrive together. They come apart
+on the bench, because NOR programming only clears bits and the terminator is
+<code>0x00</code> &mdash; nothing needs erasing to write it. With a ghost
+standing on the board, <code>flash fillb 0x10041000 0x00 1</code> wrote that one
+byte and nothing else: a dump either side of it differs at <b>exactly one
+position</b>, the TBF version field going <code>02</code> to <code>00</code>,
+with the header's size, checksum and name still intact. On the next reset the
+kernel listed one process where it had listed two. <b>One byte, no erase, ghost
+gone.</b></p>
+
 <p>The route does more than dodge the ELF defect &mdash; it closes a hazard the
 current one has. That took two measurements, and the first is about the kernel
 rather than about either route.</p>
@@ -592,11 +604,6 @@ here could close.</p>
   <code>flash-probe</code> on the RP2040 boards passes
   <code>--chip rp2040</code>, and that argument was never exercised. The flags
   around it were.</li>
-  <li><b>The terminator cannot be isolated from the sector erase.</b> Writing
-  the byte forces its flash sector to be erased, so the two cannot be separated
-  on this hardware. What is shown is that the byte's presence decides the
-  outcome, not which of the two does the work &mdash; and for the route it makes
-  no difference, since both make the old header unreadable.</li>
   <li><b>The stale-slot A/B was run over SWD only.</b> A UF2 was written through
   the bootloader in <a href="#s3">Section&nbsp;3</a>, but not as an arm of that
   comparison. The bootloader erases a sector before writing into it, so the same
