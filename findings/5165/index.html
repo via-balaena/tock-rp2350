@@ -148,10 +148,11 @@ bootrom was enumerated as <code>2e8a:000f</code> and reading the same two blocks
 
 <p>The controller is enabled, a host has given it address 0x24, frames are
 arriving, its interrupt enables are set, and <strong>the bootrom has enabled
-<code>USBCTRL_IRQ</code> in the interrupt controller itself.</strong> Assertion
-is transient and traffic-driven &mdash; which is why the original rate was two
-in nine rather than every time, and why a reprogram that keeps a host polling
-makes it near-certain.</p>
+<code>USBCTRL_IRQ</code> in the interrupt controller itself.</strong> The
+original rate of two in nine needs no more explanation than this: both of the
+nine that followed a bootrom session panicked, and the other seven never had
+the condition at all. Two of two, which is what the reproduction below turns
+into thirteen of thirteen.</p>
 
 <ol>
   <li>The bootrom leaves the USB controller enabled, addressed and permitted to
@@ -201,10 +202,10 @@ say so.</p>
 
 <p>The obvious candidate was session length &mdash; the probe-rs path takes
 96&nbsp;seconds an iteration against 18, so its reset lands far later, and a
-transient assertion would have faded by then. <strong>That is wrong, and
-testing it took one variable.</strong> Holding the bootrom session open for a
-further 78&nbsp;seconds before letting openocd reprogram and reset makes the
-iteration 96&nbsp;seconds, matching probe-rs exactly:</p>
+transient assertion would have faded by then. <strong>That is wrong.</strong> Holding
+the bootrom session open for a further 78&nbsp;seconds before letting openocd
+reprogram and reset brings its iteration to 96&mdash;97&nbsp;seconds, against
+probe-rs's 96:</p>
 
 <div class="matrix">
   <div class="mrow"><span>openocd, 18&nbsp;s iteration</span><span class="mark is-bad">13 panics in 13</span></div>
@@ -213,7 +214,9 @@ iteration 96&nbsp;seconds, matching probe-rs exactly:</p>
 </div>
 
 <p>Same tool and same commands at both durations, and the rate does not move.
-<strong>Length is not the variable; the tool is.</strong> What differs between
+<strong>Length is not the variable; the tool is.</strong> That also disposes of
+the idea that the assertion fades &mdash; over a session more than five times
+longer, it does not. What differs between
 them has not been isolated &mdash; it is somewhere in how each ends a live
 bootrom session &mdash; and none of it changes the defect, which is that the
 kernel panics on a pending bit nobody owns however it got there.</p>
