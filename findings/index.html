@@ -85,10 +85,16 @@
 <h2><span class="n">2</span>How these are written</h2>
 
 <ul class="plain">
-  <li><b>Line numbers are pinned to a commit</b> and every citation links to it,
-  so a claim about the source can be checked without cloning anything.</li>
-  <li><b>Numbers come from commands, and the commands ship.</b> Where a page
-  quotes tool output, the script that produced it is beside the page.</li>
+  <li><b>Line numbers are pinned to a commit.</b> Where a citation carries a
+  line number it links to that line at that commit, so a claim about the source
+  can be checked without cloning anything. Citations that name a file without a
+  line are not linked; the file name is the whole claim.</li>
+  <li><b>Numbers come from commands, and the command is named.</b> Where a
+  measurement can be reproduced without hardware, the script that produced it
+  ships beside the page &mdash; <a href="4770/reproduce.sh">4770 has one</a>.
+  Most of what is quoted here came off a board over a debug probe, which no
+  script reproduces; those are transcripts, quoted rather than summarised, with
+  the invocation above them.</li>
   <li><b>Quotes from the datasheet are quoted</b>, not paraphrased. The RP2040
   and RP2350 datasheets are CC&nbsp;BY-ND, so they are cited and never
   reproduced here in bulk.</li>

@@ -226,8 +226,8 @@ and again through the bootloader. The two have to want different addresses:
 these are built for adjacent slots, and two applications compiled for the same
 one are refused with <code>Could not meet fixed address requirements</code>.
 That requirement comes from an optional TBF header, not from this route
-&mdash; <code>kernel/src/process_binary.rs</code> only checks a fixed address
-when the application declares one.</p>
+&mdash; <a href="https://github.com/tock/tock/blob/e2ec78ff5/kernel/src/process_binary.rs#L231"><code>process_binary.rs:231</code></a> only checks a fixed address when the
+application declares one.</p>
 
 <p>The route does more than dodge the ELF defect &mdash; it closes a hazard the
 current one has. That took two measurements, and the first is about the kernel
