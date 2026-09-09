@@ -46,7 +46,14 @@ LOCAL = {
 
 SITE = {
     "title": "Tock on the RP2350",
+    # The tagline is read in place, with the quote below it doing the
+    # explaining. The description is read alone, in a link preview, by somebody
+    # who has not decided whether to click -- so it says what is here rather
+    # than what shape it is in.
     "tagline": "A dependency graph of one contributor's work on the Raspberry Pi Pico 2 and Pico 2 W.",
+    "description": "What Tock can and cannot drive on the Raspberry Pi Pico 2 "
+                   "and Pico 2 W: a coverage map of the chip's blocks, the queue "
+                   "of upstream work, and write-ups of the open Pico issues.",
 }
 
 PROVOCATION = {
@@ -3260,7 +3267,7 @@ def render(data):
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>%(title)s</title>
-<meta name="description" content="%(tagline)s">
+<meta name="description" content="%(description)s">
 <style>%(css)s</style>
 </head>
 <body>
@@ -3465,6 +3472,7 @@ def render(data):
 </html>
 """ % {
         "title": e(SITE["title"]), "tagline": e(SITE["tagline"]),
+        "description": e(SITE["description"]),
         # `</` inside the JSON would close the script element early.
         "css": CSS,
         "js": (JS.replace("__NODES__", node_json.replace("</", "<\\/"))
