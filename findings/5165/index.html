@@ -196,10 +196,27 @@ variant on an unpatched kernel, with openocd ending the session.</p>
 <p><strong>Both debuggers produce it, and not at the same rate.</strong> Ending
 the session with probe-rs instead panicked once in six. The reading that reset
 method was not a variable at all had been resting on a single occurrence per
-tool; what the rates actually show is timing. That path takes 96&nbsp;seconds an
-iteration against 18, so its reset lands far later in the bootrom session
-&mdash; exactly what a transient, traffic-driven assertion predicts, and no
-evidence that one tool resets more thoroughly than the other.</p>
+tool, and this kills it: something about the two paths differs, and the rates
+say so.</p>
+
+<p>The obvious candidate was session length &mdash; the probe-rs path takes
+96&nbsp;seconds an iteration against 18, so its reset lands far later, and a
+transient assertion would have faded by then. <strong>That is wrong, and
+testing it took one variable.</strong> Holding the bootrom session open for a
+further 78&nbsp;seconds before letting openocd reprogram and reset makes the
+iteration 96&nbsp;seconds, matching probe-rs exactly:</p>
+
+<div class="matrix">
+  <div class="mrow"><span>openocd, 18&nbsp;s iteration</span><span class="mark is-bad">13 panics in 13</span></div>
+  <div class="mrow"><span>openocd, 96&nbsp;s iteration</span><span class="mark is-bad">6 panics in 6</span></div>
+  <div class="mrow"><span>probe-rs, 96&nbsp;s iteration</span><span class="mark is-ok">1 panic in 6</span></div>
+</div>
+
+<p>Same tool and same commands at both durations, and the rate does not move.
+<strong>Length is not the variable; the tool is.</strong> What differs between
+them has not been isolated &mdash; it is somewhere in how each ends a live
+bootrom session &mdash; and none of it changes the defect, which is that the
+kernel panics on a pending bit nobody owns however it got there.</p>
 
 <h2><span class="n">5</span>Four theories, and one of them was right all along</h2>
 
@@ -208,10 +225,12 @@ of them genuinely were:</p>
 
 <div class="claims">
   <div class="claim">
-    <h3><span class="tag is-bad">dead</span> probe-rs resets less thoroughly than openocd</h3>
-    <p>Both produce it. The rates differ &mdash; thirteen in thirteen against
-    one in six &mdash; but that tracks how late each one's reset lands in the
-    session, not how thoroughly it resets. See <a href="#s4">Section&nbsp;4</a>.</p>
+    <h3><span class="tag is-bad">dead as stated</span> probe-rs resets less thoroughly than openocd</h3>
+    <p>Dead in its original form: both produce it. But the rates differ sharply
+    and session length has been ruled out as the reason, so the two paths do
+    differ in some way that has not been isolated &mdash; if anything the
+    evidence now points the other way, since openocd is the one that panics
+    every time. See <a href="#s4">Section&nbsp;4</a>.</p>
   </div>
   <div class="claim">
     <h3><span class="tag is-bad">dead</span> rp2350's <code>Chip::init</code> is missing the <code>clear_all_pending()</code> that rp2040 has</h3>
