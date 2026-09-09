@@ -51,21 +51,26 @@
     <dt>Asked</dt>
     <dd>A reviewer approved #5156 and said he would rather these boards moved
     to <code>tockloader local-board</code>; the answer on the thread was that it
-    would be looked into for a later pull request. This page is that look, and
-    both halves of the exchange are quoted below.</dd>
+    would be looked into for a later pull request. This page is that look. Both
+    halves of that exchange are quoted below, and under them the second ask that
+    came once this change was open.</dd>
     <dt>Route</dt>
     <dd>Build the kernel binary, let tockloader keep a flash image file, install
     applications into it as <code>.tab</code> archives, and hand the flat image
     to <code>picotool</code>, <code>openocd</code> or <code>probe-rs</code>. No ELF is spliced, so
-    nothing recomputes a program header.</dd>
+    nothing recomputes a program header. <b><code>make</code> never takes an
+    application</b>: <code>make init</code> records the board,
+    <code>tockloader install --local-board</code> adds the application, and
+    <code>make flash</code> writes the image &mdash; the shape
+    <code>esp32-c3-devkitM-1</code> already uses.</dd>
     <dt>Status</dt>
     <dd><span class="tag is-ok">runs on silicon</span> A kernel and an
     application assembled this way were put onto a Pico&nbsp;2&nbsp;W every way the
     rules offer &mdash; over SWD, through the bootloader and with probe-rs
     &mdash; and the process is live in the kernel's own process list &mdash; <a href="#s3">Section&nbsp;3</a>. Four costs come with it, and
-    one of them is a tool swap on three other boards &mdash;
+    one of them is a tool swap on the four RP2040 boards &mdash;
     <a href="#s5">Section&nbsp;5</a>. The change itself is
-    <a href="https://github.com/tock/tock/pull/5160">#5160</a> &mdash; four
+    <a href="https://github.com/tock/tock/pull/5160">#5160</a> &mdash; five
     boards, two commits.</dd>
   </dl>
 </div>
@@ -84,6 +89,20 @@
     <p class="said">I can look into that for a future pr. This fixes the immediate breakage.</p>
     <p class="found">What follows is that look, run rather than reasoned
     about.</p>
+  </div>
+  <div class="claim">
+    <h3><span class="tag is-flag">the second ask</span> On this pull request, once it was open</h3>
+    <p class="said">If we're going to switch this, let's go with somewhat of an established workflow:<br>
+    - `make init` configures the local-board for tockloader<br>
+    - `make install` flashes the local image file to the board</p>
+    <p class="said">We don't need all of the comments in the makefiles.</p>
+    <p class="said">Also, why change from elf2uf2-rs?</p>
+    <p class="found">Taken as written. That workflow is
+    <code>esp32-c3-devkitM-1</code>'s, and adopting it removes the
+    <code>APP</code> variable rather than redefining it &mdash; which retires
+    the cost a reviewer would have stopped on. The elf2uf2-rs question is
+    answered in <a href="#s5">Section&nbsp;5</a>: it reads only ELF, and what
+    this route produces is a flat image.</p>
   </div>
 </div>
 
@@ -105,7 +124,8 @@ exactly as they would be onto a real board.</p>
         <tbody>
           <tr><td class="lbl">declare</td>
             <td><code>tockloader local-board set raspberry_pi_pico_2 --binary-path &lt;image&gt; --arch cortex-m33 --app-address 0x10040000 --flash-address 0x10000000</code></td>
-            <td>Records the board once. The addresses are the board's own
+            <td>Records the board once &mdash; this is all
+            <code>make init</code> does. The addresses are the board's own
             <code>layout.ld</code>.</td></tr>
           <tr><td class="lbl">kernel</td>
             <td><code>tockloader flash --local-board --address 0x10000000 raspberry_pi_pico_2.bin</code></td>
@@ -118,7 +138,8 @@ exactly as they would be onto a real board.</p>
           <tr><td class="lbl">load</td>
             <td><code>openocd &hellip; program &lt;image&gt; 0x10000000 verify</code>
             or <code>picotool uf2 convert &lt;image&gt; -t bin -o 0x10000000</code></td>
-            <td>Both take a flat binary. Neither is given an ELF.</td></tr>
+            <td><code>make flash-openocd</code> and <code>make flash</code>.
+            Both take a flat binary; neither is given an ELF.</td></tr>
         </tbody>
       </table>
     </div>
@@ -130,10 +151,22 @@ exactly as they would be onto a real board.</p>
     application region with no padding arithmetic anywhere.</p>
   </div>
   <figcaption><b>Figure 1.</b> Run against <code>tock/tock</code>
-  <code>e2ec78ff5</code> with tockloader 1.18.1. The addresses are identical on
-  all four RP2 boards: flash begins at <code>0x10000000</code> and the
-  application region at <code>0x10040000</code>.</figcaption>
+  <code>e2ec78ff5</code> with tockloader 1.18.1. Flash begins at
+  <code>0x10000000</code> on every RP2 board, and the application region is at
+  <code>0x10040000</code> on four of the five.</figcaption>
 </figure>
+
+<p><b>A fifth board is carried along without being edited.</b>
+<code>raspberry_pi_pico_w</code>'s Makefile is one line &mdash;
+<code>include ../raspberry_pi_pico/Makefile</code> &mdash; so it inherits
+whatever that file says. Splicing never had to care: <code>objcopy</code> wrote
+into the <code>.apps</code> section at whatever address the board's own ELF put
+it. Naming the address in the Makefile does have to care, and that board's
+<code>layout.ld</code> gives its kernel 576&nbsp;K rather than 256&nbsp;K, so
+its <code>prog</code> region begins at <code>0x10090000</code>. Configured with
+<code>0x10040000</code> it would install applications on top of its own kernel.
+It sets <code>APP_ADDRESS</code> for itself, and <code>make init</code> there
+prints the higher address.</p>
 
 <h2 id="s2"><span class="n">2</span>Why the defect cannot occur here</h2>
 
@@ -218,8 +251,8 @@ to be asked about.</p>
 </figure>
 
 <p><b>And two applications at once, which the route it replaces cannot do at
-all.</b> <code>--update-section .apps=</code> takes one file. One
-<code>make program</code> installed <code>leak_claim</code> at
+all.</b> <code>--update-section .apps=</code> takes one file.
+<code>tockloader install --local-board</code> put <code>leak_claim</code> at
 <code>0x10040080</code> and <code>leak_observe</code> at <code>0x10041080</code>
 &mdash; a 274,433-byte image &mdash; and the kernel listed both, loaded over SWD
 and again through the bootloader. The two have to want different addresses:
@@ -342,7 +375,7 @@ SWD.</p>
 <p>The four lines in #5156 buy a working <code>make program</code> and change
 nothing else. This route is better shaped, and it is not free.</p>
 
-<p>The heaviest cost is the converter swap on the three RP2040 boards, so it
+<p>The heaviest cost is the converter swap on the four RP2040 boards, so it
 was measured rather than estimated. It looks like a question about a chip
 &mdash; and there is no RP2040 to ask, nor an emulator: mainline QEMU has no
 such machine, and Tock's own emulated boards are RISC-V and x86. But it is
@@ -375,9 +408,12 @@ really a question about two programs, and both are here.</p>
     every one of them zero, filling unused flash between the end of the kernel
     and the end of the kernel region, and stopping before the application
     address. So the question "does an RP2040 boot from this?" reduces to "does
-    it boot today?", which is known. <b>The cost is size:</b> the application
-    UF2 goes from 208,896 to 528,896 bytes, while the kernel-only UF2 is
-    unchanged at 204,800.</p>
+    it boot today?", which is known. <b>What it costs is size</b>, and more
+    than the earlier shape did: <code>make flash</code> now converts the image
+    rather than the ELF, so on this board its UF2 goes from 204,800 to 524,288
+    bytes with no application installed at all. The 400 blocks both files write
+    are byte-identical and the 624 added ones are entirely zero &mdash; the
+    image is dense where the ELF was sparse.</p>
   </div>
   <figcaption><b>Figure 5.</b> Built from <code>raspberry_pi_pico</code> at
   <code>e2ec78ff5</code> and compared by reassembling both files from their
@@ -392,46 +428,59 @@ really a question about two programs, and both are here.</p>
       <table class="grid">
         <thead><tr><th>Cost</th><th>What was observed</th><th>Weight</th></tr></thead>
         <tbody>
-          <tr><td class="lbl">Three boards would change tools</td>
-            <td><code>elf2uf2-rs</code> reads only ELF. Wrapping the flat image
+          <tr><td class="lbl">Four boards would change converter</td>
+            <td>Three Makefiles between them, since
+            <code>raspberry_pi_pico_w</code> includes one of the others.
+            <code>elf2uf2-rs</code> reads only ELF. Wrapping the flat image
             back into one &mdash; the technique the ESP32-C3 board uses &mdash;
             produces a file with no program headers at all, and the converter
             rejects it with <code>Unrecognized ABI 97</code>.
             <code>picotool</code> takes the binary directly, and produces the
             same kernel bytes &mdash; <a href="#f5">Figure&nbsp;5</a>.</td>
             <td><span class="tag is-flag">measured, not blind</span></td></tr>
-          <tr><td class="lbl">APP changes meaning</td>
-            <td><code>tockloader install</code> refuses a bare TBF &mdash;
-            <code>No valid TABs to use</code>. Both READMEs document
-            <code>APP</code> as the path to a <code>.tbf</code> file.</td>
+          <tr><td class="lbl">The kernel UF2 gets bigger</td>
+            <td>One <code>flash</code> target now covers both cases, so it
+            converts the image. With no application installed that is 524,288
+            bytes against 204,800 on the Pico and 147,456 on the Pico&nbsp;2
+            &mdash; every added block zero, and every block they share
+            identical. Installing an application adds five blocks, not a second
+            file.</td>
             <td><span class="tag is-bad">user-visible</span></td></tr>
           <tr><td class="lbl">The board setting is machine-wide</td>
             <td>One board at a time, in a single file under the user's
-            application-support directory. A setup step for one board replaces
-            the setting for another, and <code>make program</code> becomes
-            dependent on a step run earlier.</td>
+            application-support directory. <code>make init</code> for one board
+            replaces the setting for another, and <code>make flash</code>
+            depends on a step run earlier.</td>
             <td><span class="tag is-flag">already upstream</span></td></tr>
           <tr><td class="lbl">tockloader becomes required</td>
-            <td>For a route that needs none of it today.</td>
+            <td>For a route that needs none of it today. It is what installs
+            an application now &mdash; there is no <code>APP</code> variable to
+            redefine, because there is no longer one at all.</td>
             <td><span class="tag is-flag">normal for Tock</span></td></tr>
         </tbody>
       </table>
     </div>
-    <p class="verdict">The first two are the ones a reviewer would stop on, and
-    they land only on the three RP2040 boards and on the documented interface.
-    <b>The Pico&nbsp;2 carries none of them</b>: it already converts with
-    <code>picotool</code>, which is why that board is the one worth moving
-    first.</p>
+    <p class="verdict">The first two are the ones a reviewer would stop on.
+    <b>The one that used to head this list is gone</b>: an earlier shape of this
+    change kept <code>APP</code> and made it mean a <code>.tab</code> rather than
+    a <code>.tbf</code>, and adopting the established workflow deletes the
+    variable instead of redefining it. The Pico&nbsp;2 carries no converter
+    swap either &mdash; it already uses <code>picotool</code> &mdash; which is
+    why that board is the one worth moving first.</p>
   </div>
-  <figcaption><b>Figure 6.</b> The third row is not hypothetical &mdash; the
-  ESP32-C3 board does exactly this today with a <code>make init</code> target,
-  which is what makes it acceptable rather than what makes it harmless.</figcaption>
+  <figcaption><b>Figure 6.</b> The third row is not hypothetical &mdash;
+  <code>esp32-c3-devkitM-1</code> does exactly this today, and this change now
+  follows it. That is what makes the exposure acceptable, not what makes it
+  harmless: an earlier shape ran <code>local-board set</code> on every build so
+  no rule could inherit another board's addresses, and a separate
+  <code>make init</code> gives that up.</figcaption>
 </figure>
 
 <h2 id="s6"><span class="n">6</span>Choosing between this and #5156</h2>
 
 <p>Both fix <a href="https://github.com/tock/tock/issues/4770">#4770</a> on the
-same four boards. They are not alternatives in the sense of one being right
+same five boards &mdash; four Makefiles in #5156's case, because
+<code>raspberry_pi_pico_w</code> includes another board's. They are not alternatives in the sense of one being right
 &mdash; they are different sizes of change with different evidence behind them,
 and the order they land in costs nothing either way.</p>
 
@@ -445,12 +494,16 @@ and the order they land in costs nothing either way.</p>
           <tr><td class="lbl">size</td>
             <td>One <code>objcopy</code> line per rule. Four Makefiles,
             twenty-one added lines.</td>
-            <td>Eight files, +180 &minus;73. Two Makefile rules per board
-            rewritten, four READMEs.</td></tr>
+            <td>Nine files, +159 &minus;126. Five Makefiles and four READMEs;
+            <code>program</code>, <code>program-openocd</code>,
+            <code>program-probe</code> and <code>flash-app</code> all
+            disappear.</td></tr>
           <tr><td class="lbl">what a user notices</td>
             <td>Nothing.</td>
-            <td><code>APP</code> becomes a <code>.tab</code>;
-            <code>elf2uf2-rs</code> is no longer needed and tockloader is.</td></tr>
+            <td><code>make init</code> once per board, then
+            <code>tockloader install --local-board</code> instead of
+            <code>APP=</code>; <code>elf2uf2-rs</code> is no longer needed and
+            tockloader is.</td></tr>
           <tr><td class="lbl">the ghost application</td>
             <td>Not addressed. The splice still writes nothing at the slot after
             the last application.</td>
@@ -462,14 +515,15 @@ and the order they land in costs nothing either way.</p>
             here and no emulator</td></tr>
           <tr><td class="lbl">review standing</td>
             <td>Approved by two maintainers.</td>
-            <td>Opened 2026-09-09.</td></tr>
+            <td>Opened 2026-09-09, and reworked the same day to the workflow
+            the reviewer asked for.</td></tr>
         </tbody>
       </table>
     </div>
     <p class="verdict"><b>The asymmetry that matters is the fourth row.</b> This
     page's weakest point is exactly where #5156 is strongest. Merging #5156
     first costs this pull request nothing &mdash; it deletes those lines anyway
-    &mdash; and it keeps a fix with hardware behind it on the three boards
+    &mdash; and it keeps a fix with hardware behind it on the four boards
     nobody here can test.</p>
   </div>
   <figcaption><b>Figure 7.</b> Neither reading is a criticism of the other
@@ -503,7 +557,7 @@ could not make. What follows is what nothing here could close.</p>
   <li><b>probe-rs ran, but not against the chip the rule names.</b> The
   invocation in <a href="#f2">Figure&nbsp;2</a> used
   <code>--chip RP235x</code>, because that is the board here.
-  <code>program-probe</code> on the RP2040 boards passes
+  <code>flash-probe</code> on the RP2040 boards passes
   <code>--chip rp2040</code>, and that argument was never exercised. The flags
   around it were.</li>
   <li><b>The terminator cannot be isolated from the sector erase.</b> Writing
