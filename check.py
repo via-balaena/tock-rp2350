@@ -670,6 +670,21 @@ def check_queue(build, data, html, problems):
             f"queue: QUEUE_DEPS names {name!r}, which is nothing in the queue, "
             f"so its arrow is silently not drawn")
 
+    # A dependency on a pull request stops being a dependency the moment that
+    # pull request lands. Nothing else notices: the arrow keeps being drawn and
+    # the card keeps saying "waiting", so the page goes on giving a reason for
+    # a hold that has already been lifted. This is the one thing here that goes
+    # stale by itself, without anybody editing anything.
+    state = {pr["number"]: ("merged" if pr["mergedAt"] else pr["state"].lower())
+             for pr in data.get("prs", [])}
+    for waiter, deps in build.QUEUE_DEPS.items():
+        for dep, _ in deps:
+            if isinstance(dep, int) and state.get(dep) in ("merged", "closed"):
+                problems.append(
+                    f"queue: {waiter} is drawn waiting on #{dep}, which is "
+                    f"{state[dep]} — the hold it describes is over, so the "
+                    f"arrow and its reason need removing or rewriting")
+
     in_review, ready, _ = build.queue_groups(build.queue_rows(data))
     cards = build.queue_cards(data, ready, in_review)
     drawn = dict((label, int(n)) for label, n in re.findall(
