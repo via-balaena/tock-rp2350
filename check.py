@@ -554,23 +554,36 @@ def check_quotes(build, data, problems):
             [i.get("body") or ""] + [c.get("body") or ""
                                      for c in i.get("comments", [])]))
               for i in data.get("findings", [])}
+    # A page may quote the exchange that produced the change, and that is not
+    # always its own thread -- /findings/5160/ quotes #5156, where the
+    # alternative was asked for. Searching only the page's own issue reported a
+    # faithful quotation as invented the moment that page was renumbered.
+    threads = {pr["number"]: re.sub(r"\s+", " ", pr["thread"])
+               for pr in data.get("prs", []) if pr.get("thread")}
     for number, slug, _, _ in build.FINDINGS:
         page = ROOT / "findings" / slug / "index.html"
         if not page.exists():
             continue
-        body = bodies.get(number)
+        text = page.read_text()
+        cited = {int(n) for n in re.findall(
+            r"github\.com/tock/tock/(?:issues|pull)/(\d+)", text)}
+        body = " \u241f ".join(
+            [bodies.get(number) or ""]
+            + [threads[c] for c in sorted(cited) if c in threads])
+        body = body.strip(" \u241f ")
         if not body:
             problems.append(
                 f"quotes: no fetched body for #{number}, so findings/{slug}/'s "
                 f"quotations cannot be checked — run ./build.py")
             continue
-        for raw in re.findall(r'<p class="said">(.*?)</p>', page.read_text(), re.S):
+        for raw in re.findall(r'<p class="said">(.*?)</p>', text, re.S):
             said = html.unescape(re.sub(r"<[^>]+>", "", raw))
             said = re.sub(r"\s+", " ", said).strip().rstrip(".")
             if said not in body:
                 problems.append(
                     f"quotes: findings/{slug}/ puts {said[:60]!r}... in quotation "
-                    f"marks and #{number} does not say that")
+                    f"marks and neither #{number} nor the threads it cites "
+                    f"say that")
 
 
 def check_pins(build, data, problems):

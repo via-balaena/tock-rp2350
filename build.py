@@ -291,7 +291,7 @@ FACTS = {
         ("The converter swap, measured", "elf2uf2-rs reads only ELF, so it cannot convert a flash image; wrapping the image back into one produces a file with no program headers, refused with `Unrecognized ABI 97`. picotool takes the binary directly. From the same `raspberry_pi_pico.elf` both emit 400 blocks in family 0xe48bff56 across the same 102,400 addresses with **zero byte disagreements**, so `make flash` is unchanged in everything but the command. Converting the image, picotool writes a further 159,744 bytes, every one of them zero, filling unused flash before the application address."),
         ("What it costs", "The application UF2 grows from 208,896 to 528,896 bytes on the RP2040 boards; the kernel-only UF2 is unchanged at 204,800. `APP` becomes a `.tab` archive rather than a bare `.tbf`, because that is what tockloader installs -- a user-visible change to both READMEs. tockloader becomes a requirement, and `local-board set` records one board at a time in tockloader's own configuration; the Makefiles set it on every build so the rule cannot inherit another board's addresses."),
         ("What was not run", "No RP2040 was booted -- there is no such board here and no emulator for one. What was checked on those three is that each real make target completes, that the image begins with that board's own kernel binary byte for byte, and that the UF2 carries the image verbatim with a valid TBF header at the application address, using applications built for cortex-m0. `program-probe` moves to `probe-rs download --binary-format bin`, and that form was run on the Pico 2 -- but with `--chip RP235x`, since that is the board here. The `--chip rp2040` argument itself was never exercised."),
-        ("Written up", "The full measurement, including the silicon transcripts and the one-byte A/B, is at /findings/5156/ on this site."),
+        ("Written up", "The full measurement, including the silicon transcripts, the one-byte A/B and a section on choosing between this and #5156, is at /findings/5160/ on this site."),
     ],
     "tock:rp2-doc-fixes": [
         ("The README one, and it fails for a reader today", "`raspberry_pi_pico_2` and `pico_explorer_base` both tell you to flash an application with `APP=\"...\" make flash-app`. Neither board has that target: `make: *** No rule to make target `flash-app'.  Stop.` It is `program` on both. `flash-app` is in neither Makefile nor `boards/Makefile.common`, and `git log -S` finds it in neither at any point, so this is not a rename that left the documentation behind \u2014 it arrived with the board. Each README already says `make program` in its *second* \"Flashing app\" section, under the SWD route, so the two halves of one document disagreed and only the first one failed."),
@@ -580,7 +580,7 @@ FINDINGS = [
      "workaround in the issue strips a section that is only safe to strip by "
      "accident. Six candidate fixes measured against a kernel built from "
      "upstream; the one that works is a single objcopy line, and it is A/B verified on all four RP2 boards by running their real make targets."),
-    (5156, "5156", "a flashing route with no ELF to get wrong",
+    (5160, "5160", "a flashing route with no ELF to get wrong",
      "The reviewer who approved the four-line fix for #4770 asked for something "
      "else in the same sentence: that these boards stop splicing an application "
      "into the kernel ELF and use tockloader local-board instead. That route was "
@@ -589,7 +589,8 @@ FINDINGS = [
      "kernel's own process list. It cannot hit the defect because it never "
      "opens an ELF. Four costs "
      "come with it, and the tool swap on three RP2040 boards is the one a "
-     "reviewer would stop on."),
+     "reviewer would stop on. Written up under #5156 until that change had a "
+     "number of its own; /findings/5156/ redirects."),
     (5157, "5157", "a PIO interrupt flag delivered to the wrong client",
      "A PIO block raises eight IRQ flags that belong to the block, and the "
      "driver delivered flag n to state machine n's client -- an association the "
@@ -654,6 +655,23 @@ NOT_DONE = [
 # --------------------------------------------------------------------------
 # Fetch
 # --------------------------------------------------------------------------
+
+def quoted_threads():
+    """Pull request numbers whose threads a findings page cites.
+
+    A write-up quotes the conversation that produced the change, and that is not
+    always its own thread: /findings/5160/ quotes the exchange on #5156, because
+    that is where the alternative was asked for. Without this the quote check
+    looks only at the page's own issue, finds nothing, and reports a faithful
+    quotation as invented.
+    """
+    cited = set()
+    for page in sorted((ROOT / "findings").glob("*/index.html")):
+        for num in re.findall(r"github\.com/tock/tock/(?:issues|pull)/(\d+)",
+                              page.read_text()):
+            cited.add(int(num))
+    return cited
+
 
 def gh_json(args):
     try:
@@ -1171,6 +1189,15 @@ def fetch():
         pr["commits"] = [{"messageHeadline": c["messageHeadline"]}
                          for c in detail["commits"]]
         pr["files"] = sorted(f["path"] for f in detail["files"])
+        # Only for the pull requests a findings page quotes: a page may cite an
+        # exchange that happened somewhere other than its own thread, and the
+        # quote check has to be able to find it.
+        if pr["number"] in quoted_threads():
+            thread = gh_json(["pr", "view", str(pr["number"]), "--repo", REPO,
+                              "--json", "body,comments"])
+            pr["thread"] = " \u241f ".join(
+                [thread.get("body") or ""]
+                + [c.get("body") or "" for c in thread.get("comments", [])])
     issues = gh_json([
         "issue", "list", "--repo", REPO, "--author", AUTHOR, "--state", "all",
         "--limit", "100", "--json", "number,title,state,createdAt,url",
