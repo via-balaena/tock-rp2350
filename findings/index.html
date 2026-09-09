@@ -67,7 +67,8 @@
     is still talking to a USB host when the chip is reset, the kernel clears the
     interrupt controller at a moment when clearing it cannot work, then resets
     away the only evidence that anything was wrong. Read in the panic handler:
-    the pending bit is set while every USB register is at its reset default.</p>
+    the pending bit is set while the USB block is byte-for-byte identical to a
+    boot that did not panic.</p>
   </div>
 
   <div class="claim">

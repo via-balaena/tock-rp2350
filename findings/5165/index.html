@@ -47,9 +47,10 @@
     <dd>Clear pending once more, after the peripherals have been reset
     &mdash; <a href="#s6">Section&nbsp;6</a>. One statement.</dd>
     <dt>Status</dt>
-    <dd><span class="tag is-ok">reproduced 6 times in 6, fix measured</span>
-    A/B/A on silicon: six panics in six without it, none in six with it, six in
-    six again on the re-run.</dd>
+    <dd><span class="tag is-ok">reproduced 13 times in 13, fix measured</span>
+    Every attempt on an unpatched kernel panicked. The fix was then run A/B/A on
+    silicon: six panics in six without it, none in six with it, six in six again
+    on the re-run.</dd>
   </dl>
 </div>
 
@@ -101,8 +102,9 @@ them. Two numbers decide the whole question:</p>
 
 <p><strong>The controller is asserting nothing.</strong> It is not enabled, no
 raw interrupt condition is set, and with <code>INTE</code> at zero its output to
-the interrupt controller cannot be asserted at all. Every register in the block
-reads as its reset default.</p>
+the interrupt controller cannot be asserted at all. The whole 256-byte block is
+<strong>byte-for-byte identical</strong> to the same registers read on a boot
+that did not panic.</p>
 
 <p>Yet the pending bit is set. A pending bit that is set while its source is
 quiet was <em>latched earlier</em> and never cleared &mdash; the NVIC records
