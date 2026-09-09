@@ -101,6 +101,22 @@ Requires the `gh` CLI, authenticated.
 
 ## Checking
 
+**`./gates.sh` runs everything.** There are two suites and they do not know
+about each other: `check.py` below covers this page and the findings write-ups,
+`learning/tools/preflight.sh` covers the nine chapters and the book they
+assemble into. Only the first is habitual, because `./build.py` prints it. On
+2026-09-07 a chapter gained a link the book generator could not rewrite, the
+book stopped being written, and two more commits landed on the red before
+anyone ran the other suite.
+
+    ./gates.sh            # both suites; exit status is how many failed
+    ./gates.sh --offline  # both, skipping check.py's live fetch
+    ./gates.sh site       # just this page
+    ./gates.sh learning    # just the chapters
+
+Read that exit status without a pipe in the way; `| tail` eats it and a failing
+run reads as a passing one.
+
     ./check.py            # everything, including a live fetch
     ./check.py --offline  # skip the live fetch
 
