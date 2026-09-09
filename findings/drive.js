@@ -180,6 +180,27 @@ function drivePage(name) {
     const href = a.getAttribute('href');
     if (href.startsWith('#')) {
       check(at('anchor ' + href + ' resolves'), !!doc.getElementById(href.slice(1)));
+      // A link that resolves can still land somewhere else than it promises.
+      // "Figure 5" pointing at the top of section 5 passes the check above and
+      // is still wrong -- the reader clicks a figure reference and gets a
+      // heading. Both live on this page, so the text has to agree with the
+      // target, not merely find one.
+      const promise = (a.textContent || '').replace(/\s+/g, ' ').trim()
+        .match(/^(Figure|Section)\s+(\d+)$/);
+      if (promise) {
+        const el = doc.getElementById(href.slice(1));
+        const kind = promise[1], num = promise[2];
+        if (kind === 'Figure') {
+          const cap = el && el.tagName === 'FIGURE' && el.querySelector('figcaption');
+          check(at('link "' + promise[0] + '" lands on that figure'),
+                !!cap && cap.textContent.trim().startsWith('Figure ' + num + '.'),
+                el ? el.tagName.toLowerCase() + '#' + el.id : 'nothing');
+        } else {
+          check(at('link "' + promise[0] + '" lands on a heading'),
+                !!el && /^H[1-6]$/.test(el.tagName),
+                el ? el.tagName.toLowerCase() + '#' + el.id : 'nothing');
+        }
+      }
     } else if (!/^(https?:|mailto:)/.test(href)) {
       const target = path.resolve(HERE, name, href);
       const ok = fs.existsSync(target) ||

@@ -31,7 +31,7 @@
     <span>make program builds an ELF no UF2 tool will take</span>
   </p>
   <p class="lede">The fix in #5156 is one <code>objcopy</code> line in four
-  Makefiles. Both reviewers approved it, and one of them asked for something
+  Makefiles. Two maintainers approved it, and one of them asked for something
   else in the same breath &mdash; that these boards stop splicing an
   application into the kernel ELF and use <code>tockloader local-board</code>
   instead. That route was run end to end on a Pico&nbsp;2&nbsp;W. It works, and
@@ -50,13 +50,13 @@
     <dt>Route</dt>
     <dd>Build the kernel binary, let tockloader keep a flash image file, install
     applications into it as <code>.tab</code> archives, and hand the flat image
-    to <code>openocd</code> or to <code>picotool</code>. No ELF is spliced, so
+    to <code>picotool</code>, <code>openocd</code> or <code>probe-rs</code>. No ELF is spliced, so
     nothing recomputes a program header.</dd>
     <dt>Status</dt>
     <dd><span class="tag is-ok">runs on silicon</span> A kernel and an
-    application assembled this way were programmed over a Debug&nbsp;Probe onto
-    a Pico&nbsp;2&nbsp;W and the process is live in the kernel's own process
-    list &mdash; <a href="#s3">Section&nbsp;3</a>. Four costs come with it, and
+    application assembled this way were put onto a Pico&nbsp;2&nbsp;W every way the
+    rules offer &mdash; over SWD, through the bootloader and with probe-rs
+    &mdash; and the process is live in the kernel's own process list &mdash; <a href="#s3">Section&nbsp;3</a>. Four costs come with it, and
     one of them is a tool swap on three other boards &mdash;
     <a href="#s5">Section&nbsp;5</a>. The change itself is written &mdash;
     four boards, two commits &mdash; and not yet proposed.</dd>
@@ -207,6 +207,9 @@ to be asked about.</p>
   <code>list</code> over the UART. Transcripts are quoted, not
   summarised.</figcaption>
 
+
+</figure>
+
 <p><b>And two applications at once, which the route it replaces cannot do at
 all.</b> <code>--update-section .apps=</code> takes one file. One
 <code>make program</code> installed <code>leak_claim</code> at
@@ -218,7 +221,6 @@ one are refused with <code>Could not meet fixed address requirements</code>.
 That requirement comes from an optional TBF header, not from this route
 &mdash; <code>kernel/src/process_binary.rs</code> only checks a fixed address
 when the application declares one.</p>
-</figure>
 
 <p>The route does more than dodge the ELF defect &mdash; it closes a hazard the
 current one has. That took two measurements, and the first is about the kernel
@@ -382,7 +384,7 @@ really a question about two programs, and both are here.</p>
             produces a file with no program headers at all, and the converter
             rejects it with <code>Unrecognized ABI 97</code>.
             <code>picotool</code> takes the binary directly, and produces the
-            same kernel bytes &mdash; <a href="#s5">Figure&nbsp;5</a>.</td>
+            same kernel bytes &mdash; <a href="#f5">Figure&nbsp;5</a>.</td>
             <td><span class="tag is-flag">measured, not blind</span></td></tr>
           <tr><td class="lbl">APP changes meaning</td>
             <td><code>tockloader install</code> refuses a bare TBF &mdash;
@@ -424,10 +426,10 @@ are what is left.</p>
   emulated boards are RISC-V and x86. The image assembles, begins with that
   board's own kernel binary byte for byte, and converts to the right family with
   a valid TBF header at the application address &mdash; but nothing was booted
-  from it. <a href="#s5">Figure&nbsp;5</a> argues it would behave as it does
+  from it. <a href="#f5">Figure&nbsp;5</a> argues it would behave as it does
   today; it does not observe it.</li>
   <li><b>probe-rs ran, but not against the chip the rule names.</b> The
-  invocation in <a href="#s3">Figure&nbsp;2</a> used
+  invocation in <a href="#f2">Figure&nbsp;2</a> used
   <code>--chip RP235x</code>, because that is the board here.
   <code>program-probe</code> on the RP2040 boards passes
   <code>--chip rp2040</code>, and that argument was never exercised. The flags
