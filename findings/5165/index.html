@@ -268,13 +268,38 @@ cortex_m reset_config sysresetreq
 
 <p>There is no hardware reset line to drive, so the reset is whatever
 SYSRESETREQ covers on this part &mdash; and the dump says the USB controller is
-not in it. <code>rp2040.cfg</code> is configured the same way.</p>
+not in it. <code>rp2040.cfg</code> is configured the same way. As the next
+section shows, probe-rs does not reset it either.</p>
 
-<p><strong>What probe-rs does instead has not been measured.</strong> Its reset
-evidently leaves the line quiet, but probe-rs has no reset-and-halt, so there is
-no instant at which those registers can be read before something runs; the
-1-in-6 is reasoning from a rate. None of it changes the defect, which is that
-the kernel panics on a pending bit nobody owns however it got there.</p>
+<h3>probe-rs leaves it pending too, which was not the guess</h3>
+
+<p><code>probe-rs gdb --reset-halt</code> resets and then holds the core, giving
+the same instant on the other tool. The obvious guess &mdash; that probe-rs's
+reset leaves the line quiet, and that is why it rarely panics &mdash; is
+<strong>wrong</strong>:</p>
+
+<pre>                  MAIN_CTRL  INTE      INTS      NVIC ISPR bit 14
+openocd  reset    00000001   000113f0  00000010  1
+probe-rs reset    00000001   000113f0  00010000  1
+</pre>
+
+<p>Both leave the controller enabled, both leave an enabled condition asserted,
+and <strong>both leave IRQ&nbsp;14 pending at the reset vector.</strong> What
+differs is which condition: bit 4 against bit 16 &mdash; <code>BUFF_STATUS</code>
+and <code>SETUP_REQ</code> if the RP2040 field names carry over, which is worth
+checking against the RP2350 datasheet before anyone leans on it.</p>
+
+<p>So the difference is not in what the reset leaves. Being pending <em>at the
+vector</em> is not the same as surviving <code>Chip::init()</code>'s clear a few
+microseconds later &mdash; that needs the condition to still be asserted then.
+After an openocd reset it evidently is, every time. After a probe-rs reset it
+usually is not, and <strong>why has not been established.</strong></p>
+
+<p>One caveat on the probe-rs row: <code>gdb --reset-halt</code> attaches before
+it resets, and whether that is the same sequence as a plain
+<code>probe-rs reset</code> &mdash; the one the rates were measured with &mdash;
+has not been checked. None of this changes the defect, which is that the kernel
+panics on a pending bit nobody owns however it got there.</p>
 
 <h2><span class="n">5</span>Four theories, and one of them was right all along</h2>
 
