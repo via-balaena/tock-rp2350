@@ -657,19 +657,20 @@ NOT_DONE = [
      "builds the Pico Explorer Base since 049db0bd4. Both are upstream, both "
      "are one line, and neither belongs in the local-board change."),
     ("A Pico 2 kernel panics on any interrupt nothing claims",
-     "Seen once, 2026-09-09, after `probe-rs download` and `probe-rs reset`: "
      "`panicked at chips/rp2350/src/chip.rs:78:17: unhandled interrupt 14`. "
-     "IRQ 14 is USBCTRL_IRQ, and this board wires no USB driver, so "
-     "`service_pending_interrupts` walks to an interrupt nothing services and "
-     "panics rather than masking it. **Not reproduced in six further attempts**, "
-     "including one that deliberately recreated the suspected precondition -- a "
-     "bootrom USB session, by writing a UF2 through BOOTSEL and then repeating "
-     "the probe-rs pair. That hypothesis is therefore disconfirmed and the cause "
-     "is unknown. What the one observation does show is a latent fragility that "
-     "does not depend on knowing the trigger: any path leaving a peripheral "
-     "interrupt armed that this board does not service takes the kernel down. "
-     "Unrelated to the flash route -- an openocd reset on identical flash boots "
-     "clean, and the same probe-rs pair booted clean six times."),
+     "IRQ 14 is USBCTRL_IRQ and this board wires no USB driver, so "
+     "`service_pending_interrupts` reaches an interrupt nothing services and "
+     "panics rather than masking it. **Seen twice on 2026-09-09, and both times "
+     "the reset followed a bootrom USB session** -- once after a BOOTSEL UF2 "
+     "write, once with the bootrom's USB device still enumerated on the host. "
+     "Roughly seven resets with no bootrom involved were all clean, and a second "
+     "reset immediately after a panic boots normally. **The reset method is not "
+     "the variable**: one panic came from `probe-rs reset`, the other from "
+     "openocd, which rules out the first explanation tried. An intervening "
+     "bootrom-to-application handoff appears to clear it -- a deliberate "
+     "reproduction that let the board self-boot after the UF2 write came back "
+     "clean. Nothing here belongs to the flash route; what it costs is bench "
+     "time, since the first reset after any BOOTSEL work may need repeating."),
     ("A userspace driver for PIO", "The RP2's most distinctive peripheral, and no process can reach it."),
     ("Hardware CI for the RP2 boards", "The project's testbed runs one board and never on pull requests. Named as a dependency in #5152 rather than promised."),
 ]
