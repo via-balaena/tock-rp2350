@@ -580,7 +580,7 @@ DEFECTS = [
 # with no row. The issue state is fetched rather than written down, because
 # an issue drawn as open after it is closed is the page lying.
 FINDINGS = [
-    (4770, "4770", "make program builds an ELF no UF2 tool will take",
+    (4770, "4770", "make program builds an ELF that no UF2 tool will take",
      "Splicing an app into the kernel makes objcopy lay the segments out again, "
      "and the (NOLOAD) stack segment comes back claiming 5,376 bytes of file "
      "content for RAM. The reported cause is not what is happening, and the "

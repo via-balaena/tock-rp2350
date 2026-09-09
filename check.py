@@ -533,6 +533,42 @@ def check_findings(build, data, problems):
                 f"cannot say whether it is still open — run ./build.py")
 
 
+def check_names(build, data, problems):
+    """A findings page is called the same thing in all four places it is named.
+
+    The name appears in FINDINGS, in the page's <title>, in its <h1>, and in the
+    link from findings/. Nothing kept them together, and two of four had drifted
+    -- one by a dropped word, one into a different sentence entirely. A reader
+    following a link to a heading that does not match it has to stop and work
+    out whether they are in the right place.
+
+    The <title> may carry the site name after an em dash; that is the tab's
+    job, not a different name.
+    """
+    index = (ROOT / "findings" / "index.html").read_text()
+    for number, slug, title, _ in build.FINDINGS:
+        page = ROOT / "findings" / slug / "index.html"
+        if not page.exists():
+            continue
+        text = page.read_text()
+        seen = {"FINDINGS": title}
+        tag = re.search(r"<title>(.*?)</title>", text, re.S)
+        if tag:
+            seen["<title>"] = re.sub(r"\s*&mdash;\s*Tock on the RP2350\s*$", "",
+                                     tag.group(1)).strip()
+        h1 = re.search(r"<h1>(.*?)</h1>", text, re.S)
+        if h1:
+            seen["<h1>"] = re.sub(r"<[^>]+>", "", h1.group(1)).strip()
+        link = re.search(r'href="%s/">#\d+ &mdash; (.*?)</a>' % re.escape(slug), index)
+        if link:
+            seen["the findings index"] = re.sub(r"<[^>]+>", "", link.group(1)).strip()
+        distinct = {v.lower() for v in seen.values()}
+        if len(distinct) > 1:
+            where = "; ".join(f"{k}: {v!r}" for k, v in seen.items())
+            problems.append(
+                f"names: findings/{slug}/ is called more than one thing — {where}")
+
+
 def check_quotes(build, data, problems):
     """Everything a findings page quotes from its issue is really in it.
 
@@ -814,13 +850,14 @@ def main():
     check_queue(build, data, html, problems)
     check_basis(build, data, problems)
     check_findings(build, data, problems)
+    check_names(build, data, problems)
     check_quotes(build, data, problems)
     check_learning(problems)
     skipped = check_interactions(problems)
     if not args.offline:
         check_fresh(build, data, problems)
 
-    ran = (21 if args.offline else 22) + (0 if skipped else 1)
+    ran = (22 if args.offline else 23) + (0 if skipped else 1)
     if skipped:
         print(f"note: the interaction check did not run — {skipped}\n")
     if problems:

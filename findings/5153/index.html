@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>The RP2040 arms EP0 IN at bus reset and never takes it back &mdash; Tock on the RP2350</title>
+<title>EP0 IN is armed at bus reset and never taken back &mdash; Tock on the RP2350</title>
 <meta name="description" content="Why Tock's RP2040 CDC ACM port answers the first control IN with a stale 64-byte DATA0 packet: the buffer is handed to the USB controller during bus reset and is still owned by it when the descriptor is written.">
 <link rel="stylesheet" href="../style.css">
 </head>
