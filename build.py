@@ -578,6 +578,15 @@ DEFECTS = [
      "A virtual device propagates the multiplexer's error with `?`, and that error carries the multiplexer's buffer rather than the caller's. Two static buffers change owners and the multiplexer's slot is left empty for the life of the board."),
     ("UART: the teardown drops a buffer it cannot deliver", "fixed-local", "rp2-uart-abort-fix",
      "When a restart fails the mux takes every device's buffer, but only returns it to devices still in the Receiving state — so a device that had aborted a read loses its buffer permanently. Found while fixing the two above."),
+    ("Any process can panic a Pico 2 kernel through GPIO", "fixed-local",
+     "rp2350-gpio-irq",
+     "`IO_IRQ_BANK0` is declared in `interrupts.rs` and referenced nowhere "
+     "else, so `service_interrupt` returns false for it and the chip panics "
+     "with `unhandled interrupt 21`. Enabling a GPIO interrupt is command 7 of "
+     "the GPIO syscall driver, so **any application on the upstream "
+     "raspberry_pi_pico_2, on any pin, can take the kernel down**. Reproduced "
+     "on that board with buttons on GP14 and GP15: it panics before the change "
+     "and reports every press and release after, four lines."),
     ("A Pico 2 panics at boot on an interrupt nothing claims", "fixed-local",
      "rp2350-stale-nvic-pending",
      "IRQ 14 is USBCTRL_IRQ and this chip crate has no USB driver, so nothing "
