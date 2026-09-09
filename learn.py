@@ -18,6 +18,15 @@ its live-reload script, which polls an endpoint that exists only locally.
 The sources are not touched and do not become a build product. `learning/` is
 still what `check.py`, `mkbook.py` and `serve.py` read; `read/` is what the
 site serves, and `check.py` at the repository root fails if the two disagree.
+
+These pages carry no `<meta name="description">`, and that is a consequence of
+the above rather than an oversight. Every other page on this site has one, so
+the absence looks like a gap until you know why: the chapters put their
+`<title>` in the *body*, where an artifact host reads it, and the skeleton here
+is a copy of that host's. A per-page meta tag would have to be injected after
+the skeleton, which is the second-skeleton problem this file exists to avoid.
+The titles are descriptive and the chapters are reached from `read/` and from
+the work map, not from search, so the cost is small. Left as a decision.
 """
 
 import argparse
