@@ -622,6 +622,19 @@ NOT_DONE = [
      "Two commits currently inside the async branch, and the smaller of the two asks. Roughly half an hour of cherry-picking and a gate run."),
     ("File the four unfiled defects", "Each is demonstrated and none is filed. The constraint is review throughput, not the work."),
     ("Fix the reclaim leak", "The sibling capsule already shows what the fix looks like."),
+    ("Two RP2 Makefile bugs found while replacing the flash route",
+     "`make flash-openocd` on nano_rp2040_connect exits 0 having flashed "
+     "nothing. Its recipe references OPENOCD and OPENOCD_OPTIONS, which neither "
+     "that Makefile nor boards/Makefile.common defines, so the line begins with "
+     "`-c`; make reads the leading dash as ignore-errors, strips it, runs a "
+     "command called `c` and swallows the result -- `c: command not found`, "
+     "`Error 127 (ignored)`, exit 0. Established by expanding the recipe rather "
+     "than by grepping for the variable, which had wrongly implicated two nRF "
+     "boards that never use it. It is the only one of the eight flash-openocd "
+     "recipes in the tree that breaks this way, and the only one of the eight "
+     "not declared .PHONY. Separately, raspberry_pi_pico/Makefile has said it "
+     "builds the Pico Explorer Base since 049db0bd4. Both are upstream, both "
+     "are one line, and neither belongs in the local-board change."),
     ("A userspace driver for PIO", "The RP2's most distinctive peripheral, and no process can reach it."),
     ("Hardware CI for the RP2 boards", "The project's testbed runs one board and never on pull requests. Named as a dependency in #5152 rather than promised."),
 ]
