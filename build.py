@@ -2421,6 +2421,18 @@ QUEUE_DEPS = {
          "commits add. Either those land first, or this pull request carries "
          "them itself."),
     ],
+    "tock:rp2-local-board": [
+        (5156, "Supersedes it. This deletes the `-R .stack` lines that pull "
+               "request adds, on all four boards, so the fix has nothing left "
+               "to do once this lands. Held rather than opened anyway: #5156 is "
+               "approved by two maintainers and is **the only artefact in the "
+               "queue with RP2040 hardware behind it** -- the reporter ran it on "
+               "his own board. This one has never booted an RP2040 and cannot."),
+        (5158, "Half of it. This rewrites the same two README lines, so that "
+               "commit is subsumed either way. The ADC syscall commit in #5158 "
+               "is unrelated and survives regardless -- whichever lands second "
+               "drops one commit, not the pull request."),
+    ],
     "libtock-rs:pico2-platform": [
         (5141, "The platform row names raspberry_pi_pico_2_w, which is this "
                "pull request and not upstream yet."),
