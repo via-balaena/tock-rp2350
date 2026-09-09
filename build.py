@@ -1174,6 +1174,7 @@ def fetch():
         "number,title,state,isDraft,createdAt,mergedAt,closedAt,additions,"
         "deletions,changedFiles,url,reviewDecision,body",
     ])
+    cited_threads = quoted_threads()      # once, not once per pull request
     for pr in prs:
         # GitHub's own closing-keyword set, and its two other accepted forms:
         # an optional colon, and an explicit same-repo prefix. `\b` matters --
@@ -1192,7 +1193,7 @@ def fetch():
         # Only for the pull requests a findings page quotes: a page may cite an
         # exchange that happened somewhere other than its own thread, and the
         # quote check has to be able to find it.
-        if pr["number"] in quoted_threads():
+        if pr["number"] in cited_threads:
             thread = gh_json(["pr", "view", str(pr["number"]), "--repo", REPO,
                               "--json", "body,comments"])
             pr["thread"] = " \u241f ".join(
@@ -3062,20 +3063,27 @@ def render(data):
         for name, st, ref, detail in DEFECTS
     )
     fetched_findings = {i["number"]: i for i in data.get("findings", [])}
-    finding_rows = "".join(
-        '<li><span class="pill %s">%s</span>'
-        '<strong><a href="findings/%s/">#%d &mdash; %s</a></strong>'
-        '<span class="dd">%s</span>'
-        '<span class="dd">Reported by %s. '
-        '<a href="%s">The issue on GitHub</a>.</span></li>'
-        % ("review" if fetched_findings.get(number, {}).get("state") == "OPEN"
-           else "closed",
-           e(fetched_findings.get(number, {}).get("state", "unknown").lower()),
-           e(slug), number, e(title), e(blurb),
-           e(fetched_findings.get(number, {}).get("author", {}).get("login", "?")),
-           e(fetched_findings.get(number, {}).get(
-               "url", "https://github.com/tock/tock/issues/%d" % number)))
-        for number, slug, title, blurb in FINDINGS)
+    def finding_row(number, slug, title, blurb):
+        got = fetched_findings.get(number, {})
+        url = got.get("url", "https://github.com/tock/tock/issues/%d" % number)
+        # A findings page can be about somebody else's bug report or about our
+        # own pull request, and the two are not credited the same way. Saying
+        # "reported by" over a change we opened, and calling it an issue, was
+        # wrong on half the rows.
+        pull = "/pull/" in url
+        credit = "Opened by" if pull else "Reported by"
+        what = "The pull request on GitHub" if pull else "The issue on GitHub"
+        return ('<li><span class="pill %s">%s</span>'
+                '<strong><a href="findings/%s/">#%d &mdash; %s</a></strong>'
+                '<span class="dd">%s</span>'
+                '<span class="dd">%s %s. <a href="%s">%s</a>.</span></li>'
+                % ("review" if got.get("state") == "OPEN" else "closed",
+                   e(got.get("state", "unknown").lower()),
+                   e(slug), number, e(title), e(blurb),
+                   credit, e(got.get("author", {}).get("login", "?")),
+                   e(url), what))
+
+    finding_rows = "".join(finding_row(*row) for row in FINDINGS)
     silicon_rows = "".join("<li><strong>%s</strong><span class='dd'>%s</span></li>"
                            % (e(n), e(d)) for n, d in SILICON)
     downstream_rows = "".join(
