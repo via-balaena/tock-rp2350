@@ -465,7 +465,7 @@
         "boards/raspberry_pi_pico_2/README.md",
         "boards/raspberry_pi_pico_w/Makefile"
       ],
-      "thread": "### Pull Request Overview\r\n\r\nFixes two defects in the current flash route:\r\n- #4770: `objcopy` lays the program headers out again; the (NOLOAD) `.stack` segment claims file content for SRAM.\r\n- Ghost app: the splice writes nothing at the slot after the last app, so an old TBF header survives. This route fixes it because `tockloader` writes a terminator at that slot; the loader's existing behaviour (stopping at the first invalid header) then prevents the stale app from running.\r\n\r\nThis route opens no ELF, so #4770 cannot recur. Tockloader builds a flat flash image; picotool/openocd/probe-rs write it directly.\r\n\r\n**User-visible:** APP is now a `.tab`, not a `.tbf`. `elf2uf2-rs` leaves the tree; `picotool` is used on all four boards. No Rust changes; 2 commits, Makefiles and READMEs only.\r\n\r\n**Capability gain:** `--update-section .apps=<file>` takes one file, so the splice route cannot place two apps at all. This route did it in one `make program`: `leak_claim` at `0x10040080` and `_slot2/leak_observe` at `0x10041080`; the kernel lists both. Verified on silicon over SWD and BOOTSEL. (Two apps need distinct addresses; `leak_claim` and `leak_observe` are built for `0x10040080` and `0x10041080` respectively.)\r\n\r\n**Conflicts:** #5156 (all four Makefiles), #5158 (two READMEs). Merge-tested; happy to rebase. #5141 merges clean.\r\n\r\n### Testing Strategy\r\n\r\n**On the board (Pico 2 W, Debug Probe):**\r\n- `make program-openocd` runs unmodified; process console lists the app live.\r\n- BOOTSEL: `make program`'s UF2 (549,376 bytes, 1,073 blocks, family `0xe48bff59`) copied onto the RP2350 bootloader volume; board left BOOTSEL on its own and both apps came up.\r\n- probe-rs: `probe-rs download --chip RP235x --binary-format bin --base-address 0x10000000` finished in 17.69s, then `probe-rs reset`; board boots. This is the same flag form as the Makefile.\r\n- Two apps: one `make program` installed `leak_claim` at `0x10040080` and `_slot2/leak_observe` at `0x10041080`; kernel lists both. Image: 274,433 bytes.\r\n- 8,192-byte app then 1,024-byte app, no erase: only the second loads.\r\n- The one-byte A/B test: without the terminator, the kernel runs an app that is not in the image.\r\n\r\n**On the machine:**\r\n- Pico 2 (RP2350), single-app build: UF2 1,029 blocks, family `0xe48bff59`, payload byte-identical to the image that booted.\r\n- Raspberry Pi Pico (RP2040), `elf2uf2-rs` vs `picotool` on the same ELF: 400 blocks, same 102,400 addresses, zero disagreements.\r\n- On the RP2040 image, `picotool` writes 159,744 bytes more, all zero, below the app address.\r\n- RP2040 app UF2: 208,896 \u2192 528,896 bytes. RP2040 kernel UF2 unchanged at 204,800.\r\n- Clean checkout builds both targets; missing `tockloader` exits 2.\r\n\r\n**Limits:**\r\n- No RP2040 booted. `probe-rs` was verified with `--chip RP235x`; `--chip rp2040` was not exercised.\r\n- On this flash, writing any byte into a sector erases that sector. The terminator lands in the old header's sector, so the byte and the erase both make that header unreadable. They cannot be separated on this hardware, and it does not matter: the image being one byte longer produces the outcome either way.\r\n\r\n### TODO or Help Wanted\r\n\r\n- Someone with an RP2040 board to confirm it boots.\r\n- Follow-up: a per-board `flash_file` entry in `tockloader` would remove the machine-wide `local-board` setting entirely.\r\n\r\n### Checklist\r\n\r\n- [x] Ran `make prepush`.\r\n\r\n### PR Contents\r\n\r\n#### Documentation\r\n\r\nREADMEs updated for the four affected boards; `/docs` and the Book require no changes.\r\n\r\n#### AI Use\r\n\r\n- [x] AI was used in this PR. I have read [Tock's AI policy](https://github.com/tock/tock/blob/master/.github/CONTRIBUTING.md#ai-policy) and have properly disclosed my AI use below. This PR comment, and any subsequent PR interactions must not be generated using AI, except for under a `<details>` drawer.\r\n\r\nCode written with Claude Opus 5/Claude Code. \r\n\r\nAll measurements were produced by running commands or observing the board.\r\n\r\n<details>\r\n<summary>AI-assisted prose</summary>\r\n\r\nhttps://via-balaena.github.io/tock-rp2350/findings/5160/\r\n\r\n</details>\r\n \u241f If we're going to switch this, let's go with somewhat of an established workflow:\r\n\r\n- `make init` configures the local-board for tockloader\r\n- `make install` flashes the local image file to the board\r\n\r\nWe don't need all of the comments in the makefiles. \r\n\r\nAlso, why change from elf2uf2-rs?"
+      "thread": "### Pull Request Overview\r\n\r\nFixes two defects in the current flash route:\r\n- #4770: `objcopy` lays the program headers out again; the (NOLOAD) `.stack` segment claims file content for SRAM.\r\n- Ghost app: the splice writes nothing at the slot after the last app, so an old TBF header survives. This route fixes it because `tockloader` writes a terminator at that slot; the loader's existing behavior (stopping at the first invalid header) then prevents the stale app from running.\r\n\r\nThis route opens no ELF, so #4770 cannot recur. Tockloader builds a flat flash image; picotool/openocd/probe-rs write it directly.\r\n\r\n**User-visible:** Apps are now installed with `tockloader install --local-board <tab>`, then `make flash`. `elf2uf2-rs` leaves the tree; `picotool` is used on all five boards (including `raspberry_pi_pico_w`, whose kernel region is 576 KiB and app prog is at `0x10090000`, not `0x10040000`). No Rust changes; 2 commits, Makefiles and READMEs only (four READMEs changed; `raspberry_pi_pico_w/README.md` points readers to the Pico's guide and needed no edit).\r\n\r\n**Capability gain:** `--update-section .apps=<file>` takes one file, so the splice route cannot place two apps at all. This route does: `tockloader install --local-board` is called once with both `.tab` files (the signature is `[tab ...]`), then `make flash`. The image is 274,433 bytes. Tockloader's layout reports `leak_claim` (4,096 bytes) at slot `0x10040000` and `leak_observe` (8,192 bytes) at slot `0x10041000`; the kernel lists both. Verified on silicon over SWD and BOOTSEL.\r\n\r\n**Conflicts:** #5156 (all four Makefiles) - merge-tested against current head; #5158 is now merged (this branch is rebased onto it; the two README lines this PR replaces are resolved); #5141 merges clean. \r\n\r\n### Testing Strategy\r\n\r\n**On the board (Pico 2 W, Debug Probe):**\r\n- `make flash-openocd` runs; process console lists the app live.\r\n- Kernel-only: application region erased first over SWD (`flash erase_address 0x10040000 0x40000`, so the test measures the boot and not a stale app), then `make init` + `make flash-openocd` with nothing installed. Image exactly 262,144 bytes, `** Verified OK **`. Board boots; `list` returns its header row with nothing under it.\r\n- BOOTSEL: UF2 (549,376 bytes, 1,073 blocks, family `0xe48bff59`) copied onto the RP2350 bootloader volume; board left BOOTSEL on its own and both apps came up. The image was 274,433 bytes.\r\n- probe-rs: `probe-rs download --chip RP235x --binary-format bin --base-address 0x10000000` finished in 17.69s, then `probe-rs reset`; board boots. This is the same flag form as the Makefile.\r\n- Two apps: kernel lists both; the invocation is described above in Capability gain.\r\n- 8,192-byte app then 1,024-byte app, no erase: only the second loads.\r\n- The one-byte A/B test: without the terminator, the kernel runs an app that is not in the image.\r\n\r\n**On the machine:**\r\n- Pico 2 (RP2350), single-app build: UF2 1,029 blocks, family `0xe48bff59`, payload byte-identical to the image that booted.\r\n- Raspberry Pi Pico (RP2040), `elf2uf2-rs` vs `picotool` on the same ELF: 400 blocks, same 102,400 addresses, zero disagreements.\r\n- On the RP2040 image, `picotool` writes 159,744 bytes more, all zero, below the app address.\r\n- Kernel-only UF2: Pico 204,800 \u2192 524,288; Pico 2 147,456 \u2192 524,288. Every added block is zero; every shared block is byte-identical.\r\n- `make init` and `make flash` run end-to-end on `raspberry_pi_pico` with tockloader 1.18.1 and picotool. With tockloader absent, `make flash` exits 2 at `write-kernel` with Error 127.\r\n\r\n**Limits:**\r\n- No RP2040 booted. `probe-rs` was verified with `--chip RP235x`; `--chip rp2040` was not exercised.\r\n- The probe-rs run above predates the target rename; the invocation is manual (there is no `flash-probe` target on the Pico 2) and matches the Makefile's flag form.\r\n- On this flash, writing any byte into a sector erases that sector. The terminator lands in the old header's sector, so the byte and the erase both make that header unreadable. They cannot be separated on this hardware, and it does not matter: the image being one byte longer produces the outcome either way.\r\n\r\n### TODO or Help Wanted\r\n\r\n- Someone with an RP2040 board to confirm it boots.\r\n- Follow-up: a per-board `flash_file` entry in `tockloader` would remove the machine-wide `local-board` setting entirely.\r\n\r\n### Checklist\r\n\r\n- [x] Ran `make prepush`.\r\n\r\n### PR Contents\r\n\r\n#### Documentation\r\n\r\n- [ ] Updated the relevant files in `/docs` and the [Book](https://github.com/tock/book).\r\n- [x] No documentation updates are required. (READMEs updated for the four boards needing changes; `/docs` and the Book are unaffected.)\r\n\r\n#### AI Use\r\n\r\n- [ ] No AI was used in this PR.\r\n- [x] AI was used in this PR. I have read [Tock's AI policy](https://github.com/tock/tock/blob/master/.github/CONTRIBUTING.md#ai-policy) and have properly disclosed my AI use below. This PR comment, and any subsequent PR interactions must not be generated using AI, except for under a `<details>` drawer.\r\n\r\nCode written with Claude Opus 5/Claude Code.\r\n\r\nAll measurements were produced by running commands or observing the board.\r\n\r\n<details>\r\n<summary>AI-assisted prose</summary>\r\n\r\nhttps://via-balaena.github.io/tock-rp2350/findings/5160/\r\n\r\n</details> \u241f If we're going to switch this, let's go with somewhat of an established workflow:\r\n\r\n- `make init` configures the local-board for tockloader\r\n- `make install` flashes the local image file to the board\r\n\r\nWe don't need all of the comments in the makefiles. \r\n\r\nAlso, why change from elf2uf2-rs?"
     }
   ],
   "findings": [
@@ -539,7 +539,7 @@
         "login": "bigmark222",
         "name": "Jon H"
       },
-      "body": "### Pull Request Overview\r\n\r\nFixes two defects in the current flash route:\r\n- #4770: `objcopy` lays the program headers out again; the (NOLOAD) `.stack` segment claims file content for SRAM.\r\n- Ghost app: the splice writes nothing at the slot after the last app, so an old TBF header survives. This route fixes it because `tockloader` writes a terminator at that slot; the loader's existing behaviour (stopping at the first invalid header) then prevents the stale app from running.\r\n\r\nThis route opens no ELF, so #4770 cannot recur. Tockloader builds a flat flash image; picotool/openocd/probe-rs write it directly.\r\n\r\n**User-visible:** APP is now a `.tab`, not a `.tbf`. `elf2uf2-rs` leaves the tree; `picotool` is used on all four boards. No Rust changes; 2 commits, Makefiles and READMEs only.\r\n\r\n**Capability gain:** `--update-section .apps=<file>` takes one file, so the splice route cannot place two apps at all. This route did it in one `make program`: `leak_claim` at `0x10040080` and `_slot2/leak_observe` at `0x10041080`; the kernel lists both. Verified on silicon over SWD and BOOTSEL. (Two apps need distinct addresses; `leak_claim` and `leak_observe` are built for `0x10040080` and `0x10041080` respectively.)\r\n\r\n**Conflicts:** #5156 (all four Makefiles), #5158 (two READMEs). Merge-tested; happy to rebase. #5141 merges clean.\r\n\r\n### Testing Strategy\r\n\r\n**On the board (Pico 2 W, Debug Probe):**\r\n- `make program-openocd` runs unmodified; process console lists the app live.\r\n- BOOTSEL: `make program`'s UF2 (549,376 bytes, 1,073 blocks, family `0xe48bff59`) copied onto the RP2350 bootloader volume; board left BOOTSEL on its own and both apps came up.\r\n- probe-rs: `probe-rs download --chip RP235x --binary-format bin --base-address 0x10000000` finished in 17.69s, then `probe-rs reset`; board boots. This is the same flag form as the Makefile.\r\n- Two apps: one `make program` installed `leak_claim` at `0x10040080` and `_slot2/leak_observe` at `0x10041080`; kernel lists both. Image: 274,433 bytes.\r\n- 8,192-byte app then 1,024-byte app, no erase: only the second loads.\r\n- The one-byte A/B test: without the terminator, the kernel runs an app that is not in the image.\r\n\r\n**On the machine:**\r\n- Pico 2 (RP2350), single-app build: UF2 1,029 blocks, family `0xe48bff59`, payload byte-identical to the image that booted.\r\n- Raspberry Pi Pico (RP2040), `elf2uf2-rs` vs `picotool` on the same ELF: 400 blocks, same 102,400 addresses, zero disagreements.\r\n- On the RP2040 image, `picotool` writes 159,744 bytes more, all zero, below the app address.\r\n- RP2040 app UF2: 208,896 \u2192 528,896 bytes. RP2040 kernel UF2 unchanged at 204,800.\r\n- Clean checkout builds both targets; missing `tockloader` exits 2.\r\n\r\n**Limits:**\r\n- No RP2040 booted. `probe-rs` was verified with `--chip RP235x`; `--chip rp2040` was not exercised.\r\n- On this flash, writing any byte into a sector erases that sector. The terminator lands in the old header's sector, so the byte and the erase both make that header unreadable. They cannot be separated on this hardware, and it does not matter: the image being one byte longer produces the outcome either way.\r\n\r\n### TODO or Help Wanted\r\n\r\n- Someone with an RP2040 board to confirm it boots.\r\n- Follow-up: a per-board `flash_file` entry in `tockloader` would remove the machine-wide `local-board` setting entirely.\r\n\r\n### Checklist\r\n\r\n- [x] Ran `make prepush`.\r\n\r\n### PR Contents\r\n\r\n#### Documentation\r\n\r\nREADMEs updated for the four affected boards; `/docs` and the Book require no changes.\r\n\r\n#### AI Use\r\n\r\n- [x] AI was used in this PR. I have read [Tock's AI policy](https://github.com/tock/tock/blob/master/.github/CONTRIBUTING.md#ai-policy) and have properly disclosed my AI use below. This PR comment, and any subsequent PR interactions must not be generated using AI, except for under a `<details>` drawer.\r\n\r\nCode written with Claude Opus 5/Claude Code. \r\n\r\nAll measurements were produced by running commands or observing the board.\r\n\r\n<details>\r\n<summary>AI-assisted prose</summary>\r\n\r\nhttps://via-balaena.github.io/tock-rp2350/findings/5160/\r\n\r\n</details>\r\n",
+      "body": "### Pull Request Overview\r\n\r\nFixes two defects in the current flash route:\r\n- #4770: `objcopy` lays the program headers out again; the (NOLOAD) `.stack` segment claims file content for SRAM.\r\n- Ghost app: the splice writes nothing at the slot after the last app, so an old TBF header survives. This route fixes it because `tockloader` writes a terminator at that slot; the loader's existing behavior (stopping at the first invalid header) then prevents the stale app from running.\r\n\r\nThis route opens no ELF, so #4770 cannot recur. Tockloader builds a flat flash image; picotool/openocd/probe-rs write it directly.\r\n\r\n**User-visible:** Apps are now installed with `tockloader install --local-board <tab>`, then `make flash`. `elf2uf2-rs` leaves the tree; `picotool` is used on all five boards (including `raspberry_pi_pico_w`, whose kernel region is 576 KiB and app prog is at `0x10090000`, not `0x10040000`). No Rust changes; 2 commits, Makefiles and READMEs only (four READMEs changed; `raspberry_pi_pico_w/README.md` points readers to the Pico's guide and needed no edit).\r\n\r\n**Capability gain:** `--update-section .apps=<file>` takes one file, so the splice route cannot place two apps at all. This route does: `tockloader install --local-board` is called once with both `.tab` files (the signature is `[tab ...]`), then `make flash`. The image is 274,433 bytes. Tockloader's layout reports `leak_claim` (4,096 bytes) at slot `0x10040000` and `leak_observe` (8,192 bytes) at slot `0x10041000`; the kernel lists both. Verified on silicon over SWD and BOOTSEL.\r\n\r\n**Conflicts:** #5156 (all four Makefiles) - merge-tested against current head; #5158 is now merged (this branch is rebased onto it; the two README lines this PR replaces are resolved); #5141 merges clean. \r\n\r\n### Testing Strategy\r\n\r\n**On the board (Pico 2 W, Debug Probe):**\r\n- `make flash-openocd` runs; process console lists the app live.\r\n- Kernel-only: application region erased first over SWD (`flash erase_address 0x10040000 0x40000`, so the test measures the boot and not a stale app), then `make init` + `make flash-openocd` with nothing installed. Image exactly 262,144 bytes, `** Verified OK **`. Board boots; `list` returns its header row with nothing under it.\r\n- BOOTSEL: UF2 (549,376 bytes, 1,073 blocks, family `0xe48bff59`) copied onto the RP2350 bootloader volume; board left BOOTSEL on its own and both apps came up. The image was 274,433 bytes.\r\n- probe-rs: `probe-rs download --chip RP235x --binary-format bin --base-address 0x10000000` finished in 17.69s, then `probe-rs reset`; board boots. This is the same flag form as the Makefile.\r\n- Two apps: kernel lists both; the invocation is described above in Capability gain.\r\n- 8,192-byte app then 1,024-byte app, no erase: only the second loads.\r\n- The one-byte A/B test: without the terminator, the kernel runs an app that is not in the image.\r\n\r\n**On the machine:**\r\n- Pico 2 (RP2350), single-app build: UF2 1,029 blocks, family `0xe48bff59`, payload byte-identical to the image that booted.\r\n- Raspberry Pi Pico (RP2040), `elf2uf2-rs` vs `picotool` on the same ELF: 400 blocks, same 102,400 addresses, zero disagreements.\r\n- On the RP2040 image, `picotool` writes 159,744 bytes more, all zero, below the app address.\r\n- Kernel-only UF2: Pico 204,800 \u2192 524,288; Pico 2 147,456 \u2192 524,288. Every added block is zero; every shared block is byte-identical.\r\n- `make init` and `make flash` run end-to-end on `raspberry_pi_pico` with tockloader 1.18.1 and picotool. With tockloader absent, `make flash` exits 2 at `write-kernel` with Error 127.\r\n\r\n**Limits:**\r\n- No RP2040 booted. `probe-rs` was verified with `--chip RP235x`; `--chip rp2040` was not exercised.\r\n- The probe-rs run above predates the target rename; the invocation is manual (there is no `flash-probe` target on the Pico 2) and matches the Makefile's flag form.\r\n- On this flash, writing any byte into a sector erases that sector. The terminator lands in the old header's sector, so the byte and the erase both make that header unreadable. They cannot be separated on this hardware, and it does not matter: the image being one byte longer produces the outcome either way.\r\n\r\n### TODO or Help Wanted\r\n\r\n- Someone with an RP2040 board to confirm it boots.\r\n- Follow-up: a per-board `flash_file` entry in `tockloader` would remove the machine-wide `local-board` setting entirely.\r\n\r\n### Checklist\r\n\r\n- [x] Ran `make prepush`.\r\n\r\n### PR Contents\r\n\r\n#### Documentation\r\n\r\n- [ ] Updated the relevant files in `/docs` and the [Book](https://github.com/tock/book).\r\n- [x] No documentation updates are required. (READMEs updated for the four boards needing changes; `/docs` and the Book are unaffected.)\r\n\r\n#### AI Use\r\n\r\n- [ ] No AI was used in this PR.\r\n- [x] AI was used in this PR. I have read [Tock's AI policy](https://github.com/tock/tock/blob/master/.github/CONTRIBUTING.md#ai-policy) and have properly disclosed my AI use below. This PR comment, and any subsequent PR interactions must not be generated using AI, except for under a `<details>` drawer.\r\n\r\nCode written with Claude Opus 5/Claude Code.\r\n\r\nAll measurements were produced by running commands or observing the board.\r\n\r\n<details>\r\n<summary>AI-assisted prose</summary>\r\n\r\nhttps://via-balaena.github.io/tock-rp2350/findings/5160/\r\n\r\n</details>",
       "comments": [
         {
           "author": "bradjc",
@@ -572,7 +572,7 @@
         "stat": "3 files changed, 190 insertions(+), 1 deletion(-)",
         "base": "upstream/master",
         "base_sha": "0c6e7b184",
-        "behind": 17,
+        "behind": 28,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -607,7 +607,7 @@
         "stat": "46 files changed, 5446 insertions(+), 2771 deletions(-)",
         "base": "upstream/master",
         "base_sha": "479b61829",
-        "behind": 46,
+        "behind": 57,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -620,7 +620,7 @@
         "stat": "2 files changed, 35 insertions(+), 9 deletions(-)",
         "base": "upstream/master",
         "base_sha": "b3234a172",
-        "behind": 3604,
+        "behind": 3615,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -631,7 +631,7 @@
         "stat": "",
         "base": "upstream/master",
         "base_sha": "0b5b4753e",
-        "behind": 100,
+        "behind": 111,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -644,7 +644,7 @@
         "stat": "5 files changed, 30 deletions(-)",
         "base": "upstream/master",
         "base_sha": "08894c2e0",
-        "behind": 115,
+        "behind": 126,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -844,7 +844,7 @@
         "stat": "48 files changed, 4913 insertions(+), 3812 deletions(-)",
         "base": "upstream/master",
         "base_sha": "8e7431d08",
-        "behind": 71,
+        "behind": 82,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -855,7 +855,7 @@
         "stat": "",
         "base": "upstream/master",
         "base_sha": "38e3744f4",
-        "behind": 86,
+        "behind": 97,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -885,7 +885,7 @@
         "stat": "48 files changed, 5032 insertions(+), 3812 deletions(-)",
         "base": "upstream/master",
         "base_sha": "8e7431d08",
-        "behind": 71,
+        "behind": 82,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -908,7 +908,7 @@
         "stat": "38 files changed, 4423 insertions(+), 2550 deletions(-)",
         "base": "upstream/master",
         "base_sha": "479b61829",
-        "behind": 46,
+        "behind": 57,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -923,7 +923,7 @@
         "stat": "8 files changed, 431 insertions(+), 238 deletions(-)",
         "base": "upstream/master",
         "base_sha": "e2ec78ff5",
-        "behind": 3,
+        "behind": 14,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -934,7 +934,7 @@
         "stat": "",
         "base": "upstream/master",
         "base_sha": "6319b0ca4",
-        "behind": 4,
+        "behind": 15,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -948,7 +948,7 @@
         "stat": "9 files changed, 159 insertions(+), 126 deletions(-)",
         "base": "upstream/master",
         "base_sha": "52aa1b684",
-        "behind": 0,
+        "behind": 11,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -961,7 +961,7 @@
         "stat": "4 files changed, 21 insertions(+)",
         "base": "upstream/master",
         "base_sha": "73af792ec",
-        "behind": 6,
+        "behind": 17,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -975,7 +975,7 @@
         "stat": "4 files changed, 51 insertions(+), 19 deletions(-)",
         "base": "upstream/master",
         "base_sha": "834bbbc26",
-        "behind": 35,
+        "behind": 46,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -988,7 +988,7 @@
         "stat": "4 files changed, 136 insertions(+), 280 deletions(-)",
         "base": "upstream/master",
         "base_sha": "479b61829",
-        "behind": 46,
+        "behind": 57,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1005,7 +1005,7 @@
         "stat": "4 files changed, 502 insertions(+), 263 deletions(-)",
         "base": "upstream/master",
         "base_sha": "73af792ec",
-        "behind": 6,
+        "behind": 17,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1020,7 +1020,7 @@
         "stat": "4 files changed, 57 insertions(+), 13 deletions(-)",
         "base": "upstream/master",
         "base_sha": "e2ec78ff5",
-        "behind": 3,
+        "behind": 14,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1033,7 +1033,7 @@
         "stat": "1 file changed, 4 insertions(+)",
         "base": "upstream/master",
         "base_sha": "e2ec78ff5",
-        "behind": 3,
+        "behind": 14,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1047,7 +1047,7 @@
         "stat": "4 files changed, 698 insertions(+), 4 deletions(-)",
         "base": "upstream/master",
         "base_sha": "65608d717",
-        "behind": 101,
+        "behind": 112,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1062,7 +1062,7 @@
         "stat": "5 files changed, 487 insertions(+)",
         "base": "upstream/master",
         "base_sha": "e2ec78ff5",
-        "behind": 3,
+        "behind": 14,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1300,7 +1300,7 @@
     "ok": true,
     "upstream_ref": "upstream/master",
     "fork_ref": "bench/stepper-pico2w",
-    "head": "52aa1b684",
+    "head": "d0d478657",
     "resets": {
       "rp2040": {
         "USBCTRL": 24,
