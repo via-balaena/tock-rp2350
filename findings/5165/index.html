@@ -86,7 +86,7 @@ same stale bit would be handled there rather than fatal &mdash; read from the
 source, not run; see <a href="#s8">Section&nbsp;8</a>. On the RP2350 there is
 nothing to route the line to.</p>
 
-<h2><span class="n">2</span>The pending bit is a latch, not an interrupt</h2>
+<h2 id="s2"><span class="n">2</span>The pending bit is a latch, not an interrupt</h2>
 
 <p>The board was halted over SWD while it sat in its own panic handler, and the
 interrupt controller and the USB block were read out before anything reset
@@ -249,7 +249,9 @@ after the reset  00000001   000113f0  <b>00000010</b>  <b>1</b>
 
 <p><strong>The reset does not touch the USB controller.</strong>
 <code>MAIN_CTRL</code> and <code>INTE</code> come through it unchanged &mdash;
-still enabled, still permitted to interrupt.</p>
+still enabled, still permitted to interrupt. That is the same register
+<a href="#s2">Section&nbsp;2</a> reads as zero: this is the board before the
+kernel runs, and that one is after the kernel has reset the controller.</p>
 
 <p>What changes is <code>INTS</code>, the interrupt state after masking. It is
 zero while the bootrom runs, so nothing is pending then. After the reset an
@@ -302,14 +304,17 @@ command the rates were measured with. <code>probe-rs reset</code> calls
 <code>core.reset_and_halt()</code>. In the Armv8-M core both run the identical
 line:</p>
 
-<pre>self.sequence.reset_system(&amp;mut *self.memory, CoreType::Armv8m, None)?;
+<pre>self.sequence.reset_system(&amp;mut *self.memory, crate::CoreType::Armv8m, None)?;
 </pre>
 
 <p>Same function, same arguments, so whatever that does for this chip, both
-paths do it. <code>reset_and_halt</code> adds only a DEMCR vector-catch write
-before it &mdash; a debug register, described in the code's own comment as
-&ldquo;this will halt the core after reset&rdquo; &mdash; and a wait for the
-halt afterwards. <strong>The stimulus is the same by construction.</strong></p>
+paths do it. <code>reset_and_halt</code> wraps more around it &mdash; a DEMCR
+vector-catch set before, described in the code's own comment as &ldquo;this will
+halt the core after reset&rdquo;, then a wait for the halt, an XPSR Thumb-bit
+fixup, a catch clear and a read of the program counter. Every one of those is a
+debug or core-register operation, and every one happens either before the reset
+or after the core has already stopped. <strong>The stimulus itself is the same
+by construction.</strong></p>
 
 <p>What both rows do share as a limit: the core is halted while the USB
 controller keeps running, so these are the registers shortly after each reset
