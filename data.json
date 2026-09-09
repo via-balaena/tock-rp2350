@@ -488,7 +488,8 @@
       ],
       "files": [
         "boards/raspberry_pi_pico_2/src/main.rs"
-      ]
+      ],
+      "thread": "### Pull Request Overview\n\n1. A Pico 2 can panic at boot with `unhandled interrupt 14`.\n2. IRQ 14 is `USBCTRL_IRQ`; the `rp2350` chip crate has no USB driver, so nothing claims it.\n3. `Chip::init()` already calls `clear_all_pending()`, but it runs before the peripheral reset, so a still-asserting source re-latches; the reset then silences it without clearing the pending bit. This PR adds a second `clear_all_pending()` after the peripheral reset to clear the re-latched bit.\n\n### Testing Strategy\n\n- Reproduction: Erase the first flash sector so the bootrom falls back to its USB device, then reset from the debugger (OpenOCD) while that session is live.\n- Result: Panics every time before this change, never after - 6/0/6 A/B/A.\n- Board: Pico 2 W running the upstream `raspberry_pi_pico_2` crate.\n\n### TODO or Help Wanted\n\nNone, this is ready for review.\n\n### Checklist\n\n- [x] Ran `make prepush` (green).\n- [x] Ran `make clippy` (clean, though not required by template).\n\n### PR Contents\n#### Documentation\n- [x] No documentation updates are required. This is a board-file fix with no doc impact.\n\n#### AI Use\n- [ ] No AI was used in this PR.\n- [x] AI was used in this PR. I have read [Tock's AI policy](https://github.com/tock/tock/blob/master/.github/CONTRIBUTING.md#ai-policy) and have properly disclosed my AI use below.\n\nCode written with Claude Opus 5/Claude Code.\n"
     }
   ],
   "findings": [
@@ -574,6 +575,21 @@
       "state": "OPEN",
       "title": "rp2: build the flashed image with tockloader instead of splicing an ELF",
       "url": "https://github.com/tock/tock/pull/5160"
+    },
+    {
+      "author": {
+        "id": "U_kgDODlBQIA",
+        "is_bot": false,
+        "login": "bigmark222",
+        "name": "Jon H"
+      },
+      "body": "### Pull Request Overview\n\n1. A Pico 2 can panic at boot with `unhandled interrupt 14`.\n2. IRQ 14 is `USBCTRL_IRQ`; the `rp2350` chip crate has no USB driver, so nothing claims it.\n3. `Chip::init()` already calls `clear_all_pending()`, but it runs before the peripheral reset, so a still-asserting source re-latches; the reset then silences it without clearing the pending bit. This PR adds a second `clear_all_pending()` after the peripheral reset to clear the re-latched bit.\n\n### Testing Strategy\n\n- Reproduction: Erase the first flash sector so the bootrom falls back to its USB device, then reset from the debugger (OpenOCD) while that session is live.\n- Result: Panics every time before this change, never after - 6/0/6 A/B/A.\n- Board: Pico 2 W running the upstream `raspberry_pi_pico_2` crate.\n\n### TODO or Help Wanted\n\nNone, this is ready for review.\n\n### Checklist\n\n- [x] Ran `make prepush` (green).\n- [x] Ran `make clippy` (clean, though not required by template).\n\n### PR Contents\n#### Documentation\n- [x] No documentation updates are required. This is a board-file fix with no doc impact.\n\n#### AI Use\n- [ ] No AI was used in this PR.\n- [x] AI was used in this PR. I have read [Tock's AI policy](https://github.com/tock/tock/blob/master/.github/CONTRIBUTING.md#ai-policy) and have properly disclosed my AI use below.\n\nCode written with Claude Opus 5/Claude Code.\n",
+      "comments": [],
+      "createdAt": "2026-09-09T20:32:52Z",
+      "number": 5165,
+      "state": "OPEN",
+      "title": "boards: rp2350: clear stale NVIC pending after the peripheral reset",
+      "url": "https://github.com/tock/tock/pull/5165"
     }
   ],
   "issues": [

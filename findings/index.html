@@ -60,6 +60,17 @@
   </div>
 
   <div class="claim">
+    <h3><span class="tag is-bad">board</span> <a href="5165/">#5165 &mdash; a pending interrupt survives the reset that silenced it</a></h3>
+    <p class="found">A Raspberry Pi Pico 2 could panic at boot with
+    <code>unhandled interrupt 14</code>, and the trigger looked random for most
+    of a day: twice in nine resets, from two different debuggers. If the bootrom
+    is still talking to a USB host when the chip is reset, the kernel clears the
+    interrupt controller at a moment when clearing it cannot work, then resets
+    away the only evidence that anything was wrong. Read in the panic handler:
+    the pending bit is set while every USB register is at its reset default.</p>
+  </div>
+
+  <div class="claim">
     <h3><span class="tag is-bad">chip driver</span> <a href="5157/">#5157 &mdash; a PIO interrupt flag delivered to the wrong client</a></h3>
     <p class="found">A PIO block raises eight IRQ flags that belong to the
     block, and the driver delivered flag <i>n</i> to state machine <i>n</i>'s

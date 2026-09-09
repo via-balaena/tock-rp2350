@@ -316,6 +316,7 @@ FACTS = {
         ("Reproducing it with nobody in the room", "Both original sightings followed a bootrom USB session, which meant holding BOOTSEL -- so no rate could be measured and no fix could be tested. **Erasing the first flash sector takes the `IMAGE_DEF` with it, so the bootrom finds no image and falls back to its own USB device**; wait for `2e8a:000f` to enumerate, then reprogram and reset from the debugger while that session is live. The panic went from twice in nine resets with no known trigger to **thirteen in thirteen on demand** -- every run of this variant on an unpatched kernel, openocd ending the session. **Both debuggers produce it, but not at the same rate**: ending the bootrom session with probe-rs instead panicked once in six. That path takes 96 s an iteration against 18 s, so its reset lands much later in the session, which is what a transient traffic-driven assertion predicts. It is not evidence that one tool resets more thoroughly than the other -- the earlier reading, that reset method is not a variable at all, was resting on one occurrence per tool."),
         ("Measured A/B/A on silicon", "A Pico 2 W over a Debug Probe, running the upstream `raspberry_pi_pico_2` board crate: **six panics in six on master, none in six with the statement, six in six again on the re-run.** Run as A/B/A rather than A/B so an ordering effect or a bench that had changed under us would show as a clean third arm. Under the fix both installed applications ran to completion with the console answering throughout. The two kernels have **identical `.text`**, 69,164 bytes each -- the size summary would have called them the same binary, and only `cmp` and the hashes distinguish them."),
         ("What it does not establish", "The hardware is a Pico 2 W running the upstream `raspberry_pi_pico_2` crate; there is no plain Pico 2 here. **No RP2040 board was involved** -- the four RP2040 boards share the same ordering and the same stale bit will reach them, but `USBCTRL_IRQ` is serviced there, so it is handled rather than fatal; that reasoning is from the source and nothing was run. USB is the only source seen doing this, though the mechanism is general to any peripheral asserting when `Chip::init` runs. And **thirteen resets with no bootrom step in them have all booted cleanly**, which bounds that rate low without showing it is zero."),
+        ("Written up", "The full measurement -- the register dumps taken during a live bootrom session and again in the panic handler, the four theories and which one turned out to be the mechanism, and the placement question -- is at /findings/5165/ on this site."),
     ],
     "tock:rp2-doc-fixes": [
         ("The README one, and it fails for a reader today", "`raspberry_pi_pico_2` and `pico_explorer_base` both tell you to flash an application with `APP=\"...\" make flash-app`. Neither board has that target: `make: *** No rule to make target `flash-app'.  Stop.` It is `program` on both. `flash-app` is in neither Makefile nor `boards/Makefile.common`, and `git log -S` finds it in neither at any point, so this is not a rename that left the documentation behind \u2014 it arrived with the board. Each README already says `make program` in its *second* \"Flashing app\" section, under the SWD route, so the two halves of one document disagreed and only the first one failed."),
@@ -637,6 +638,16 @@ FINDINGS = [
      "RP2040 boards is the one a reviewer would stop on. Written up under "
      "#5156 until that change had a number of its own; /findings/5156/ "
      "redirects."),
+    (5165, "5165", "a pending interrupt survives the reset that silenced it",
+     "IRQ 14 is USBCTRL_IRQ, and this chip crate has no USB driver at all, so "
+     "nothing can claim it. The pending bit is a latch rather than a live "
+     "interrupt: read over SWD in the panic handler, NVIC ISPR bit 14 is set "
+     "while every register in the USB block is at its reset default. The "
+     "bootrom hands over a controller that is enabled, addressed and permitted "
+     "to interrupt, so `Chip::init()`'s clear cannot stick and the peripheral "
+     "reset afterwards silences the source without taking the latched bit back. "
+     "Erasing the first flash sector reproduces it on demand, and one statement "
+     "removes it -- measured A/B/A on silicon."),
     (5157, "5157", "a PIO interrupt flag delivered to the wrong client",
      "A PIO block raises eight IRQ flags that belong to the block, and the "
      "driver delivered flag n to state machine n's client -- an association the "

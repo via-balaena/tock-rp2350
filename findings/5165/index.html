@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>A pending interrupt survives the reset that silenced it &mdash; Tock on the RP2350</title>
+<meta name="description" content="Why a Raspberry Pi Pico 2 panics at boot with 'unhandled interrupt 14': the USB controller's NVIC pending bit is latched before the peripheral reset and is still set after it, long after the controller itself has gone quiet.">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to the report</a>
+<div class="wrap">
+
+<header class="top">
+  <nav class="crumb" aria-label="Breadcrumb">
+    <a href="../../">Tock on the RP2350</a>
+    <span class="sep">/</span>
+    <a href="../">Findings</a>
+    <span class="sep">/</span>
+    <span>#5165</span>
+  </nav>
+  <h1>A pending interrupt survives the reset that silenced it</h1>
+  <p class="issue">
+    <a href="https://github.com/tock/tock/issues/5165">tock/tock#5165</a>
+    <span class="state">open when this was written</span>
+    <span>opened 2026-09-09 by bigmark222</span>
+  </p>
+  <p class="lede">A Raspberry Pi Pico 2 could panic during boot with
+  <code>unhandled interrupt 14</code>, and for most of a day the trigger looked
+  random: twice in nine resets, from two different debuggers, with a clean run
+  in between. It is not random. If the bootrom is still talking to a USB host
+  when the chip is reset, the kernel clears the interrupt controller at a moment
+  when clearing it cannot work, and then resets away the only evidence that
+  anything was ever wrong.</p>
+</header>
+
+<main id="main">
+
+<div class="short">
+  <dl>
+    <dt>Defect</dt>
+    <dd>The NVIC's pending bit for <code>USBCTRL_IRQ</code> is latched while the
+    bootrom still has the controller asserting, survives the peripheral reset
+    that silences the source, and is claimed by no driver on this board &mdash;
+    so the first pass through <code>service_pending_interrupts</code> panics.</dd>
+    <dt>Fix</dt>
+    <dd>Clear pending once more, after the peripherals have been reset
+    &mdash; <a href="#s6">Section&nbsp;6</a>. One statement.</dd>
+    <dt>Status</dt>
+    <dd><span class="tag is-ok">reproduced 6 times in 6, fix measured</span>
+    A/B/A on silicon: six panics in six without it, none in six with it, six in
+    six again on the re-run.</dd>
+  </dl>
+</div>
+
+<h2><span class="n">1</span>What was measured</h2>
+
+<p>The panic arrives before the main loop, on a board that had booted fine
+minutes earlier:</p>
+
+<pre>panicked at chips/rp2350/src/chip.rs:78:17:
+<b>unhandled interrupt 14</b>
+</pre>
+
+<p><span class="srcref">chips/rp2350/src/chip.rs</span> The line is deliberate.
+<code>service_pending_interrupts</code> walks the pending NVIC lines and refuses
+to continue past one nothing claims:</p>
+
+<pre>while let Some(interrupt) = cortexm33::nvic::next_pending_with_mask(mask) {
+    if !self.interrupt_service.service_interrupt(interrupt) {
+        <b>panic!("unhandled interrupt {}", interrupt);</b>
+    }
+</pre>
+
+<p>That is not an rp2350 quirk. <strong>Twelve of the twenty-three chip crates
+in the tree panic the same way</strong>, and the same line is what surfaced an
+unrouted <code>IO_IRQ_BANK0</code> on this chip earlier. It is doing its job:
+it found something.</p>
+
+<p>IRQ 14 is <code>USBCTRL_IRQ</code>. What makes it fatal here rather than
+merely noisy is an absence &mdash; <strong><code>chips/rp2350/src/</code> has no
+<code>usb.rs</code> at all.</strong> The RP2040 crate has one, and
+<code>chips/rp2040/src/chip.rs</code> services <code>USBCTRL_IRQ</code>, which
+is why the four RP2040 boards never show this. On the RP2350 there is nothing to
+route the line to.</p>
+
+<h2><span class="n">2</span>The pending bit is a latch, not an interrupt</h2>
+
+<p>The board was halted over SWD while it sat in its own panic handler, and the
+interrupt controller and the USB block were read out before anything reset
+them. Two numbers decide the whole question:</p>
+
+<dl class="readout">
+  <div><dt>NVIC ISPR</dt><dd class="is-bad">bit 14 set</dd></div>
+  <div><dt>USB MAIN_CTRL</dt><dd class="is-ok">00000000</dd></div>
+  <div><dt>USB INTR (raw)</dt><dd class="is-ok">00000000</dd></div>
+  <div><dt>USB INTE (enable)</dt><dd class="is-ok">00000000</dd></div>
+  <div><dt>USB INTS (masked)</dt><dd class="is-ok">00000000</dd></div>
+  <div><dt>NVIC ISER</dt><dd>all zero</dd></div>
+</dl>
+
+<p><strong>The controller is asserting nothing.</strong> It is not enabled, no
+raw interrupt condition is set, and with <code>INTE</code> at zero its output to
+the interrupt controller cannot be asserted at all. Every register in the block
+reads as its reset default.</p>
+
+<p>Yet the pending bit is set. A pending bit that is set while its source is
+quiet was <em>latched earlier</em> and never cleared &mdash; the NVIC records
+that a line was asserted, and nothing about the source going away afterwards
+takes that record back.</p>
+
+<p class="verdict">This is the measurement that separates the two candidate
+stories. <b>A live interrupt</b> would show the controller asserting, and the
+fix would be to service or mask it. <b>A stale latch</b> shows exactly what was
+read here, and the fix is to clear it once the source is genuinely gone.</p>
+
+<p>For comparison, the same three dumps on a clean boot of the same image:
+<code>ISER</code> has three lines enabled &mdash; <code>TIMER0_IRQ_0</code>,
+<code>SIO_IRQ_FIFO</code>, <code>UART0_IRQ</code> &mdash; and
+<code>ISPR</code> is empty.</p>
+
+<h2><span class="n">3</span>The four lines of boot that leave it behind</h2>
+
+<p><span class="srcref">boards/raspberry_pi_pico_2/src/main.rs</span> The order
+is the whole defect, and every line in it is reasonable on its own:</p>
+
+<pre>ChipHw::init();                    <b>// disable_all() + clear_all_pending()</b>
+...
+resets.reset_all_except(&amp;[ ... ]);  <b>// USBCTRL is reset here</b>
+init_clocks(peripherals, clocks, resets);
+resets.unreset_all_except(&amp;[], true);
+</pre>
+
+<p>The first step is measured rather than assumed. Halting the chip while the
+bootrom was enumerated as <code>2e8a:000f</code> and reading the same two blocks:</p>
+
+<dl class="readout">
+  <div><dt>NVIC ISER</dt><dd class="is-bad">bit 14 set</dd></div>
+  <div><dt>USB MAIN_CTRL</dt><dd class="is-bad">00000001</dd></div>
+  <div><dt>USB ADDR_ENDP</dt><dd class="is-bad">00000024</dd></div>
+  <div><dt>USB SOF_RD</dt><dd class="is-bad">00000398</dd></div>
+  <div><dt>USB INTE</dt><dd class="is-bad">000113f0</dd></div>
+  <div><dt>USB INTR</dt><dd class="is-bad">00100008</dd></div>
+</dl>
+
+<p>The controller is enabled, a host has given it address 0x24, frames are
+arriving, its interrupt enables are set, and <strong>the bootrom has enabled
+<code>USBCTRL_IRQ</code> in the interrupt controller itself.</strong> Assertion
+is transient and traffic-driven &mdash; which is why the original rate was two
+in nine rather than every time, and why a reprogram that keeps a host polling
+makes it near-certain.</p>
+
+<ol>
+  <li>The bootrom leaves the USB controller enabled, addressed and permitted to
+  interrupt, because it was in the middle of talking to a host.</li>
+  <li><code>Chip::init()</code> runs <code>disable_all()</code> and
+  <code>clear_all_pending()</code>. <strong>That clear cannot stick.</strong>
+  The line is still asserted, so the NVIC re-latches the bit immediately; a
+  level-sensitive source cannot be cleared out from under.</li>
+  <li><code>reset_all_except</code> resets the USB controller and the source
+  goes quiet &mdash; leaving behind a pending bit that is now unreachable by any
+  of the mechanisms that would normally clear it.</li>
+  <li>Nothing on this board claims IRQ 14, so the first pass through
+  <code>service_pending_interrupts</code> panics.</li>
+</ol>
+
+<p><code>disable_all()</code> does not save it either.
+<code>next_pending_with_mask</code> reads the <em>pending</em> register, not the
+<em>enable</em> register, so an interrupt that is disabled and pending is still
+found and still panics.</p>
+
+<h2><span class="n">4</span>Reproducing it with nobody in the room</h2>
+
+<p>Both original sightings followed a bootrom USB session, and reaching one
+meant holding the BOOTSEL button &mdash; which makes a rate impossible to
+measure and a fix impossible to test. The software route to the same condition
+turns out to be one openocd command:</p>
+
+<ol>
+  <li><strong>Erase the first flash sector.</strong> The RP2350's
+  <code>IMAGE_DEF</code> block goes with it, so the bootrom finds no valid image
+  and falls back to its own USB device.</li>
+  <li><strong>Wait for <code>2e8a:000f</code> to enumerate</strong> on the
+  host. Now a real bootrom USB session is live, with no button pressed.</li>
+  <li><strong>Reprogram and reset from the debugger while it is still
+  live.</strong> That is the condition the second sighting described.</li>
+</ol>
+
+<p>The panic went from twice in nine resets, cause unknown, to
+<strong>thirteen in thirteen on demand</strong> &mdash; every run of this
+variant on an unpatched kernel, with openocd ending the session.</p>
+
+<p><strong>Both debuggers produce it, and not at the same rate.</strong> Ending
+the session with probe-rs instead panicked once in six. The reading that reset
+method was not a variable at all had been resting on a single occurrence per
+tool; what the rates actually show is timing. That path takes 96&nbsp;seconds an
+iteration against 18, so its reset lands far later in the bootrom session
+&mdash; exactly what a transient, traffic-driven assertion predicts, and no
+evidence that one tool resets more thoroughly than the other.</p>
+
+<h2><span class="n">5</span>Four theories, and one of them was right all along</h2>
+
+<p>Four mechanisms were proposed and all four written down as eliminated. Three
+of them genuinely were:</p>
+
+<div class="claims">
+  <div class="claim">
+    <h3><span class="tag is-bad">dead</span> probe-rs resets less thoroughly than openocd</h3>
+    <p>One occurrence came from each tool.</p>
+  </div>
+  <div class="claim">
+    <h3><span class="tag is-bad">dead</span> rp2350's <code>Chip::init</code> is missing the <code>clear_all_pending()</code> that rp2040 has</h3>
+    <p>It has it, immediately after <code>disable_all()</code>. This was nearly
+    reported from a <code>grep | head</code> that had truncated rp2350 off the
+    list.</p>
+  </div>
+  <div class="claim">
+    <h3><span class="tag is-bad">dead</span> the bootrom leaves the USB peripheral live</h3>
+    <p>Dead as stated: the peripheral <em>is</em> reset at startup and does come
+    back in its default state, which the register dump confirms. The bootrom's
+    involvement is real, but the peripheral is not what carries it across.</p>
+  </div>
+  <div class="claim">
+    <h3><span class="tag is-ok">this was the mechanism</span> <code>ChipHw::init()</code> runs before the peripheral reset, so anything pending afterwards is never cleared</h3>
+    <p>The grounds for dismissing it were: <em>true, but not an anomaly &mdash;
+    all five RP2 boards order it that way, and other chips clear the NVIC in
+    <code>Chip::init</code> too.</em> Both halves of that are correct, and it is
+    still the cause.</p>
+  </div>
+</div>
+
+<p class="verdict is-bad"><b>Conventional and causal are independent.</b>
+&ldquo;Is this unusual?&rdquo; and &ldquo;did this cause the failure?&rdquo; are
+different questions, and only the second one eliminates anything. A pattern
+every board in the family shares is still the cause when exactly one board in
+the family has no driver for the line it strands.</p>
+
+<h2 id="s6"><span class="n">6</span>The fix, and what measures it</h2>
+
+<p>One statement, after the peripherals have been reset and while nothing is
+asserting:</p>
+
+<pre>resets.unreset_all_except(&amp;[], true);
+
+<b>cortexm33::nvic::clear_all_pending();</b>
+</pre>
+
+<p>Measured on a Pico 2 W over a Debug Probe, running the upstream
+<code>raspberry_pi_pico_2</code> board crate, with the bootrom reproduction
+above as the trigger:</p>
+
+<div class="matrix">
+  <div class="mrow"><span>master, <code>d0d478657</code></span><span class="mark is-bad">6 panics in 6</span></div>
+  <div class="mrow"><span>master + the one statement</span><span class="mark is-ok">0 panics in 6</span></div>
+  <div class="mrow"><span>master again, to rule out drift</span><span class="mark is-bad">6 panics in 6</span></div>
+</div>
+
+<p>Run as A/B/A rather than A/B, so an ordering effect or a bench that had
+simply changed under us would have shown up as a clean third arm. Under the fix
+both installed applications ran to completion with the console answering
+throughout, so it is not buying quiet by breaking something else.</p>
+
+<p>One detail worth keeping, because it nearly hid the difference: the two
+kernels have <strong>identical <code>.text</code></strong>, 69,164 bytes each.
+The size summary would have called them the same binary. Only
+<code>cmp</code> and the hashes distinguish them.</p>
+
+<h2><span class="n">7</span>Where the line belongs is a real question</h2>
+
+<p>Three placements are defensible and only one of them has been measured.</p>
+
+<div class="claims">
+  <div class="claim">
+    <h3><span class="tag is-ok">chosen</span> The board, after the peripheral reset</h3>
+    <p>It is the board the panic was demonstrated on, and
+    <code>raspberry_pi_pico_2</code> is the <strong>only upstream board built on
+    <code>chips/rp2350</code></strong> &mdash; so every board that can reach this
+    defect is covered by the one file.</p>
+  </div>
+  <div class="claim">
+    <h3><span class="tag is-flag">arguable</span> <code>Resets::reset_all_except</code>, in the chip crate</h3>
+    <p>Silencing a source would also drop the latch it left, covering all five
+    RP2 boards &mdash; but in <strong>two</strong> crates rather than one, since
+    rp2040 and rp2350 each have their own <code>resets.rs</code>. Neither would
+    need a new dependency; both already depend on their arch crate. Against it:
+    a peripheral-reset driver reaching into the interrupt controller is a
+    surprising place to find that, and half the edit would land on boards that
+    do not exhibit the defect.</p>
+  </div>
+  <div class="claim">
+    <h3><span class="tag is-bad">rejected</span> Stop panicking on an unclaimed interrupt</h3>
+    <p>It is the largest change and the least defensible: twelve chip crates
+    behave this way, and on this same chip that panic is what exposed an
+    unrouted GPIO interrupt. Masking it would have hidden a real defect to hide
+    this one.</p>
+  </div>
+</div>
+
+<h2><span class="n">8</span>What this does not establish</h2>
+
+<ul>
+  <li><strong>The hardware is a Pico 2 W</strong> running the upstream
+  <code>raspberry_pi_pico_2</code> board crate. There is no plain Pico 2 here.
+  The two differ in what is wired to the pins, not in the boot sequence or the
+  chip, but they are not the same board.</li>
+  <li><strong>No RP2040 board was involved.</strong> The four RP2040 boards
+  share the same ordering, and the same stale bit will reach them &mdash; but
+  <code>USBCTRL_IRQ</code> is serviced there, so it is handled instead of fatal.
+  That reasoning is from the source; nothing was run.</li>
+  <li><strong>USB is the only source seen doing this.</strong> The mechanism is
+  general &mdash; any peripheral asserting at the moment
+  <code>Chip::init</code> runs would latch the same way &mdash; but the bootrom
+  is the only thing observed arming one, and it arms USB.</li>
+  <li><strong>The rate outside the bootrom condition is not known to be
+  zero.</strong> Thirteen resets with no bootrom step in them have all booted
+  cleanly. That bounds it low; it does not show it is zero.</li>
+</ul>
+
+</main>
+</div>
+</body>
+</html>
