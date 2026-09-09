@@ -560,6 +560,15 @@ FINDINGS = [
      "workaround in the issue strips a section that is only safe to strip by "
      "accident. Six candidate fixes measured against a kernel built from "
      "upstream; the one that works is a single objcopy line, and it is A/B verified on all four RP2 boards by running their real make targets."),
+    (5156, "5156", "a flashing route with no ELF to get wrong",
+     "The reviewer who approved the four-line fix for #4770 asked for something "
+     "else in the same sentence: that these boards stop splicing an application "
+     "into the kernel ELF and use tockloader local-board instead. That route was "
+     "run end to end -- a kernel and an application assembled by tockloader, "
+     "programmed over SWD, and the process live in the kernel's own process "
+     "list. It cannot hit the defect because it never opens an ELF. Four costs "
+     "come with it, and the tool swap on three RP2040 boards is the one a "
+     "reviewer would stop on."),
     (5157, "5157", "a PIO interrupt flag delivered to the wrong client",
      "A PIO block raises eight IRQ flags that belong to the block, and the "
      "driver delivered flag n to state machine n's client -- an association the "

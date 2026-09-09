@@ -57,6 +57,18 @@
   </div>
 
   <div class="claim">
+    <h3><span class="tag is-flag">build tooling</span> <a href="5156/">#5156 &mdash; a flashing route with no ELF to get wrong</a></h3>
+    <p class="found">The reviewer who approved the four-line fix for #4770 asked
+    for something else in the same sentence: that these boards stop splicing an
+    application into the kernel ELF and use <code>tockloader local-board</code>
+    instead. That route was run end to end &mdash; a kernel and an application
+    assembled by tockloader, programmed over SWD, and the process live in the
+    kernel's own process list. It cannot hit the defect, because it never opens
+    an ELF. Four costs come with it, and the tool swap on three RP2040 boards is
+    the one a reviewer would stop on.</p>
+  </div>
+
+  <div class="claim">
     <h3><span class="tag is-flag">chip driver</span> <a href="5153/">#5153 &mdash; EP0 IN is armed at bus reset and never taken back</a></h3>
     <p class="found">The RP2040 USB driver hands EP0's IN buffer to the USB
     controller during bus reset, with a length of 64 and a PID of DATA0 and

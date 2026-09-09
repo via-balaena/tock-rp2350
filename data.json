@@ -1,5 +1,5 @@
 {
-  "fetched": "2026-09-08",
+  "fetched": "2026-09-09",
   "prs": [
     {
       "additions": 1,
@@ -476,6 +476,30 @@
       "state": "OPEN",
       "title": "The Raspberry PI Pico RP2040 USB CDC ACM serial port does not work with many machines",
       "url": "https://github.com/tock/tock/issues/5153"
+    },
+    {
+      "author": {
+        "id": "U_kgDODlBQIA",
+        "is_bot": false,
+        "login": "bigmark222",
+        "name": "Jon H"
+      },
+      "body": "### Pull Request Overview\r\n\r\nThis PR supersedes #5154.\r\n\r\nSplicing an app into the kernel breaks the relevant make target on 4 of the 5 RP2 boards: \"ELF contains memory contents for uninitialized memory at 20000000\". BFD re-lays headers after --set-section-flags .apps=LOAD,ALLOC, and .stack (NOLOAD) ends up claiming file contents for SRAM. Add -R .stack to each objcopy splice rule. Fixes #4770.\r\n\r\n<details>\r\n<summary>AI-generated measurement data</summary>\r\n\r\nhttps://via-balaena.github.io/tock-rp2350/findings/4770/\r\n\r\n</details>\r\n\r\n### Testing Strategy\r\n\r\npotto216's RP2040: reporter verified on his machine via program/elf2uf2-rs/BOOTSEL. App ran; console \"Hello world!\". (https://github.com/tock/tock/issues/4770#issuecomment-5573463328)\r\n\r\nprogram-openocd on RP2350: Pico 2 W over Debug Probe. rc=2 \u2192 rc=0. Without fix, openocd verify_image fails at 0x20000000 and aborts before reset, leaving board halted.\r\n\r\nFile-level: all 4 boards pass (raspberry_pi_pico, raspberry_pi_pico_2, pico_explorer_base, nano_rp2040_connect). pico_explorer_base and nano_rp2040_connect are file-level only. No hardware run yet.\r\n\r\n### TODO or Help Wanted\r\n\r\nprogram-probe (probe-rs): not run. Could someone with an RP2040 and probe-rs try it? @potto216 ?\r\n\r\n### Checklist\r\n\r\n- [x] Ran `make prepush`.\r\n\r\n### PR Contents\r\n\r\n#### Documentation\r\n\r\n- [ ] Updated the relevant files in `/docs` and the [Book](https://github.com/tock/book).\r\n- [x] No documentation updates are required.\r\n\r\n#### AI Use\r\n\r\n- [ ] No AI was used in this PR.\r\n- [x] AI was used in this PR. I have read [Tock's AI policy](https://github.com/tock/tock/blob/master/.github/CONTRIBUTING.md#ai-policy) and have properly disclosed my AI use below. This PR comment, and any subsequent PR interactions must not be generated using AI, except for under a `<details>` drawer.\r\n\r\nCode written with Claude Opus 5\n",
+      "comments": [
+        {
+          "author": "bigmark222",
+          "body": "> I would rather see this move to use `tockloader local-board`, but if this improves things then fine.\r\n\r\n@bradjc \r\n\r\nI can look into that for a future pr. This fixes the immediate breakage."
+        },
+        {
+          "author": "bigmark222",
+          "body": "--set-section-flags .apps=LOAD,ALLOC gives .apps file content, which forces BFD to recompute the program headers. \r\n\r\n.stack is (NOLOAD) and lives in SRAM at 0x20000000; during that recompute its p_filesz changes from 0x0 to its full size. The ELF then claims file content for memory that has none, and elf2uf2-rs refuses it with:\r\nError: \"ELF contains memory contents for uninitialized memory at 20000000\"\r\n-R .stack drops it from the flashed artifact only. The kernel ELF keeps its symbols, and .stack reserves stack space with no bytes to carry, so it costs nothing.\r\n\r\nThe section itself stays NOBITS in the section table; the issue is in the program header (p_filesz), which is why it's not obvious from reading the section headers alone."
+        }
+      ],
+      "createdAt": "2026-09-08T16:57:59Z",
+      "number": 5156,
+      "state": "OPEN",
+      "title": "rp2: strip .stack from the ELF that make program flashes",
+      "url": "https://github.com/tock/tock/pull/5156"
     },
     {
       "author": {

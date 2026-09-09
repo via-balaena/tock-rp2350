@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>A flashing route with no ELF to get wrong</title>
+<meta name="description" content="The reviewer's alternative to PR #5156 — moving the RP2 boards to tockloader local-board — run end to end on a Pico 2 W. It retires issue #4770 by construction rather than by patch, and it costs more than the four lines it would replace.">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to the report</a>
+<div class="wrap">
+
+<header class="top">
+  <nav class="crumb" aria-label="Breadcrumb">
+    <a href="../../">Tock on the RP2350</a>
+    <span class="sep">/</span>
+    <a href="../">Findings</a>
+    <span class="sep">/</span>
+    <span>#5156</span>
+  </nav>
+  <h1>A flashing route with no ELF to get wrong</h1>
+  <p class="issue">
+    <a href="https://github.com/tock/tock/issues/5156">tock/tock#5156</a>
+    <span class="state">approved and open when this was written</span>
+    <span>the reviewer's alternative, run 2026-09-09</span>
+  </p>
+  <p class="issue">
+    <a href="https://github.com/tock/tock/issues/4770">#4770</a>
+    <span class="state">the defect that PR fixes</span>
+    <span>make program builds an ELF no UF2 tool will take</span>
+  </p>
+  <p class="lede">The fix in #5156 is one <code>objcopy</code> line in four
+  Makefiles. Both reviewers approved it, and one of them asked for something
+  else in the same breath &mdash; that these boards stop splicing an
+  application into the kernel ELF and use <code>tockloader local-board</code>
+  instead. That route was run end to end on a Pico&nbsp;2&nbsp;W. It works, and
+  it does not fix the defect so much as remove the conditions for it.</p>
+</header>
+
+<main id="main">
+
+<div class="short">
+  <dl>
+    <dt>Asked</dt>
+    <dd>A reviewer approved #5156 and said he would rather these boards moved
+    to <code>tockloader local-board</code>; the answer on the thread was that it
+    would be looked into for a later pull request. This page is that look, and
+    both halves of the exchange are quoted below.</dd>
+    <dt>Route</dt>
+    <dd>Build the kernel binary, let tockloader keep a flash image file, install
+    applications into it as <code>.tab</code> archives, and hand the flat image
+    to <code>openocd</code> or to <code>picotool</code>. No ELF is spliced, so
+    nothing recomputes a program header.</dd>
+    <dt>Status</dt>
+    <dd><span class="tag is-ok">runs on silicon</span> A kernel and an
+    application assembled this way were programmed over a Debug&nbsp;Probe onto
+    a Pico&nbsp;2&nbsp;W and the process is live in the kernel's own process
+    list &mdash; <a href="#s3">Section&nbsp;3</a>. Four costs come with it, and
+    one of them is a tool swap on three other boards &mdash;
+    <a href="#s5">Section&nbsp;5</a>.</dd>
+  </dl>
+</div>
+
+<div class="claims">
+  <div class="claim">
+    <h3><span class="tag is-flag">the ask</span> On the pull request that fixes it the short way</h3>
+    <p class="said">I would rather see this move to use `tockloader local-board`, but if this improves things then fine</p>
+    <p class="found">Quoted with its backticks because that is how it was
+    written. The approval and the alternative arrived in the same sentence, so
+    nothing here is a dispute &mdash; it is the second half being taken
+    seriously.</p>
+  </div>
+  <div class="claim">
+    <h3><span class="tag is-flag">the answer</span> Given on the thread the same day</h3>
+    <p class="said">I can look into that for a future pr. This fixes the immediate breakage.</p>
+    <p class="found">What follows is that look, run rather than reasoned
+    about.</p>
+  </div>
+</div>
+
+<h2><span class="n">1</span>What the route is</h2>
+
+<p>The rule in the tree today makes a copy of the kernel ELF, gives its
+<code>.apps</code> section file content, and writes one application's TBF into
+it. The local-board route never opens an ELF. <code>tockloader</code> keeps a
+file that stands in for the board's flash; the kernel binary is written at the
+base of it and applications are installed into it at the application region,
+exactly as they would be onto a real board.</p>
+
+<figure id="f1">
+  <div class="instrument">
+    <p class="ititle">Four commands, and what the file contains afterwards</p>
+    <div class="scroll">
+      <table class="grid">
+        <thead><tr><th>Step</th><th>Command</th><th>Result</th></tr></thead>
+        <tbody>
+          <tr><td class="lbl">declare</td>
+            <td><code>tockloader local-board set raspberry_pi_pico_2 --arch cortex-m33 --app-address 0x10040000 --flash-address 0x10000000</code></td>
+            <td>Records the board once. The addresses are the board's own
+            <code>layout.ld</code>.</td></tr>
+          <tr><td class="lbl">kernel</td>
+            <td><code>tockloader flash --local-board --address 0x10000000 raspberry_pi_pico_2.bin</code></td>
+            <td>262,144 bytes, byte-for-byte the <code>.bin</code> the ordinary
+            build already produces.</td></tr>
+          <tr><td class="lbl">application</td>
+            <td><code>tockloader install --local-board console.tab</code></td>
+            <td>Reports the application at <code>0x10040080</code> inside a
+            1,024-byte region beginning at <code>0x10040000</code>.</td></tr>
+          <tr><td class="lbl">load</td>
+            <td><code>openocd &hellip; program &lt;image&gt; 0x10000000 verify</code>
+            or <code>picotool uf2 convert &lt;image&gt; -t bin -o 0x10000000</code></td>
+            <td>Both take a flat binary. Neither is given an ELF.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="verdict">The resulting image is 263,169 bytes: the kernel binary
+    unchanged &mdash; <b>compared byte for byte, not assumed</b> &mdash; then
+    the 1,024-byte TBF at offset <code>0x40000</code>, then a single terminator
+    byte. <b>The kernel binary is already exactly <code>0x40000</code> long on
+    both chips</b>, so the application lands where the linker script puts the
+    application region with no padding arithmetic anywhere.</p>
+  </div>
+  <figcaption><b>Figure 1.</b> Run against <code>tock/tock</code>
+  <code>d5b5f7cbc</code> with tockloader 1.18.1. The addresses are identical on
+  all four RP2 boards: flash begins at <code>0x10000000</code> and the
+  application region at <code>0x10040000</code>.</figcaption>
+</figure>
+
+<h2 id="s2"><span class="n">2</span>Why the defect cannot occur here</h2>
+
+<p><a href="https://github.com/tock/tock/issues/4770">#4770</a> is not really
+about the stack. It is about what <code>objcopy</code> does when a section
+acquires file content: it lays the program headers out again, and on the way
+through, the <code>(NOLOAD)</code> stack segment in SRAM comes back claiming
+file content it does not have. The section stays <code>NOBITS</code> the whole
+time, which is why nothing that reads the section table can see it.</p>
+
+<p><b>That sequence needs an ELF to happen to.</b> On this route the only
+<code>objcopy</code> in the chain is the kernel's own ELF-to-binary step, which
+the build already performs and which nothing here changes. There is no second
+copy, no section given contents, and no program header to recompute.</p>
+
+<p>The three failure modes recorded on the <a href="../4770/">#4770 page</a>
+were checked against this route rather than assumed away. Two of them belong to
+the UF2 converters and cannot arise, because what they are handed is not an ELF.
+The third belonged to <code>openocd</code>, which used to write flash correctly,
+skip the SRAM segment with <code>no flash bank found</code>, and then fail its
+own <code>verify_image</code> against memory it had declined to write. <b>The
+programming run in <a href="#s3">Section&nbsp;3</a> emitted no such warning and
+verified clean</b>, which is the observation rather than the argument.</p>
+
+<h2 id="s3"><span class="n">3</span>On silicon</h2>
+
+<p>The image was programmed onto a Pico&nbsp;2&nbsp;W over a Debug&nbsp;Probe,
+the board reset, and the console read. Two applications were used in turn:
+<code>console</code>, which prints a line and exits, and <code>blink</code>,
+which loops &mdash; so that the second run leaves a live process for the kernel
+to be asked about.</p>
+
+<figure id="f2">
+  <div class="instrument">
+    <p class="ititle">Programmed, booted, and asked</p>
+    <div class="scroll">
+      <table class="grid">
+        <thead><tr><th>Stage</th><th>What came back</th><th>Reading</th></tr></thead>
+        <tbody>
+          <tr><td class="lbl">programming</td>
+            <td><code>** Programming Finished **</code><br>
+                <code>** Verified OK **</code></td>
+            <td><span class="mark is-ok">flat image accepted</span></td></tr>
+          <tr><td class="lbl">boot</td>
+            <td><code>Initialization complete. Enter main loop</code><br>
+                <code>Hello world!</code></td>
+            <td><span class="mark is-ok">the application ran</span></td></tr>
+          <tr><td class="lbl">process list</td>
+            <td><code>PID 0&nbsp; Unique&nbsp; blink&nbsp; Quanta 0&nbsp;
+                Syscalls 177&nbsp; Restarts 0&nbsp; Grants 1/4&nbsp;
+                Yielded</code></td>
+            <td><span class="mark is-ok">the kernel enumerates it</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="verdict"><b>The third row is the one that matters.</b> A line of
+    output could come from anywhere; a process the kernel has admitted to its
+    own table, counted 177 system calls for and parked in
+    <code>Yielded</code>, was loaded and started from that image. The
+    <code>Hello world!</code> line above it is from the first run, whose
+    application prints once and terminates.</p>
+  </div>
+  <figcaption><b>Figure 2.</b> Pico&nbsp;2&nbsp;W on a Debug&nbsp;Probe,
+  2026-09-09, kernel built from <code>d5b5f7cbc</code>. The process list is the
+  board's own process console answering <code>list</code> over the UART.
+  Transcripts are quoted, not summarised.</figcaption>
+</figure>
+
+<p>One thing the route does <b>not</b> take care of. The image ends where its
+last application ends, so a previous application that was longer leaves a tail
+behind in flash, and the kernel will load that tail as a second process. The
+programming run above erased the whole application region first, exactly as the
+splice route has to. <b>This is the same trap, not a fixed one.</b></p>
+
+<h2 id="s4"><span class="n">4</span>The other half, without a BOOTSEL press</h2>
+
+<p>The board reaches this bench over SWD, so the drag-and-drop route was not
+exercised physically. It did not need to be. <code>picotool</code> converted the
+same image, and the UF2 was taken apart again and compared against the bytes
+that had just run.</p>
+
+<figure id="f3">
+  <div class="instrument">
+    <p class="ititle">The UF2 disassembled and compared</p>
+    <div class="scroll">
+      <table class="grid">
+        <thead><tr><th>Property</th><th>Value</th><th>Why it is checked</th></tr></thead>
+        <tbody>
+          <tr><td class="lbl">blocks</td><td class="num">1,029</td>
+            <td>Every one carries the two UF2 magic words and the trailing one,
+            or the reassembly would have stopped.</td></tr>
+          <tr><td class="lbl">family</td><td><code>0xe48bff59</code></td>
+            <td>RP2350 Arm-S. The converter inferred it; a wrong family is
+            refused by the bootloader and looks like nothing happening.</td></tr>
+          <tr><td class="lbl">payload</td><td class="num">263,424 bytes</td>
+            <td>Reassembled from the block headers, not from the file
+            order.</td></tr>
+          <tr><td class="lbl">against the image</td><td>identical</td>
+            <td>The first 263,169 bytes equal the image programmed in
+            <a href="#s3">Section&nbsp;3</a>; the remainder is zero padding to a
+            block boundary.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="verdict">This is what carries the silicon result across to the
+    <code>program</code> target: the UF2 is not <i>like</i> the image that
+    booted, it <b>is</b> that image plus padding. The same conversion with
+    <code>--family rp2040</code> produces family <code>0xe48bff56</code> and
+    places the TBF at the same address &mdash; but see
+    <a href="#s6">Section&nbsp;6</a> for what that does and does not show.</p>
+  </div>
+  <figcaption><b>Figure 3.</b> Decoded with a short script that walks the
+  512-byte block headers and rebuilds a flat address space, rather than trusting
+  the converter's exit status. The whole reason #4770 went unnoticed is that a
+  tool exited zero.</figcaption>
+</figure>
+
+<h2 id="s5"><span class="n">5</span>What it would cost</h2>
+
+<p>The four lines in #5156 buy a working <code>make program</code> and change
+nothing else. This route is better shaped, and it is not free.</p>
+
+<figure id="f4">
+  <div class="instrument">
+    <p class="ititle">Four costs, each one measured rather than anticipated</p>
+    <div class="scroll">
+      <table class="grid">
+        <thead><tr><th>Cost</th><th>What was observed</th><th>Weight</th></tr></thead>
+        <tbody>
+          <tr><td class="lbl">Three boards would change tools</td>
+            <td><code>elf2uf2-rs</code> reads only ELF. Wrapping the flat image
+            back into one &mdash; the technique the ESP32-C3 board uses &mdash;
+            produces a file with no program headers at all, and the converter
+            rejects it with <code>Unrecognized ABI 97</code>.
+            <code>picotool</code> takes the binary directly.</td>
+            <td><span class="tag is-bad">a real swap</span></td></tr>
+          <tr><td class="lbl">APP changes meaning</td>
+            <td><code>tockloader install</code> refuses a bare TBF &mdash;
+            <code>No valid TABs to use</code>. Both READMEs document
+            <code>APP</code> as the path to a <code>.tbf</code> file.</td>
+            <td><span class="tag is-bad">user-visible</span></td></tr>
+          <tr><td class="lbl">The board setting is machine-wide</td>
+            <td>One board at a time, in a single file under the user's
+            application-support directory. A setup step for one board replaces
+            the setting for another, and <code>make program</code> becomes
+            dependent on a step run earlier.</td>
+            <td><span class="tag is-flag">already upstream</span></td></tr>
+          <tr><td class="lbl">tockloader becomes required</td>
+            <td>For a route that needs none of it today.</td>
+            <td><span class="tag is-flag">normal for Tock</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="verdict">The first two are the ones a reviewer would stop on, and
+    they land only on the three RP2040 boards and on the documented interface.
+    <b>The Pico&nbsp;2 carries none of them</b>: it already converts with
+    <code>picotool</code>, which is why that board is the one worth moving
+    first.</p>
+  </div>
+  <figcaption><b>Figure 4.</b> The third row is not hypothetical &mdash; the
+  ESP32-C3 board does exactly this today with a <code>make init</code> target,
+  which is what makes it acceptable rather than what makes it harmless.</figcaption>
+</figure>
+
+<h2 id="s6"><span class="n">6</span>What this does not establish</h2>
+
+<ul class="plain">
+  <li><b>Nothing ran on an RP2040.</b> There is no such board here. The
+  RP2040 work is a file exercise: the image assembles, and
+  <code>picotool</code> converts it to the right family with the TBF at the
+  right address. Whether that image boots is untested.</li>
+  <li><b>The RP2040 application was the wrong architecture.</b> The archive
+  installed into that image holds a <code>cortex-m33</code> binary, because it
+  is the one this bench builds. It demonstrates placement and nothing about
+  execution, and a real move would have to be redone with an application built
+  for the chip.</li>
+  <li><b>Two applications could not be installed together.</b> The attempt
+  fails with <code>Could not meet fixed address requirements</code>, because
+  both archives here are built at a fixed address and want the same one. That
+  is a property of how these applications were compiled, not of this route
+  &mdash; but it means <b>"this gets you multiple applications" is not a claim
+  this page can make</b>.</li>
+  <li><b>No UF2 was written over BOOTSEL.</b> The equivalence in
+  <a href="#s4">Section&nbsp;4</a> is between bytes, which is strong, but the
+  bootloader's own acceptance of the file was not observed.</li>
+  <li><b>The stale-tail hazard is unchanged.</b> The erase in
+  <a href="#s3">Section&nbsp;3</a> was kept deliberately. A route that wrote a
+  full-length image would remove that trap; this one does not.</li>
+  <li><b>Nothing here says #5156 should wait.</b> It is approved by two
+  maintainers and fixes a target that is broken today. What this page argues is
+  that the successor is worth building, not that the predecessor was wrong.</li>
+</ul>
+
+</main>
+
+<footer>
+  <p>Measured against tock/tock
+  <a href="https://github.com/tock/tock/commit/d5b5f7cbc"><code>d5b5f7cbc</code></a>,
+  tockloader 1.18.1, and a Pico&nbsp;2&nbsp;W on a Debug&nbsp;Probe. Part of
+  <a href="../../">a work map</a> of what Tock can drive on an RP2350.</p>
+  <p>This page was written with AI assistance. Every number on it was produced
+  by running the commands or the board, and the console transcripts are quoted
+  rather than summarised, so it can be checked without trusting it. Corrections
+  are welcome on the pull request.</p>
+</footer>
+
+</div>
+</body>
+</html>
