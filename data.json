@@ -886,8 +886,8 @@
         ],
         "stat": "8 files changed, 431 insertions(+), 238 deletions(-)",
         "base": "upstream/master",
-        "base_sha": "2a7a40450",
-        "behind": 8,
+        "base_sha": "e2ec78ff5",
+        "behind": 0,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -986,8 +986,8 @@
         ],
         "stat": "4 files changed, 57 insertions(+), 13 deletions(-)",
         "base": "upstream/master",
-        "base_sha": "2a7a40450",
-        "behind": 8,
+        "base_sha": "e2ec78ff5",
+        "behind": 0,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -999,8 +999,8 @@
         ],
         "stat": "1 file changed, 4 insertions(+)",
         "base": "upstream/master",
-        "base_sha": "2a7a40450",
-        "behind": 8,
+        "base_sha": "e2ec78ff5",
+        "behind": 0,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1028,8 +1028,8 @@
         ],
         "stat": "5 files changed, 487 insertions(+)",
         "base": "upstream/master",
-        "base_sha": "2a7a40450",
-        "behind": 8,
+        "base_sha": "e2ec78ff5",
+        "behind": 0,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
