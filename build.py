@@ -108,6 +108,7 @@ INTENT = {
     "tock:boards-remove-dead-ram-layout": ("upstream", "Closed in favour of fixing the addresses.", None),
     "tock:stepper-capsule": ("upstream", "A stepper motor capsule: four phase pins driven from the capsule's own alarm, with the owning process's liveness checked before every step.", "Undecided whether it goes upstream at all. A new syscall driver means a new driver number and new API surface, which is a materially different ask from a bug fix — it must not become a fourth thing waiting behind the three descriptions."),
     "tock:rp2-adc": ("upstream", "Moves the SAR ADC driver into the shared rp2xxx crate, adds the RP2350's, and wires it up on the Pico 2 so driver 0x00005 answers. Three commits, the same shape as #5112, which merged.", "Ready. Unblocks the whole analogue tier of the breadboard kit — joystick, potentiometer, light sensor, thermistor — none of which needs new wiring."),
+    "tock:rp2350-stale-nvic-pending": ("upstream", "Clears the NVIC's pending bits once more after the peripherals have been reset, so a Pico 2 stops panicking with `unhandled interrupt 14` when the chip is reset out of a live bootrom USB session. One file, one statement, +9 lines.", "Ready and **not opened** -- it needs a description. Cut from master at `d0d478657`, `make prepush` green, head `4422dbd3c`. Independent of everything else in the queue: it touches one board file and no Makefile, so it cannot collide with #5156 or #5160. Where the line belongs is a fair review question -- the board covers every upstream board built on `chips/rp2350`, since `raspberry_pi_pico_2` is the only one; `Resets::reset_all_except` would cover all five RP2 boards at a single site; and not panicking at all runs against the twelve chip crates that do."),
     "tock:rp2350-gpio-irq": ("upstream", "Routes IO_IRQ_BANK0 on the RP2350, which is defined and referenced nowhere else, so enabling a GPIO interrupt panics the kernel.", "Ready, and four lines. Independent of everything else in the queue."),
     "tock:rp2-uart-abort-fix": ("upstream", "The fix for all three UART defects: the abort ordering in the three chip drivers, and the two buffer-ownership bugs in the mux. Three commits, each building standalone, no size change on any board.", "Verified by A/B under QEMU on the pinned hifive1 kernel — Err(BUSY) without it, the read left outstanding with it, and 16 bytes typed completing it Ok. Waiting only on a pull request description."),
     "tock:rp2350-spi-bench": ("never", "A bench harness that drives the SPI loopback.", None),
@@ -299,6 +300,14 @@ FACTS = {
         ("What it costs", "One `flash` target now covers kernel and kernel-plus-applications, so it converts the image rather than the ELF and the UF2 is dense where the ELF was sparse: with nothing installed, 524,288 bytes against 204,800 on the Pico and 147,456 on the Pico 2. The 400 blocks the two files share are byte-identical and every added block is zero; installing an application adds five blocks. `APP` is gone rather than redefined -- applications are installed with `tockloader install --local-board <tab>`, so tockloader becomes a requirement. `local-board set` records one board at a time in tockloader's own configuration, and a separate `make init` reintroduces the exposure that setting it on every build had avoided; esp32-c3-devkitM-1 has the same exposure today."),
         ("What was not run", "No RP2040 was booted -- there is no such board here and no emulator for one. What was checked on those three is that each real make target completes, that the image begins with that board's own kernel binary byte for byte, and that the UF2 carries the image verbatim with a valid TBF header at the application address, using applications built for cortex-m0. The whole flow was then run for real on `raspberry_pi_pico` -- `make init`, `make flash`, tockloader 1.18.1 -- and the UF2 it produced writes every address the old one did, byte for byte. `flash-probe` moves to `probe-rs download --binary-format bin`, and that form was run on the Pico 2 -- but with `--chip RP235x`, since that is the board here. The `--chip rp2040` argument itself was never exercised."),
         ("Written up", "The full measurement, including the silicon transcripts, the one-byte A/B and a section on choosing between this and #5156, is at /findings/5160/ on this site."),
+    ],
+    "tock:rp2350-stale-nvic-pending": [
+        ("What it fixes", "A Pico 2 could panic during boot with `panicked at chips/rp2350/src/chip.rs:78:17: unhandled interrupt 14`. IRQ 14 is `USBCTRL_IRQ`, and `chips/rp2350/src/` has **no `usb.rs` at all** -- the RP2040 crate has one and services the line, this one has nothing to route it to. `service_pending_interrupts` reaches an interrupt nothing claims and panics, which is what it is written to do: twelve of the twenty-three chip crates in the tree behave the same way, and that same line exposed an unrouted `IO_IRQ_BANK0` on this chip earlier."),
+        ("The pending bit is a latch, not a live interrupt", "Read over SWD while the board sat in its own panic handler: **NVIC ISPR bit 14 is set while the USB block's MAIN_CTRL, INTR, INTE and INTS are all zero.** The controller is not enabled, no raw condition is set, and with INTE at zero its output cannot be asserted at all -- every register in the block reads as its reset default. A pending bit set beside a quiet source was latched earlier and never cleared. That single pair of numbers separates the two candidate stories: a live interrupt would need servicing or masking, a stale latch needs clearing once the source is gone."),
+        ("Why the existing clear cannot do it", "`Chip::init()` already runs `clear_all_pending()`. It runs *before* `reset_all_except`, and if the bootrom is still talking to a host the USB line is still asserted at that moment, so the NVIC re-latches immediately -- a level-sensitive source cannot be cleared out from under. The peripheral reset afterwards silences the source and leaves the latched bit behind. `disable_all()` does not save it either: `next_pending_with_mask` reads the pending register, not the enable register."),
+        ("Reproducing it with nobody in the room", "Both original sightings followed a bootrom USB session, which meant holding BOOTSEL -- so no rate could be measured and no fix could be tested. **Erasing the first flash sector takes the `IMAGE_DEF` with it, so the bootrom finds no image and falls back to its own USB device**; wait for `2e8a:000f` to enumerate, then reprogram and reset from the debugger while that session is live. The panic went from twice in nine resets with no known trigger to **six in six on demand.** Reset method is not a variable: openocd and probe-rs both produce it."),
+        ("Measured A/B/A on silicon", "A Pico 2 W over a Debug Probe, running the upstream `raspberry_pi_pico_2` board crate: **six panics in six on master, none in six with the statement, six in six again on the re-run.** Run as A/B/A rather than A/B so an ordering effect or a bench that had changed under us would show as a clean third arm. Under the fix both installed applications ran to completion with the console answering throughout. The two kernels have **identical `.text`**, 69,164 bytes each -- the size summary would have called them the same binary, and only `cmp` and the hashes distinguish them."),
+        ("What it does not establish", "The hardware is a Pico 2 W running the upstream `raspberry_pi_pico_2` crate; there is no plain Pico 2 here. **No RP2040 board was involved** -- the four RP2040 boards share the same ordering and the same stale bit will reach them, but `USBCTRL_IRQ` is serviced there, so it is handled rather than fatal; that reasoning is from the source and nothing was run. USB is the only source seen doing this, though the mechanism is general to any peripheral asserting when `Chip::init` runs. And roughly nine plain resets with no bootrom involved were clean, which is not enough to call that rate zero."),
     ],
     "tock:rp2-doc-fixes": [
         ("The README one, and it fails for a reader today", "`raspberry_pi_pico_2` and `pico_explorer_base` both tell you to flash an application with `APP=\"...\" make flash-app`. Neither board has that target: `make: *** No rule to make target `flash-app'.  Stop.` It is `program` on both. `flash-app` is in neither Makefile nor `boards/Makefile.common`, and `git log -S` finds it in neither at any point, so this is not a rename that left the documentation behind \u2014 it arrived with the board. Each README already says `make program` in its *second* \"Flashing app\" section, under the SWD route, so the two halves of one document disagreed and only the first one failed."),
@@ -656,21 +665,26 @@ NOT_DONE = [
      "not declared .PHONY. Separately, raspberry_pi_pico/Makefile has said it "
      "builds the Pico Explorer Base since 049db0bd4. Both are upstream, both "
      "are one line, and neither belongs in the local-board change."),
-    ("A Pico 2 kernel panics on any interrupt nothing claims",
+    ("A Pico 2 boot panic is solved and the fix is unsent",
      "`panicked at chips/rp2350/src/chip.rs:78:17: unhandled interrupt 14`. "
-     "IRQ 14 is USBCTRL_IRQ and this board wires no USB driver, so "
-     "`service_pending_interrupts` reaches an interrupt nothing services and "
-     "panics rather than masking it. **Seen twice on 2026-09-09, and both times "
-     "the reset followed a bootrom USB session** -- once after a BOOTSEL UF2 "
-     "write, once with the bootrom's USB device still enumerated on the host. "
-     "Roughly seven resets with no bootrom involved were all clean, and a second "
-     "reset immediately after a panic boots normally. **The reset method is not "
-     "the variable**: one panic came from `probe-rs reset`, the other from "
-     "openocd, which rules out the first explanation tried. An intervening "
-     "bootrom-to-application handoff appears to clear it -- a deliberate "
-     "reproduction that let the board self-boot after the UF2 write came back "
-     "clean. Nothing here belongs to the flash route; what it costs is bench "
-     "time, since the first reset after any BOOTSEL work may need repeating."),
+     "IRQ 14 is USBCTRL_IRQ and `chips/rp2350/src/` has no `usb.rs` at all, so "
+     "nothing can claim it. **The pending bit is a latch, not a live "
+     "interrupt**: read over SWD while the board sat in its own panic handler, "
+     "NVIC ISPR bit 14 is set while the USB block's MAIN_CTRL, INTR, INTE and "
+     "INTS are all zero. If the bootrom is still talking to a host when the "
+     "chip is reset, the controller is asserting while `Chip::init()` runs, so "
+     "its `clear_all_pending()` cannot stick -- the NVIC re-latches at once -- "
+     "and `reset_all_except` then silences the source and leaves the latched "
+     "bit behind. **Erasing the first flash sector, so the bootrom falls back "
+     "to its own USB device, reproduces it without touching the board: six "
+     "panics in six, where it had been two in nine with no known trigger.** "
+     "One statement after the peripheral reset removes it, A/B/A on silicon at "
+     "6 / 0 / 6. Branch `rp2350-stale-nvic-pending` is cut from master, one "
+     "file, `make prepush` green, and **not opened** -- it needs a description, "
+     "and where the line belongs is a fair question: the board covers every "
+     "upstream board on this chip, `Resets` would cover all five RP2 boards at "
+     "one site, and not panicking at all runs against twelve chip crates that "
+     "do."),
     ("A userspace driver for PIO", "The RP2's most distinctive peripheral, and no process can reach it."),
     ("Hardware CI for the RP2 boards", "The project's testbed runs one board and never on pull requests. Named as a dependency in #5152 rather than promised."),
 ]
