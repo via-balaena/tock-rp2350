@@ -108,7 +108,7 @@ INTENT = {
     "tock:boards-remove-dead-ram-layout": ("upstream", "Closed in favour of fixing the addresses.", None),
     "tock:stepper-capsule": ("upstream", "A stepper motor capsule: four phase pins driven from the capsule's own alarm, with the owning process's liveness checked before every step.", "Undecided whether it goes upstream at all. A new syscall driver means a new driver number and new API surface, which is a materially different ask from a bug fix — it must not become a fourth thing waiting behind the three descriptions."),
     "tock:rp2-adc": ("upstream", "Moves the SAR ADC driver into the shared rp2xxx crate, adds the RP2350's, and wires it up on the Pico 2 so driver 0x00005 answers. Three commits, the same shape as #5112, which merged.", "Ready. Unblocks the whole analogue tier of the breadboard kit — joystick, potentiometer, light sensor, thermistor — none of which needs new wiring."),
-    "tock:rp2350-stale-nvic-pending": ("upstream", "Clears the NVIC's pending bits once more after the peripherals have been reset, so a Pico 2 stops panicking with `unhandled interrupt 14` when the chip is reset out of a live bootrom USB session. One statement and a five-line comment.", "Ready and **not opened** -- it needs a description. Cut from master at `d0d478657`, head `7a3bf4fc4`, one file, +7 lines, `make prepush` green and `make clippy` clean. Two other upstream branches touch this file, #5141 and `rp2-adc`, and it merges clean with both. **#5141 still matters**: it moves this board's boot sequence into a new `lib.rs`, so the statement belongs there rather than where a clean merge leaves it. Where the line belongs is a fair review question -- the board covers every upstream board built on `chips/rp2350`, since `raspberry_pi_pico_2` is the only one; `Resets::reset_all_except` would cover all five RP2 boards but in **two** chip crates rather than one, since rp2040 and rp2350 each have their own; and not panicking at all runs against the twelve chip crates that do."),
+    "tock:rp2350-stale-nvic-pending": ("upstream", "Clears the NVIC's pending bits once more after the peripherals have been reset, so a Pico 2 stops panicking with `unhandled interrupt 14` when the chip is reset out of a live bootrom USB session. One statement and a five-line comment.", "**Open as #5165**, head `7a3bf4fc4`, cut from master at `d0d478657`, one file, +7 lines, `make prepush` green and `make clippy` clean. Two other upstream branches touch this file, #5141 and `rp2-adc`, and it merges clean with both. **#5141 still matters**: it moves this board's boot sequence into a new `lib.rs`, so the statement belongs there rather than where a clean merge leaves it. Where the line belongs is a fair review question -- the board covers every upstream board built on `chips/rp2350`, since `raspberry_pi_pico_2` is the only one; `Resets::reset_all_except` would cover all five RP2 boards but in **two** chip crates rather than one, since rp2040 and rp2350 each have their own; and not panicking at all runs against the twelve chip crates that do."),
     "tock:rp2350-gpio-irq": ("upstream", "Routes IO_IRQ_BANK0 on the RP2350, which is defined and referenced nowhere else, so enabling a GPIO interrupt panics the kernel.", "Ready, and four lines. Independent of everything else in the queue."),
     "tock:rp2-uart-abort-fix": ("upstream", "The fix for all three UART defects: the abort ordering in the three chip drivers, and the two buffer-ownership bugs in the mux. Three commits, each building standalone, no size change on any board.", "Verified by A/B under QEMU on the pinned hifive1 kernel — Err(BUSY) without it, the read left outstanding with it, and 16 bytes typed completing it Ok. Waiting only on a pull request description."),
     "tock:rp2350-spi-bench": ("never", "A bench harness that drives the SPI loopback.", None),
@@ -144,6 +144,14 @@ VERIFY = {
 # renders, unannotated: new work must appear on the page rather than vanish
 # because this table was not updated.
 WORK = {
+    "rp2350: clear stale NVIC pending after the peripheral reset": {
+        "short": "Clear NVIC pending after the reset",
+        "note": "The bootrom can hand over a USB controller that is still "
+                "asserting, so `Chip::init()`'s clear cannot stick and the "
+                "peripheral reset leaves the latched bit behind. Nothing on "
+                "this board claims IRQ 14, so the kernel panicked at boot.",
+        "verify": "silicon",
+    },
     "boards: declare all 520 kB of SRAM on Pico 2": {
         "short": "Declare all 520 kB of SRAM",
         "verify": "build",
