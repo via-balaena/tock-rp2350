@@ -149,10 +149,11 @@ bootrom was enumerated as <code>2e8a:000f</code> and reading the same two blocks
 <p>The controller is enabled, a host has given it address 0x24, frames are
 arriving, its interrupt enables are set, and <strong>the bootrom has enabled
 <code>USBCTRL_IRQ</code> in the interrupt controller itself.</strong> The
-original rate of two in nine needs no more explanation than this: both of the
-nine that followed a bootrom session panicked, and the other seven never had
-the condition at all. Two of two, which is what the reproduction below turns
-into thirteen of thirteen.</p>
+original rate of two in nine needs no mechanism to explain it, only the
+condition: both sightings were resets taken out of a <em>live</em> session and
+both panicked, while the rest of that day&rsquo;s resets either had no bootrom
+involved or had let the board self-boot out of it first, ending the session.
+The rate was low because the condition was rare.</p>
 
 <ol>
   <li>The bootrom leaves the USB controller enabled, addressed and permitted to
