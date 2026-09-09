@@ -41,6 +41,8 @@ import sys
 import tempfile
 
 TOOLS = os.path.dirname(os.path.abspath(__file__))
+SITE = "https://via-balaena.github.io/tock-rp2350/"
+
 ROOT = os.path.dirname(TOOLS)
 
 MARKER = "* { box-sizing: border-box; }"
@@ -329,6 +331,14 @@ def main(argv):
         body = re.sub(r'href="(?:\.\./)?(ch[^"/]+)/"',
                       lambda m: 'href="#%s"' % where.get(m.group(1), m.group(1)), body)
         body = body.replace('href="../"', 'href="#cover"')
+        # A link out of the chapter tree -- ../../findings/4770/ and the like --
+        # is correct where the chapter is served and meaningless here, because
+        # the book is one file with no directory above it and is meant to be
+        # readable away from the site. Those become absolute; nothing else in
+        # the series does, which is why the address lives here and not in a
+        # chapter.
+        body = re.sub(r'href="\.\./\.\./([^"]+)"',
+                      lambda m: 'href="%s%s"' % (SITE, m.group(1)), body)
 
         ids = declared_ids(body)
         every_id |= {"%s--%s" % (key, i) for i in ids}
