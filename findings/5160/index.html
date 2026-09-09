@@ -329,7 +329,7 @@ SWD.</p>
     booted, it <b>is</b> that image plus padding. The same conversion with
     <code>--family rp2040</code> produces family <code>0xe48bff56</code> and
     places the TBF at the same address &mdash; but see
-    <a href="#s6">Section&nbsp;6</a> for what that does and does not show.</p>
+    <a href="#s7">Section&nbsp;7</a> for what that does and does not show.</p>
   </div>
   <figcaption><b>Figure 4.</b> Decoded with a short script that walks the
   512-byte block headers and rebuilds a flat address space, rather than trusting
@@ -428,42 +428,7 @@ really a question about two programs, and both are here.</p>
   which is what makes it acceptable rather than what makes it harmless.</figcaption>
 </figure>
 
-<h2 id="s6"><span class="n">6</span>What this does not establish</h2>
-
-<p>This list was longer. Three entries came off it by going back to the board
-rather than by arguing about them &mdash; a UF2 written through the bootloader,
-two applications installed at once, and an A/B rebuilt from real applications
-instead of a patched copy &mdash; and a fourth narrowed to the one argument it
-could not make. What follows is what nothing here could close.</p>
-
-<ul class="plain">
-  <li><b>Nothing ran on an RP2040.</b> There is no such board here and no
-  emulator for it &mdash; mainline QEMU has no RP2040 machine, and Tock's own
-  emulated boards are RISC-V and x86. The image assembles, begins with that
-  board's own kernel binary byte for byte, and converts to the right family with
-  a valid TBF header at the application address &mdash; but nothing was booted
-  from it. <a href="#f5">Figure&nbsp;5</a> argues it would behave as it does
-  today; it does not observe it.</li>
-  <li><b>probe-rs ran, but not against the chip the rule names.</b> The
-  invocation in <a href="#f2">Figure&nbsp;2</a> used
-  <code>--chip RP235x</code>, because that is the board here.
-  <code>program-probe</code> on the RP2040 boards passes
-  <code>--chip rp2040</code>, and that argument was never exercised. The flags
-  around it were.</li>
-  <li><b>The terminator cannot be isolated from the sector erase.</b> Writing
-  the byte forces its flash sector to be erased, so the two cannot be separated
-  on this hardware. What is shown is that the byte's presence decides the
-  outcome, not which of the two does the work &mdash; and for the route it makes
-  no difference, since both make the old header unreadable.</li>
-  <li><b>The stale-slot A/B was run over SWD only.</b> A UF2 was written through
-  the bootloader in <a href="#s3">Section&nbsp;3</a>, but not as an arm of that
-  comparison. The bootloader erases a sector before writing into it, so the same
-  reasoning should hold; it was not observed.</li>
-</ul>
-
-</main>
-
-<h2 id="s7"><span class="n">7</span>Choosing between this and #5156</h2>
+<h2 id="s6"><span class="n">6</span>Choosing between this and #5156</h2>
 
 <p>Both fix <a href="https://github.com/tock/tock/issues/4770">#4770</a> on the
 same four boards. They are not alternatives in the sense of one being right
@@ -518,6 +483,41 @@ in the ADC syscall document that samples are left-justified. This rewrites the
 same two README lines, so that commit is subsumed whichever way round they land.
 The ADC commit has nothing to do with flashing and survives either order.
 <b>Whichever goes second drops one commit, not the pull request.</b></p>
+
+<h2 id="s7"><span class="n">7</span>What this does not establish</h2>
+
+<p>This list was longer. Three entries came off it by going back to the board
+rather than by arguing about them &mdash; a UF2 written through the bootloader,
+two applications installed at once, and an A/B rebuilt from real applications
+instead of a patched copy &mdash; and a fourth narrowed to the one argument it
+could not make. What follows is what nothing here could close.</p>
+
+<ul class="plain">
+  <li><b>Nothing ran on an RP2040.</b> There is no such board here and no
+  emulator for it &mdash; mainline QEMU has no RP2040 machine, and Tock's own
+  emulated boards are RISC-V and x86. The image assembles, begins with that
+  board's own kernel binary byte for byte, and converts to the right family with
+  a valid TBF header at the application address &mdash; but nothing was booted
+  from it. <a href="#f5">Figure&nbsp;5</a> argues it would behave as it does
+  today; it does not observe it.</li>
+  <li><b>probe-rs ran, but not against the chip the rule names.</b> The
+  invocation in <a href="#f2">Figure&nbsp;2</a> used
+  <code>--chip RP235x</code>, because that is the board here.
+  <code>program-probe</code> on the RP2040 boards passes
+  <code>--chip rp2040</code>, and that argument was never exercised. The flags
+  around it were.</li>
+  <li><b>The terminator cannot be isolated from the sector erase.</b> Writing
+  the byte forces its flash sector to be erased, so the two cannot be separated
+  on this hardware. What is shown is that the byte's presence decides the
+  outcome, not which of the two does the work &mdash; and for the route it makes
+  no difference, since both make the old header unreadable.</li>
+  <li><b>The stale-slot A/B was run over SWD only.</b> A UF2 was written through
+  the bootloader in <a href="#s3">Section&nbsp;3</a>, but not as an arm of that
+  comparison. The bootloader erases a sector before writing into it, so the same
+  reasoning should hold; it was not observed.</li>
+</ul>
+
+</main>
 
 
 <footer>

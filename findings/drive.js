@@ -244,6 +244,18 @@ function drivePage(name) {
     });
   });
 
+  // Every findings page ends with what it does not establish, and
+  // /findings/ says so in its opening paragraph -- that promise is the reason
+  // these pages can be trusted at all. It broke silently once, by appending a
+  // section after it, so it is asserted rather than remembered.
+  if (name !== '.') {
+    const h2 = [...doc.querySelectorAll('h2')];
+    const last = h2.length ? h2[h2.length - 1].textContent.toLowerCase() : '';
+    check(at('ends with what it does not establish'),
+          /does not establish/.test(last),
+          h2.length ? h2[h2.length - 1].textContent.trim().slice(0, 40) : 'no h2');
+  }
+
   // Nothing about the bench, and no path off this machine.
   const leak = html.match(/192\.168|10\.\d+\.\d+\.\d+|[0-9a-f]{2}(:[0-9a-f]{2}){5}|ttyACM|\/home\/|\/Users\//i);
   check(at('no private path or address'), !leak, leak && leak[0]);
