@@ -58,7 +58,8 @@
     a Pico&nbsp;2&nbsp;W and the process is live in the kernel's own process
     list &mdash; <a href="#s3">Section&nbsp;3</a>. Four costs come with it, and
     one of them is a tool swap on three other boards &mdash;
-    <a href="#s5">Section&nbsp;5</a>.</dd>
+    <a href="#s5">Section&nbsp;5</a>. The change itself is written &mdash;
+    four boards, two commits &mdash; and not yet proposed.</dd>
   </dl>
 </div>
 
@@ -299,7 +300,50 @@ that had just run.</p>
 <p>The four lines in #5156 buy a working <code>make program</code> and change
 nothing else. This route is better shaped, and it is not free.</p>
 
+<p>The heaviest cost is the converter swap on the three RP2040 boards, so it
+was measured rather than estimated. It looks like a question about a chip
+&mdash; and there is no RP2040 to ask, nor an emulator: mainline QEMU has no
+such machine, and Tock's own emulated boards are RISC-V and x86. But it is
+really a question about two programs, and both are here.</p>
+
 <figure id="f5">
+  <div class="instrument">
+    <p class="ititle">Both converters, one kernel, compared address by address</p>
+    <div class="scroll">
+      <table class="grid">
+        <thead><tr><th>From</th><th>elf2uf2-rs</th><th>picotool</th></tr></thead>
+        <tbody>
+          <tr><td class="lbl">the kernel ELF</td>
+            <td class="num">400 blocks, 102,400 bytes</td>
+            <td class="num">400 blocks, 102,400 bytes</td></tr>
+          <tr><td class="lbl">family</td>
+            <td><code>0xe48bff56</code></td>
+            <td><code>0xe48bff56</code></td></tr>
+          <tr><td class="lbl">bytes they disagree on</td>
+            <td class="num" colspan="2">0</td></tr>
+          <tr><td class="lbl">the flash image</td>
+            <td>cannot &mdash; reads ELF only</td>
+            <td class="num">1,033 blocks, TBF at the application address</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="verdict"><b>Not one byte differs</b> across the 102,400 addresses
+    both write from the same kernel. Converting the flash image, picotool writes
+    a further 159,744 bytes that elf2uf2-rs never had the chance to &mdash;
+    every one of them zero, filling unused flash between the end of the kernel
+    and the end of the kernel region, and stopping before the application
+    address. So the question "does an RP2040 boot from this?" reduces to "does
+    it boot today?", which is known. <b>The cost is size:</b> the application
+    UF2 goes from 208,896 to 528,896 bytes, while the kernel-only UF2 is
+    unchanged at 204,800.</p>
+  </div>
+  <figcaption><b>Figure 5.</b> Built from <code>raspberry_pi_pico</code> at
+  <code>e2ec78ff5</code> and compared by reassembling both files from their
+  block headers into address maps. An emulator would have proved that the
+  emulator models the chip; this proves the two files agree.</figcaption>
+</figure>
+
+<figure id="f6">
   <div class="instrument">
     <p class="ititle">Four costs, each one measured rather than anticipated</p>
     <div class="scroll">
@@ -311,8 +355,9 @@ nothing else. This route is better shaped, and it is not free.</p>
             back into one &mdash; the technique the ESP32-C3 board uses &mdash;
             produces a file with no program headers at all, and the converter
             rejects it with <code>Unrecognized ABI 97</code>.
-            <code>picotool</code> takes the binary directly.</td>
-            <td><span class="tag is-bad">a real swap</span></td></tr>
+            <code>picotool</code> takes the binary directly, and produces the
+            same kernel bytes &mdash; <a href="#s5">Figure&nbsp;5</a>.</td>
+            <td><span class="tag is-flag">measured, not blind</span></td></tr>
           <tr><td class="lbl">APP changes meaning</td>
             <td><code>tockloader install</code> refuses a bare TBF &mdash;
             <code>No valid TABs to use</code>. Both READMEs document
@@ -336,7 +381,7 @@ nothing else. This route is better shaped, and it is not free.</p>
     <code>picotool</code>, which is why that board is the one worth moving
     first.</p>
   </div>
-  <figcaption><b>Figure 5.</b> The third row is not hypothetical &mdash; the
+  <figcaption><b>Figure 6.</b> The third row is not hypothetical &mdash; the
   ESP32-C3 board does exactly this today with a <code>make init</code> target,
   which is what makes it acceptable rather than what makes it harmless.</figcaption>
 </figure>
@@ -344,15 +389,16 @@ nothing else. This route is better shaped, and it is not free.</p>
 <h2 id="s6"><span class="n">6</span>What this does not establish</h2>
 
 <ul class="plain">
-  <li><b>Nothing ran on an RP2040.</b> There is no such board here. The
-  RP2040 work is a file exercise: the image assembles, and
-  <code>picotool</code> converts it to the right family with the TBF at the
-  right address. Whether that image boots is untested.</li>
-  <li><b>The RP2040 application was the wrong architecture.</b> The archive
-  installed into that image holds a <code>cortex-m33</code> binary, because it
-  is the one this bench builds. It demonstrates placement and nothing about
-  execution, and a real move would have to be redone with an application built
-  for the chip.</li>
+  <li><b>Nothing ran on an RP2040.</b> There is no such board here and no
+  emulator for it. The image assembles, begins with that board's own kernel
+  binary byte for byte, and converts to the right family with a valid TBF
+  header at the application address &mdash; but no RP2040 was booted from it.
+  <a href="#s5">Figure&nbsp;5</a> is an argument that it would behave as it does
+  today, not an observation that it does.</li>
+  <li><b>The probe-rs path was not exercised.</b> <code>program-probe</code>
+  moves to <code>probe-rs download --binary-format bin</code>, because
+  <code>probe-rs run</code> wants an ELF. The flags are real; the invocation was
+  never run, because the machine holding the probe has no probe-rs.</li>
   <li><b>Two applications could not be installed together.</b> The attempt
   fails with <code>Could not meet fixed address requirements</code>. Both
   archives carry a Fixed Addresses header naming process flash

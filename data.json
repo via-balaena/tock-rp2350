@@ -536,7 +536,7 @@
         "stat": "3 files changed, 190 insertions(+), 1 deletion(-)",
         "base": "upstream/master",
         "base_sha": "0c6e7b184",
-        "behind": 11,
+        "behind": 14,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -571,7 +571,7 @@
         "stat": "46 files changed, 5446 insertions(+), 2771 deletions(-)",
         "base": "upstream/master",
         "base_sha": "479b61829",
-        "behind": 40,
+        "behind": 43,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -584,7 +584,7 @@
         "stat": "2 files changed, 35 insertions(+), 9 deletions(-)",
         "base": "upstream/master",
         "base_sha": "b3234a172",
-        "behind": 3598,
+        "behind": 3601,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -595,7 +595,7 @@
         "stat": "",
         "base": "upstream/master",
         "base_sha": "0b5b4753e",
-        "behind": 94,
+        "behind": 97,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -608,7 +608,7 @@
         "stat": "5 files changed, 30 deletions(-)",
         "base": "upstream/master",
         "base_sha": "08894c2e0",
-        "behind": 109,
+        "behind": 112,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -808,7 +808,7 @@
         "stat": "48 files changed, 4913 insertions(+), 3812 deletions(-)",
         "base": "upstream/master",
         "base_sha": "8e7431d08",
-        "behind": 65,
+        "behind": 68,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -819,7 +819,7 @@
         "stat": "",
         "base": "upstream/master",
         "base_sha": "38e3744f4",
-        "behind": 80,
+        "behind": 83,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -849,7 +849,7 @@
         "stat": "48 files changed, 5032 insertions(+), 3812 deletions(-)",
         "base": "upstream/master",
         "base_sha": "8e7431d08",
-        "behind": 65,
+        "behind": 68,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -872,7 +872,7 @@
         "stat": "38 files changed, 4423 insertions(+), 2550 deletions(-)",
         "base": "upstream/master",
         "base_sha": "479b61829",
-        "behind": 40,
+        "behind": 43,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -887,7 +887,7 @@
         "stat": "8 files changed, 431 insertions(+), 238 deletions(-)",
         "base": "upstream/master",
         "base_sha": "2a7a40450",
-        "behind": 5,
+        "behind": 8,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -901,6 +901,20 @@
         "stat": "3 files changed, 7 insertions(+), 3 deletions(-)",
         "base": "upstream/master",
         "base_sha": "73af792ec",
+        "behind": 3,
+        "pushed": true,
+        "on_remote": true,
+        "unpushed": 0
+      },
+      "rp2-local-board": {
+        "ahead": 2,
+        "commits": [
+          "rp2040: the same image route, and one UF2 converter instead of two",
+          "rp2350: build the flashed image with tockloader, not by splicing an ELF"
+        ],
+        "stat": "8 files changed, 183 insertions(+), 72 deletions(-)",
+        "base": "upstream/master",
+        "base_sha": "e2ec78ff5",
         "behind": 0,
         "pushed": true,
         "on_remote": true,
@@ -914,7 +928,7 @@
         "stat": "4 files changed, 21 insertions(+)",
         "base": "upstream/master",
         "base_sha": "73af792ec",
-        "behind": 0,
+        "behind": 3,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -928,7 +942,7 @@
         "stat": "4 files changed, 51 insertions(+), 19 deletions(-)",
         "base": "upstream/master",
         "base_sha": "834bbbc26",
-        "behind": 29,
+        "behind": 32,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -941,7 +955,7 @@
         "stat": "4 files changed, 136 insertions(+), 280 deletions(-)",
         "base": "upstream/master",
         "base_sha": "479b61829",
-        "behind": 40,
+        "behind": 43,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -958,7 +972,7 @@
         "stat": "4 files changed, 502 insertions(+), 263 deletions(-)",
         "base": "upstream/master",
         "base_sha": "73af792ec",
-        "behind": 0,
+        "behind": 3,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -973,7 +987,7 @@
         "stat": "4 files changed, 57 insertions(+), 13 deletions(-)",
         "base": "upstream/master",
         "base_sha": "2a7a40450",
-        "behind": 5,
+        "behind": 8,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -986,7 +1000,7 @@
         "stat": "1 file changed, 4 insertions(+)",
         "base": "upstream/master",
         "base_sha": "2a7a40450",
-        "behind": 5,
+        "behind": 8,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1000,7 +1014,7 @@
         "stat": "4 files changed, 698 insertions(+), 4 deletions(-)",
         "base": "upstream/master",
         "base_sha": "65608d717",
-        "behind": 95,
+        "behind": 98,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1015,7 +1029,7 @@
         "stat": "5 files changed, 487 insertions(+)",
         "base": "upstream/master",
         "base_sha": "2a7a40450",
-        "behind": 5,
+        "behind": 8,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1253,7 +1267,7 @@
     "ok": true,
     "upstream_ref": "upstream/master",
     "fork_ref": "bench/stepper-pico2w",
-    "head": "73af792ec",
+    "head": "e2ec78ff5",
     "resets": {
       "rp2040": {
         "USBCTRL": 24,
@@ -1596,6 +1610,51 @@
         }
       },
       "rp2-doc-fixes": {
+        "rp2040": {
+          "adc": 240,
+          "chip": 246,
+          "clocks": 1419,
+          "deferred_calls": 33,
+          "dma": 606,
+          "gpio": 727,
+          "i2c": 729,
+          "interrupts": 30,
+          "lib": 109,
+          "mod": 5,
+          "pio": 1947,
+          "pio_gspi": 270,
+          "pio_pwm": 95,
+          "pio_spi": 572,
+          "pwm": 76,
+          "resets": 371,
+          "rtc": 448,
+          "spi": 36,
+          "sysinfo": 98,
+          "timer": 277,
+          "uart": 761,
+          "usb": 2484,
+          "watchdog": 129,
+          "xosc": 117
+        },
+        "rp2350": {
+          "chip": 175,
+          "clocks": 1530,
+          "gpio": 1555,
+          "interrupts": 56,
+          "lib": 118,
+          "resets": 400,
+          "spi": 36,
+          "ticks": 174,
+          "timer": 274,
+          "uart": 811,
+          "xosc": 125
+        },
+        "rp2xxx": {
+          "lib": 29,
+          "spi": 638
+        }
+      },
+      "rp2-local-board": {
         "rp2040": {
           "adc": 240,
           "chip": 246,
@@ -13969,6 +14028,16 @@
         "boards/pico_explorer_base/README.md",
         "boards/raspberry_pi_pico_2/README.md",
         "doc/syscalls/00005_adc.md"
+      ],
+      "rp2-local-board": [
+        "boards/nano_rp2040_connect/Makefile",
+        "boards/nano_rp2040_connect/README.md",
+        "boards/pico_explorer_base/Makefile",
+        "boards/pico_explorer_base/README.md",
+        "boards/raspberry_pi_pico/Makefile",
+        "boards/raspberry_pi_pico/README.md",
+        "boards/raspberry_pi_pico_2/Makefile",
+        "boards/raspberry_pi_pico_2/README.md"
       ],
       "rp2-make-program-fix": [
         "boards/nano_rp2040_connect/Makefile",
