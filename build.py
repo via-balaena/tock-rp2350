@@ -3384,9 +3384,9 @@ def render(data):
   <h2>Findings</h2>
   <p class="lede">Pico problems worked through far enough to be useful to whoever
   fixes them &mdash; some reported by other people, some our own changes written up
-  so a reviewer can check them. Each page pins its citations to a commit, ships the
-  script that produced any tool output it quotes, and ends with what it does
-  <em>not</em> establish &mdash; which for the USB one is most of it.
+  so a reviewer can check them. Each page cites the tree at a commit, quotes tool
+  output rather than summarising it, and ends with what it does <em>not</em>
+  establish &mdash; which for the USB one is most of it.
   <a href="findings/">All of them, with how to read one</a>.</p>
   <ul class="plain">%(findings)s</ul>
   <p class="foot">Written with AI assistance, disclosed on each page, which is also why
