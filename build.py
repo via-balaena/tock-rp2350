@@ -584,7 +584,8 @@ DEFECTS = [
      "else, so `service_interrupt` returns false for it and the chip panics "
      "with `unhandled interrupt 21`. Enabling a GPIO interrupt is command 7 of "
      "the GPIO syscall driver, so **any application on the upstream "
-     "raspberry_pi_pico_2, on any pin, can take the kernel down**. Reproduced "
+     "raspberry_pi_pico_2 can take the kernel down**, on any of the twenty-four "
+     "pins that board exposes. Reproduced "
      "on that board with buttons on GP14 and GP15: it panics before the change "
      "and reports every press and release after, four lines."),
     ("A Pico 2 panics at boot on an interrupt nothing claims", "fixed-local",
