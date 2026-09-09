@@ -445,8 +445,10 @@ The size summary would have called them the same binary. Only
   <code>Chip::init</code> runs would latch the same way &mdash; but the bootrom
   is the only thing observed arming one, and it arms USB.</li>
   <li><strong>The rate outside the bootrom condition is not known to be
-  zero.</strong> Thirteen resets with no bootrom step in them have all booted
-  cleanly. That bounds it low; it does not show it is zero.</li>
+  zero.</strong> No reset the harness has logged without a bootrom step in it
+  has ever panicked &mdash; twenty-five of them by the time this was written,
+  and the logs are the count rather than this sentence. That bounds it low; it
+  does not show it is zero.</li>
 </ul>
 
 </main>
