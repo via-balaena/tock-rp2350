@@ -97,7 +97,7 @@ exactly as they would be onto a real board.</p>
         <thead><tr><th>Step</th><th>Command</th><th>Result</th></tr></thead>
         <tbody>
           <tr><td class="lbl">declare</td>
-            <td><code>tockloader local-board set raspberry_pi_pico_2 --arch cortex-m33 --app-address 0x10040000 --flash-address 0x10000000</code></td>
+            <td><code>tockloader local-board set raspberry_pi_pico_2 --binary-path &lt;image&gt; --arch cortex-m33 --app-address 0x10040000 --flash-address 0x10000000</code></td>
             <td>Records the board once. The addresses are the board's own
             <code>layout.ld</code>.</td></tr>
           <tr><td class="lbl">kernel</td>
@@ -123,7 +123,7 @@ exactly as they would be onto a real board.</p>
     application region with no padding arithmetic anywhere.</p>
   </div>
   <figcaption><b>Figure 1.</b> Run against <code>tock/tock</code>
-  <code>d5b5f7cbc</code> with tockloader 1.18.1. The addresses are identical on
+  <code>e2ec78ff5</code> with tockloader 1.18.1. The addresses are identical on
   all four RP2 boards: flash begins at <code>0x10000000</code> and the
   application region at <code>0x10040000</code>.</figcaption>
 </figure>
@@ -176,7 +176,7 @@ to be asked about.</p>
             <td><span class="mark is-ok">the application ran</span></td></tr>
           <tr><td class="lbl">process list</td>
             <td><code>PID 0&nbsp; Unique&nbsp; blink&nbsp; Quanta 0&nbsp;
-                Syscalls 177&nbsp; Restarts 0&nbsp; Grants 1/4&nbsp;
+                Syscalls 141&nbsp; Restarts 0&nbsp; Grants 1/4&nbsp;
                 Yielded</code></td>
             <td><span class="mark is-ok">the kernel enumerates it</span></td></tr>
         </tbody>
@@ -184,13 +184,15 @@ to be asked about.</p>
     </div>
     <p class="verdict"><b>The third row is the one that matters.</b> A line of
     output could come from anywhere; a process the kernel has admitted to its
-    own table, counted 177 system calls for and parked in
-    <code>Yielded</code>, was loaded and started from that image. The
+    own table and parked in <code>Yielded</code> was loaded and started from
+    that image. The system-call count is whatever it had reached when the
+    question was asked &mdash; the application loops &mdash; so it says the
+    process is running, not that the number reproduces. The
     <code>Hello world!</code> line above it is from the first run, whose
     application prints once and terminates.</p>
   </div>
   <figcaption><b>Figure 2.</b> Pico&nbsp;2&nbsp;W on a Debug&nbsp;Probe,
-  2026-09-09, kernel built from <code>d5b5f7cbc</code>. The process list is the
+  2026-09-09, kernel built from <code>e2ec78ff5</code>. The process list is the
   board's own process console answering <code>list</code> over the UART.
   Transcripts are quoted, not summarised.</figcaption>
 </figure>
@@ -431,7 +433,7 @@ really a question about two programs, and both are here.</p>
 
 <footer>
   <p>Measured against tock/tock
-  <a href="https://github.com/tock/tock/commit/d5b5f7cbc"><code>d5b5f7cbc</code></a>,
+  <a href="https://github.com/tock/tock/commit/e2ec78ff5"><code>e2ec78ff5</code></a>,
   tockloader 1.18.1, and a Pico&nbsp;2&nbsp;W on a Debug&nbsp;Probe. Part of
   <a href="../../">a work map</a> of what Tock can drive on an RP2350.</p>
   <p>This page was written with AI assistance. Every number on it was produced

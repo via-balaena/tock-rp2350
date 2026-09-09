@@ -912,7 +912,7 @@
           "rp2040: the same image route, and one UF2 converter instead of two",
           "rp2350: build the flashed image with tockloader, not by splicing an ELF"
         ],
-        "stat": "8 files changed, 183 insertions(+), 72 deletions(-)",
+        "stat": "8 files changed, 180 insertions(+), 73 deletions(-)",
         "base": "upstream/master",
         "base_sha": "e2ec78ff5",
         "behind": 0,
