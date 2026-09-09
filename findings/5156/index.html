@@ -194,58 +194,62 @@ to be asked about.</p>
   Transcripts are quoted, not summarised.</figcaption>
 </figure>
 
-<p>There is one trap the route does not remove by itself &mdash; and, it turns
-out, does make fixable. The image ends where its last application ends, so
-whatever is already in flash past that point survives. That is not a
-speculative concern, so it was put on the board: an image containing <b>no
-application at all</b> was programmed over the running one, without erasing
-first.</p>
+<p>The route does more than dodge the ELF defect &mdash; it closes a hazard the
+current one has. That took two measurements, and the first is about the kernel
+rather than about either route.</p>
+
+<p><b>The loader stops at the first invalid header.</b> It walks TBF headers
+from the start of the application region, and when one does not parse it gives
+up rather than scanning on. That was checked instead of assumed: a valid
+application placed one sector further along, with erased flash between, is
+never reached and never appears in the process list. <b>So there is exactly one
+address at which an old application can come back &mdash; the slot immediately
+after the new image's last one.</b></p>
+
+<p>tockloader writes a single zero byte at that slot. Splicing writes nothing
+there. That is the entire difference between the two routes on this point, and
+it is worth exactly one byte.</p>
 
 <figure id="f3">
   <div class="instrument">
-    <p class="ititle">Two kernel-only images, neither preceded by an erase</p>
+    <p class="ititle">Two images one byte apart, flashed over the same board state</p>
     <div class="scroll">
       <table class="grid">
         <thead><tr><th>Image</th><th>Length</th><th>Process list after reset</th></tr></thead>
         <tbody>
-          <tr><td class="lbl">kernel alone</td>
-            <td class="num">262,144 bytes</td>
-            <td><code>blink</code>, still there &mdash;
-            <span class="mark is-bad">stale application runs</span></td></tr>
-          <tr><td class="lbl">kernel padded to the end of the application region</td>
-            <td class="num">524,288 bytes</td>
-            <td>empty &mdash;
-            <span class="mark is-ok">nothing left to load</span></td></tr>
+          <tr><td class="lbl">ends exactly on the old header</td>
+            <td class="num">266,240 bytes</td>
+            <td><code>blink</code>, then <code>ghost</code> &mdash;
+            <span class="mark is-bad">old application comes back</span></td></tr>
+          <tr><td class="lbl">the same, plus tockloader's terminator</td>
+            <td class="num">266,241 bytes</td>
+            <td><code>blink</code> alone &mdash;
+            <span class="mark is-ok">slot invalidated</span></td></tr>
         </tbody>
       </table>
     </div>
-    <p class="verdict">The first row is the trap in its purest form: an image
-    with <b>no application in it</b> was flashed and verified, and the board
-    came back running the previous one. The second is the whole fix &mdash;
-    filling the application region with erased-state bytes, so the loader finds
-    no valid header and stops. <b>No erase command, and nothing specific to
-    <code>openocd</code>.</b></p>
+    <p class="verdict">Both arms start from an identical board state, written
+    with an erase beforehand: one application in a 4&nbsp;kB slot and a second,
+    valid one beginning on the next sector boundary. The images differ by one
+    byte and nothing else. <b>Without it the kernel loads an application that is
+    not in the image it was given.</b> <code>openocd</code> reports the
+    mechanism itself &mdash; the byte falls inside the old application's sector,
+    which forces that sector to be erased. On this flash the byte and the erase
+    it triggers cannot be told apart; together they make the slot
+    unreadable.</p>
   </div>
-  <figcaption><b>Figure 3.</b> Same board, same session, 2026-09-09. Run
-  deliberately without the erase step that <a href="#s3">the run above</a>
-  used, because the question was what the image does on its own.</figcaption>
+  <figcaption><b>Figure 3.</b> Same board, 2026-09-09. The second application
+  was forged by patching a copy of the first &mdash; its name, its fixed
+  addresses and its header checksum &mdash; because the two archives available
+  here demand the same address and cannot be installed together.</figcaption>
 </figure>
 
-<p><b>This matters more on the other target than on this one.</b> The
-<code>program</code> rule converts to UF2 and copies it onto a mounted
-bootloader volume, and there is no erase step on that path &mdash; there cannot
-be, because dropping a file onto a drive cannot run
-<code>flash erase_address</code>. The splice route has no way out of it either,
-because the ELF's <code>.apps</code> section is exactly as long as the TBF put
-into it. <b>A flat image can simply be longer</b>, which makes padding the
-first thing a successor ought to do and something the current route cannot
-offer at all.</p>
-
-<p>One detail short of a claim: tockloader writes a single zero byte after the
-last application, which would spoil the version field of any TBF header
-beginning right there. That is structure read out of the image rather than a
-protection this page tested, and it does nothing for the case above &mdash;
-where no application was installed, so no terminator was written.</p>
+<p><b>What this retires.</b> An earlier version of this page recommended padding
+the image across the whole application region. That rested on a wrong model of
+the loader &mdash; that it might scan past a gap &mdash; and it is unnecessary:
+the terminator already covers the only slot that can matter. Flashing a kernel
+on its own does leave applications in place, but that is Tock's ordinary
+behaviour and not a fault to be fixed here.</p>
 
 <h2 id="s4"><span class="n">4</span>The other half, without a BOOTSEL press</h2>
 
@@ -360,13 +364,18 @@ nothing else. This route is better shaped, and it is not free.</p>
   <li><b>No UF2 was written over BOOTSEL.</b> The equivalence in
   <a href="#s4">Section&nbsp;4</a> is between bytes, which is strong, but the
   bootloader's own acceptance of the file was not observed.</li>
-  <li><b>The one-byte terminator was not tested.</b> tockloader writes a zero
-  byte after the last application, and it ought to invalidate a TBF header
-  beginning there. Whether it does was never put on the board: the A/B in
-  <a href="#s3">Section&nbsp;3</a> used an image with no application in it,
-  which carries no terminator at all.</li>
-  <li><b>The padded image was flashed over SWD, not through BOOTSEL.</b> That
-  is the path padding exists to help, and it is the one still unobserved.</li>
+  <li><b>The terminator was not isolated from the sector erase.</b> Writing the
+  byte forces its flash sector to be erased, so the two cannot be separated on
+  this hardware. What is demonstrated is that the byte's presence decides the
+  outcome, not which of the two does the work.</li>
+  <li><b>The second application in <a href="#s3">Figure&nbsp;3</a> is
+  forged.</b> It is a copy of the first with its fixed addresses, name and
+  checksum patched, not something a toolchain produced. The kernel accepted and
+  listed it, which is what the test needed, but it is not a real
+  build.</li>
+  <li><b>The stale-slot A/B was run over SWD only.</b> The same reasoning should
+  hold through the bootloader, which erases a sector before writing into it, but
+  that was not observed.</li>
   <li><b>Nothing here says #5156 should wait.</b> It is approved by two
   maintainers and fixes a target that is broken today. What this page argues is
   that the successor is worth building, not that the predecessor was wrong.</li>
