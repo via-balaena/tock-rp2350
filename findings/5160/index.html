@@ -243,11 +243,10 @@ to be asked about.</p>
   <figcaption><b>Figure 2.</b> Pico&nbsp;2&nbsp;W on a Debug&nbsp;Probe,
   2026-09-09, kernel built from <code>e2ec78ff5</code>. <b>All three ways of
   putting the image on the board were run</b> &mdash; SWD, the bootloader, and
-  probe-rs. They were run under the target names this change carried before it
-  was reworked; the openocd line <code>flash-openocd</code> executes is
-  byte-identical to the one <code>program-openocd</code> did, and what differs
-  is the prerequisite, which now writes the kernel and leaves applications to
-  <code>tockloader install</code>. The process list is the board's own process console answering
+  probe-rs. SWD and the bootloader were then <b>run again after the rework,
+  under the target names the change actually ships</b> &mdash;
+  <code>make flash-openocd</code> and <code>make flash</code> &mdash; and both
+  behaved as they had. The process list is the board's own process console answering
   <code>list</code> over the UART. Transcripts are quoted, not
   summarised.</figcaption>
 
@@ -259,15 +258,28 @@ all.</b> <code>--update-section .apps=</code> takes one file. Two were
 installed into a 274,433-byte image &mdash; <code>leak_claim</code> at
 <code>0x10040080</code> and <code>leak_observe</code> at <code>0x10041080</code>
 &mdash; and the kernel listed both, loaded over SWD and again through the
-bootloader. <code>tockloader install</code> takes <code>[tab ...]</code>, so one
-call carries both; <b>that shape is read off the rule and the tool's signature,
-not off a saved transcript</b>, which is a weaker claim than the two processes
-in the list beside it. The two have to want different addresses:
+bootloader. <b>One <code>tockloader install --local-board</code> carries both</b>,
+its signature being <code>[tab ...]</code>: run with the two archives it reports
+a layout of <code>leak_claim</code> 4,096 bytes at <code>0x10040000</code> and
+<code>leak_observe</code> 8,192 bytes at <code>0x10041000</code>, and the file it
+leaves is 274,433 bytes. That was read off the rule until 2026-09-09, when the
+call was made directly and the number came back the same.
+The two have to want different addresses:
 these are built for adjacent slots, and two applications compiled for the same
 one are refused with <code>Could not meet fixed address requirements</code>.
 That requirement comes from an optional TBF header, not from this route
 &mdash; <a href="https://github.com/tock/tock/blob/e2ec78ff5/kernel/src/process_binary.rs#L231"><code>process_binary.rs:231</code></a> only checks a fixed address when the
 application declares one.</p>
+
+<p><b>And the empty case, which the rework created and nothing had tested.</b>
+Collapsing <code>program</code> into <code>flash</code> means <code>flash</code>
+converts the image rather than the ELF, so with no application installed the
+board is handed a dense 262,144 bytes where the ELF was sparse. Run against an
+erased application region it boots and the process console answers
+<code>list</code> with its header row and nothing under it &mdash; which is two
+observations, not one: the kernel came up from the dense image, and an erased
+region really is empty rather than quietly holding something the loader would
+find.</p>
 
 <p>The route does more than dodge the ELF defect &mdash; it closes a hazard the
 current one has. That took two measurements, and the first is about the kernel
@@ -555,11 +567,13 @@ either landed, and the resolution was a rebase rather than a surprise.</p>
 
 <h2 id="s7"><span class="n">7</span>What this does not establish</h2>
 
-<p>This list was longer. Three entries came off it by going back to the board
-rather than by arguing about them &mdash; a UF2 written through the bootloader,
-two applications installed at once, and an A/B rebuilt from real applications
-instead of a patched copy &mdash; and a fourth narrowed to the one argument it
-could not make. What follows is what nothing here could close.</p>
+<p>This list was longer, and every entry that came off it came off by going
+back to the board rather than by arguing about it: a UF2 written through the
+bootloader, two applications installed at once, an A/B rebuilt from real
+applications instead of a patched copy, and &mdash; after the rework introduced
+it &mdash; a kernel-only image, which the collapse of <code>program</code> into
+<code>flash</code> made a new and untested case. What follows is what nothing
+here could close.</p>
 
 <ul class="plain">
   <li><b>Nothing ran on an RP2040.</b> There is no such board here and no
@@ -583,12 +597,6 @@ could not make. What follows is what nothing here could close.</p>
   on this hardware. What is shown is that the byte's presence decides the
   outcome, not which of the two does the work &mdash; and for the route it makes
   no difference, since both make the old header unreadable.</li>
-  <li><b>No kernel-only image has been booted from this route.</b> Collapsing
-  <code>program</code> into <code>flash</code> means <code>flash</code> converts
-  the image rather than the ELF, and with nothing installed that image is a
-  dense 262,144 bytes where the ELF was sparse. Every block it adds is zero and
-  every block the two share is identical &mdash; but the with-application case
-  is the one that was put on a board.</li>
   <li><b>The stale-slot A/B was run over SWD only.</b> A UF2 was written through
   the bootloader in <a href="#s3">Section&nbsp;3</a>, but not as an arm of that
   comparison. The bootloader erases a sector before writing into it, so the same
