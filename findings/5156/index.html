@@ -273,6 +273,13 @@ it is worth exactly one byte.</p>
   the arms is the byte under test.</figcaption>
 </figure>
 
+<p><b>The ordinary case, for completeness.</b> The A/B above is contrived on
+purpose &mdash; it puts an application exactly where the next one would start,
+because that is the only place a stale header can survive. The everyday version
+was run too: an 8,192-byte application flashed, then a 1,024-byte one over it
+with no erase in between. Only the second appears in the process list. That is
+the terminator doing its job without anyone arranging for it to matter.</p>
+
 <p><b>What this retires.</b> An earlier version of this page recommended padding
 the image across the whole application region. That rested on a wrong model of
 the loader &mdash; that it might scan past a gap &mdash; and it is unnecessary:
