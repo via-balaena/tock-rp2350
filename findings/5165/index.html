@@ -161,7 +161,9 @@ The rate was low because the condition was rare.</p>
   <li><code>Chip::init()</code> runs <code>disable_all()</code> and
   <code>clear_all_pending()</code>. <strong>That clear cannot stick.</strong>
   The line is still asserted, so the NVIC re-latches the bit immediately; a
-  level-sensitive source cannot be cleared out from under.</li>
+  level-sensitive source cannot be cleared out from under. Measured rather than
+  argued: halt the core at the reset vector and the bit is already set before
+  the kernel runs at all &mdash; <a href="#s4">Section&nbsp;4</a>.</li>
   <li><code>reset_all_except</code> resets the USB controller and the source
   goes quiet &mdash; leaving behind a pending bit that is now unreachable by any
   of the mechanisms that would normally clear it.</li>
@@ -217,10 +219,62 @@ probe-rs's 96:</p>
 <p>Same tool and same commands at both durations, and the rate does not move.
 <strong>Length is not the variable; the tool is.</strong> That also disposes of
 the idea that the assertion fades &mdash; over a session more than five times
-longer, it does not. What differs between
-them has not been isolated &mdash; it is somewhere in how each ends a live
-bootrom session &mdash; and none of it changes the defect, which is that the
-kernel panics on a pending bit nobody owns however it got there.</p>
+longer, it does not.</p>
+
+<p>Each tool does two things to a live bootrom session, programs and then
+resets, so the halves swap independently &mdash; <code>probe-rs download</code>
+does not reset unless asked:</p>
+
+<div class="matrix">
+  <div class="mrow"><span>openocd programs, openocd resets</span><span class="mark is-bad">13 in 13, and 6 in 6</span></div>
+  <div class="mrow"><span>probe-rs programs, openocd resets</span><span class="mark is-bad">6 in 6</span></div>
+  <div class="mrow"><span>openocd programs, probe-rs resets</span><span class="mark is-ok">1 in 6</span></div>
+  <div class="mrow"><span>probe-rs programs, probe-rs resets</span><span class="mark is-ok">1 in 6</span></div>
+</div>
+
+<p><strong>Whoever resets decides it; the programming does not matter.</strong>
+That also kills the next guess in line, that probe-rs holding the core halted
+through an eighteen-second download was what let the line go quiet.</p>
+
+<h3>What an openocd reset leaves, read before a single instruction runs</h3>
+
+<p><code>reset halt</code> holds the core at the reset vector, so this is the
+state the kernel is handed rather than a state it produced. Beside the same
+registers taken while the bootrom was still running:</p>
+
+<pre>                 MAIN_CTRL  INTE      INTS      NVIC ISPR bit 14
+bootrom running  00000001   000113f0  00000000  0
+after the reset  00000001   000113f0  <b>00000010</b>  <b>1</b>
+</pre>
+
+<p><strong>The reset does not touch the USB controller.</strong>
+<code>MAIN_CTRL</code> and <code>INTE</code> come through it unchanged &mdash;
+still enabled, still permitted to interrupt.</p>
+
+<p>What changes is <code>INTS</code>, the interrupt state after masking. It is
+zero while the bootrom runs, so nothing is pending then. After the reset an
+enabled condition is asserted, nothing is left to service it, and the NVIC
+latches IRQ&nbsp;14 &mdash; <em>before the kernel executes anything at all.</em>
+Why that condition appears across the reset is not established here; what is
+measured is that it does, and that the controller is in a position to raise it
+because the reset left it running.</p>
+
+<p>openocd's own target file says why, at
+<code>scripts/target/rp2350.cfg:140</code>:</p>
+
+<pre># srst does not exist; use SYSRESETREQ to perform a soft reset
+cortex_m reset_config sysresetreq
+</pre>
+
+<p>There is no hardware reset line to drive, so the reset is whatever
+SYSRESETREQ covers on this part &mdash; and the dump says the USB controller is
+not in it. <code>rp2040.cfg</code> is configured the same way.</p>
+
+<p><strong>What probe-rs does instead has not been measured.</strong> Its reset
+evidently leaves the line quiet, but probe-rs has no reset-and-halt, so there is
+no instant at which those registers can be read before something runs; the
+1-in-6 is reasoning from a rate. None of it changes the defect, which is that
+the kernel panics on a pending bit nobody owns however it got there.</p>
 
 <h2><span class="n">5</span>Four theories, and one of them was right all along</h2>
 
