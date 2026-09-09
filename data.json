@@ -408,7 +408,7 @@
       "isDraft": false,
       "mergedAt": null,
       "number": 5158,
-      "reviewDecision": "REVIEW_REQUIRED",
+      "reviewDecision": "APPROVED",
       "state": "OPEN",
       "title": "docs: rp2: two places the documentation disagrees with the code",
       "url": "https://github.com/tock/tock/pull/5158",
@@ -493,6 +493,10 @@
         {
           "author": "bigmark222",
           "body": "--set-section-flags .apps=LOAD,ALLOC gives .apps file content, which forces BFD to recompute the program headers. \r\n\r\n.stack is (NOLOAD) and lives in SRAM at 0x20000000; during that recompute its p_filesz changes from 0x0 to its full size. The ELF then claims file content for memory that has none, and elf2uf2-rs refuses it with:\r\nError: \"ELF contains memory contents for uninitialized memory at 20000000\"\r\n-R .stack drops it from the flashed artifact only. The kernel ELF keeps its symbols, and .stack reserves stack space with no bytes to carry, so it costs nothing.\r\n\r\nThe section itself stays NOBITS in the section table; the issue is in the program header (p_filesz), which is why it's not obvious from reading the section headers alone."
+        },
+        {
+          "author": "lschuermann",
+          "body": "> .stack is (NOLOAD) and lives in SRAM at 0x20000000; during that recompute its p_filesz changes from 0x0 to its full size.\r\n\r\nGot it. Doesn't this sound like a linker bug? Why does the linker change the `p_filesz` segment header for a `NOLOAD` segment, effectively materializing its contents out of thin air?\r\n\r\nAgain, not disagreeing with this fix, just trying to fully understand the issue."
         }
       ],
       "createdAt": "2026-09-08T16:57:59Z",

@@ -61,9 +61,9 @@
     <p class="found">The reviewer who approved the four-line fix for #4770 asked
     for something else in the same sentence: that these boards stop splicing an
     application into the kernel ELF and use <code>tockloader local-board</code>
-    instead. That route was run end to end &mdash; a kernel and an application
-    assembled by tockloader, programmed over SWD, and the process live in the
-    kernel's own process list. It cannot hit the defect, because it never opens
+    instead. That route was run end to end &mdash; assembled by tockloader, loaded
+    three ways (SWD, the bootloader, probe-rs), with two applications
+    co-resident and live in the kernel's own process list. It cannot hit the defect, because it never opens
     an ELF. Four costs come with it, and the tool swap on three RP2040 boards is
     the one a reviewer would stop on.</p>
   </div>
