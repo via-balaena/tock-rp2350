@@ -194,11 +194,58 @@ to be asked about.</p>
   Transcripts are quoted, not summarised.</figcaption>
 </figure>
 
-<p>One thing the route does <b>not</b> take care of. The image ends where its
-last application ends, so a previous application that was longer leaves a tail
-behind in flash, and the kernel will load that tail as a second process. The
-programming run above erased the whole application region first, exactly as the
-splice route has to. <b>This is the same trap, not a fixed one.</b></p>
+<p>There is one trap the route does not remove by itself &mdash; and, it turns
+out, does make fixable. The image ends where its last application ends, so
+whatever is already in flash past that point survives. That is not a
+speculative concern, so it was put on the board: an image containing <b>no
+application at all</b> was programmed over the running one, without erasing
+first.</p>
+
+<figure id="f3">
+  <div class="instrument">
+    <p class="ititle">Two kernel-only images, neither preceded by an erase</p>
+    <div class="scroll">
+      <table class="grid">
+        <thead><tr><th>Image</th><th>Length</th><th>Process list after reset</th></tr></thead>
+        <tbody>
+          <tr><td class="lbl">kernel alone</td>
+            <td class="num">262,144 bytes</td>
+            <td><code>blink</code>, still there &mdash;
+            <span class="mark is-bad">stale application runs</span></td></tr>
+          <tr><td class="lbl">kernel padded to the end of the application region</td>
+            <td class="num">524,288 bytes</td>
+            <td>empty &mdash;
+            <span class="mark is-ok">nothing left to load</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="verdict">The first row is the trap in its purest form: an image
+    with <b>no application in it</b> was flashed and verified, and the board
+    came back running the previous one. The second is the whole fix &mdash;
+    filling the application region with erased-state bytes, so the loader finds
+    no valid header and stops. <b>No erase command, and nothing specific to
+    <code>openocd</code>.</b></p>
+  </div>
+  <figcaption><b>Figure 3.</b> Same board, same session, 2026-09-09. Run
+  deliberately without the erase step that <a href="#s3">the run above</a>
+  used, because the question was what the image does on its own.</figcaption>
+</figure>
+
+<p><b>This matters more on the other target than on this one.</b> The
+<code>program</code> rule converts to UF2 and copies it onto a mounted
+bootloader volume, and there is no erase step on that path &mdash; there cannot
+be, because dropping a file onto a drive cannot run
+<code>flash erase_address</code>. The splice route has no way out of it either,
+because the ELF's <code>.apps</code> section is exactly as long as the TBF put
+into it. <b>A flat image can simply be longer</b>, which makes padding the
+first thing a successor ought to do and something the current route cannot
+offer at all.</p>
+
+<p>One detail short of a claim: tockloader writes a single zero byte after the
+last application, which would spoil the version field of any TBF header
+beginning right there. That is structure read out of the image rather than a
+protection this page tested, and it does nothing for the case above &mdash;
+where no application was installed, so no terminator was written.</p>
 
 <h2 id="s4"><span class="n">4</span>The other half, without a BOOTSEL press</h2>
 
@@ -207,7 +254,7 @@ exercised physically. It did not need to be. <code>picotool</code> converted the
 same image, and the UF2 was taken apart again and compared against the bytes
 that had just run.</p>
 
-<figure id="f3">
+<figure id="f4">
   <div class="instrument">
     <p class="ititle">The UF2 disassembled and compared</p>
     <div class="scroll">
@@ -237,7 +284,7 @@ that had just run.</p>
     places the TBF at the same address &mdash; but see
     <a href="#s6">Section&nbsp;6</a> for what that does and does not show.</p>
   </div>
-  <figcaption><b>Figure 3.</b> Decoded with a short script that walks the
+  <figcaption><b>Figure 4.</b> Decoded with a short script that walks the
   512-byte block headers and rebuilds a flat address space, rather than trusting
   the converter's exit status. The whole reason #4770 went unnoticed is that a
   tool exited zero.</figcaption>
@@ -248,7 +295,7 @@ that had just run.</p>
 <p>The four lines in #5156 buy a working <code>make program</code> and change
 nothing else. This route is better shaped, and it is not free.</p>
 
-<figure id="f4">
+<figure id="f5">
   <div class="instrument">
     <p class="ititle">Four costs, each one measured rather than anticipated</p>
     <div class="scroll">
@@ -285,7 +332,7 @@ nothing else. This route is better shaped, and it is not free.</p>
     <code>picotool</code>, which is why that board is the one worth moving
     first.</p>
   </div>
-  <figcaption><b>Figure 4.</b> The third row is not hypothetical &mdash; the
+  <figcaption><b>Figure 5.</b> The third row is not hypothetical &mdash; the
   ESP32-C3 board does exactly this today with a <code>make init</code> target,
   which is what makes it acceptable rather than what makes it harmless.</figcaption>
 </figure>
@@ -303,17 +350,23 @@ nothing else. This route is better shaped, and it is not free.</p>
   execution, and a real move would have to be redone with an application built
   for the chip.</li>
   <li><b>Two applications could not be installed together.</b> The attempt
-  fails with <code>Could not meet fixed address requirements</code>, because
-  both archives here are built at a fixed address and want the same one. That
-  is a property of how these applications were compiled, not of this route
+  fails with <code>Could not meet fixed address requirements</code>. Both
+  archives carry a Fixed Addresses header naming process flash
+  <code>0x10040080</code> and process RAM <code>0x20020000</code> &mdash; the
+  same pair, so exactly one address satisfies both and only one application can
+  have it. That is written in the applications, not in this route
   &mdash; but it means <b>"this gets you multiple applications" is not a claim
   this page can make</b>.</li>
   <li><b>No UF2 was written over BOOTSEL.</b> The equivalence in
   <a href="#s4">Section&nbsp;4</a> is between bytes, which is strong, but the
   bootloader's own acceptance of the file was not observed.</li>
-  <li><b>The stale-tail hazard is unchanged.</b> The erase in
-  <a href="#s3">Section&nbsp;3</a> was kept deliberately. A route that wrote a
-  full-length image would remove that trap; this one does not.</li>
+  <li><b>The one-byte terminator was not tested.</b> tockloader writes a zero
+  byte after the last application, and it ought to invalidate a TBF header
+  beginning there. Whether it does was never put on the board: the A/B in
+  <a href="#s3">Section&nbsp;3</a> used an image with no application in it,
+  which carries no terminator at all.</li>
+  <li><b>The padded image was flashed over SWD, not through BOOTSEL.</b> That
+  is the path padding exists to help, and it is the one still unobserved.</li>
   <li><b>Nothing here says #5156 should wait.</b> It is approved by two
   maintainers and fixes a target that is broken today. What this page argues is
   that the successor is worth building, not that the predecessor was wrong.</li>
