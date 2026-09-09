@@ -578,6 +578,16 @@ DEFECTS = [
      "A virtual device propagates the multiplexer's error with `?`, and that error carries the multiplexer's buffer rather than the caller's. Two static buffers change owners and the multiplexer's slot is left empty for the life of the board."),
     ("UART: the teardown drops a buffer it cannot deliver", "fixed-local", "rp2-uart-abort-fix",
      "When a restart fails the mux takes every device's buffer, but only returns it to devices still in the Receiving state — so a device that had aborted a read loses its buffer permanently. Found while fixing the two above."),
+    ("A Pico 2 panics at boot on an interrupt nothing claims", "fixed-local",
+     "rp2350-stale-nvic-pending",
+     "IRQ 14 is USBCTRL_IRQ and this chip crate has no USB driver, so nothing "
+     "services it and the first pass through `service_pending_interrupts` "
+     "panics. The pending bit is a leftover, not a live interrupt: read over "
+     "SWD in the panic handler, NVIC ISPR bit 14 is set while the USB block's "
+     "MAIN_CTRL, INTR, INTE and INTS are all zero. The bootrom runs that "
+     "controller with its interrupt enables set, so a source still asserting "
+     "when `Chip::init()` clears pending re-latches at once, and the peripheral "
+     "reset afterwards silences it without taking the latched bit back."),
     ("A stopped process never gets its GPIO reclaimed", "unfiled", None,
      "The pin stays driven forever. A sibling capsule already has the fix, which makes this a consistency bug. Five of forty-five capsules are affected."),
     ("`make program` cannot flash an app on the Pico 2", "unfiled", None,
@@ -628,6 +638,11 @@ FINDINGS = [
 ]
 
 SILICON = [
+    ("A boot panic reproduced on demand, and removed",
+     "Erasing the first flash sector drops the bootrom into its own USB device, "
+     "and resetting out of that live session panicked thirteen times in "
+     "thirteen where the trigger had been unknown. The one-statement fix was "
+     "then measured A/B/A on the same board: six panics, none, six again."),
     ("Pico 2 W scans WiFi", "Firmware up over PIO and DMA, MAC read from the radio's OTP, scan completed."),
     ("SPI loopback", "A 32-byte pattern written and read back through the RP2350 SPI driver."),
     ("Boot from RAM", "The layout from #5109, booting."),
