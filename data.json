@@ -1057,7 +1057,7 @@
         "commits": [
           "rp2350: clear stale NVIC pending after the peripheral reset"
         ],
-        "stat": "1 file changed, 9 insertions(+)",
+        "stat": "1 file changed, 7 insertions(+)",
         "base": "upstream/master",
         "base_sha": "d0d478657",
         "behind": 0,
