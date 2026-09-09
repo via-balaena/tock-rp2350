@@ -546,6 +546,17 @@ def check_names(build, data, problems):
     job, not a different name.
     """
     index = (ROOT / "findings" / "index.html").read_text()
+    # The work map's list is generated from FINDINGS; findings/index.html is
+    # written by hand. They were in different orders, so the same four
+    # write-ups read in one sequence on one page and another sequence on the
+    # next. Nothing generated it, so nothing noticed.
+    listed = [int(n) for n in re.findall(r'href="(\d+)/"', index)]
+    expected = [n for n, _, _, _ in build.FINDINGS]
+    if listed != expected:
+        problems.append(
+            f"names: findings/index.html lists {listed} and FINDINGS has "
+            f"{expected} — the same pages in two different orders")
+
     for number, slug, title, _ in build.FINDINGS:
         page = ROOT / "findings" / slug / "index.html"
         if not page.exists():

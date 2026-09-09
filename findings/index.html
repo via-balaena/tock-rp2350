@@ -34,18 +34,6 @@
 
 <div class="claims">
   <div class="claim">
-    <h3><span class="tag is-bad">chip driver</span> <a href="5157/">#5157 &mdash; a PIO interrupt flag delivered to the wrong client</a></h3>
-    <p class="found">A PIO block raises eight IRQ flags that belong to the
-    block, and the driver delivered flag <i>n</i> to state machine <i>n</i>'s
-    client &mdash; an association the hardware does not have, and one the
-    datasheet invites by naming those bits
-    <code>SM0</code>&ndash;<code>SM3</code>. A flag whose state machine has no
-    client is never cleared, so the peripheral keeps asserting and the kernel
-    spins. Invisible in the tree because the only user sits on the diagonal.
-    Both the misrouting and the fix were run on a Pico&nbsp;2&nbsp;W.</p>
-  </div>
-
-  <div class="claim">
     <h3><span class="tag is-flag">build tooling</span> <a href="4770/">#4770 &mdash; <code>make program</code> builds an ELF that no UF2 tool will take</a></h3>
     <p class="found">Splicing an application into the kernel makes
     <code>objcopy</code> lay the segments out again, and the
@@ -69,6 +57,18 @@
     co-resident and live in the kernel's own process list. It cannot hit the defect, because it never opens
     an ELF. Four costs come with it, and the tool swap on three RP2040 boards is
     the one a reviewer would stop on.</p>
+  </div>
+
+  <div class="claim">
+    <h3><span class="tag is-bad">chip driver</span> <a href="5157/">#5157 &mdash; a PIO interrupt flag delivered to the wrong client</a></h3>
+    <p class="found">A PIO block raises eight IRQ flags that belong to the
+    block, and the driver delivered flag <i>n</i> to state machine <i>n</i>'s
+    client &mdash; an association the hardware does not have, and one the
+    datasheet invites by naming those bits
+    <code>SM0</code>&ndash;<code>SM3</code>. A flag whose state machine has no
+    client is never cleared, so the peripheral keeps asserting and the kernel
+    spins. Invisible in the tree because the only user sits on the diagonal.
+    Both the misrouting and the fix were run on a Pico&nbsp;2&nbsp;W.</p>
   </div>
 
   <div class="claim">
