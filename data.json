@@ -426,6 +426,39 @@
         "boards/raspberry_pi_pico_2/README.md",
         "doc/syscalls/00005_adc.md"
       ]
+    },
+    {
+      "additions": 180,
+      "changedFiles": 8,
+      "closedAt": null,
+      "createdAt": "2026-09-09T13:32:30Z",
+      "deletions": 73,
+      "isDraft": false,
+      "mergedAt": null,
+      "number": 5160,
+      "reviewDecision": "REVIEW_REQUIRED",
+      "state": "OPEN",
+      "title": "rp2: build the flashed image with tockloader instead of splicing an ELF",
+      "url": "https://github.com/tock/tock/pull/5160",
+      "closes": [],
+      "commits": [
+        {
+          "messageHeadline": "rp2350: build the flashed image with tockloader, not by splicing an ELF"
+        },
+        {
+          "messageHeadline": "rp2040: the same image route, and one UF2 converter instead of two"
+        }
+      ],
+      "files": [
+        "boards/nano_rp2040_connect/Makefile",
+        "boards/nano_rp2040_connect/README.md",
+        "boards/pico_explorer_base/Makefile",
+        "boards/pico_explorer_base/README.md",
+        "boards/raspberry_pi_pico/Makefile",
+        "boards/raspberry_pi_pico/README.md",
+        "boards/raspberry_pi_pico_2/Makefile",
+        "boards/raspberry_pi_pico_2/README.md"
+      ]
     }
   ],
   "findings": [
