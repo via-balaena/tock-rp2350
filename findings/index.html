@@ -65,8 +65,9 @@
     <code>unhandled interrupt 14</code>, and the trigger looked random for most
     of a day: twice in nine resets, from two different debuggers. If the bootrom
     is still talking to a USB host when the chip is reset, the kernel clears the
-    interrupt controller at a moment when clearing it cannot work, then resets
-    away the only evidence that anything was wrong. Read in the panic handler:
+    interrupt controller at a moment when clearing it cannot work, then resets the
+    peripheral, leaving a pending bit whose cause is no longer anywhere to be
+    seen. Read in the panic handler:
     the pending bit is set while the USB block is byte-for-byte identical to a
     boot that did not panic.</p>
   </div>

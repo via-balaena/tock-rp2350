@@ -30,8 +30,8 @@
   random: twice in nine resets, from two different debuggers, with a clean run
   in between. It is not random. If the bootrom is still talking to a USB host
   when the chip is reset, the kernel clears the interrupt controller at a moment
-  when clearing it cannot work, and then resets away the only evidence that
-  anything was ever wrong.</p>
+  when clearing it cannot work, and then resets the peripheral, leaving a pending
+  bit whose cause is no longer anywhere to be seen.</p>
 </header>
 
 <main id="main">
@@ -81,9 +81,10 @@ it found something.</p>
 <p>IRQ 14 is <code>USBCTRL_IRQ</code>. What makes it fatal here rather than
 merely noisy is an absence &mdash; <strong><code>chips/rp2350/src/</code> has no
 <code>usb.rs</code> at all.</strong> The RP2040 crate has one, and
-<code>chips/rp2040/src/chip.rs</code> services <code>USBCTRL_IRQ</code>, which
-is why the four RP2040 boards never show this. On the RP2350 there is nothing to
-route the line to.</p>
+<code>chips/rp2040/src/chip.rs</code> services <code>USBCTRL_IRQ</code>, so the
+same stale bit would be handled there rather than fatal &mdash; read from the
+source, not run; see <a href="#s8">Section&nbsp;8</a>. On the RP2350 there is
+nothing to route the line to.</p>
 
 <h2><span class="n">2</span>The pending bit is a latch, not an interrupt</h2>
 
@@ -171,7 +172,7 @@ makes it near-certain.</p>
 <em>enable</em> register, so an interrupt that is disabled and pending is still
 found and still panics.</p>
 
-<h2><span class="n">4</span>Reproducing it with nobody in the room</h2>
+<h2 id="s4"><span class="n">4</span>Reproducing it with nobody in the room</h2>
 
 <p>Both original sightings followed a bootrom USB session, and reaching one
 meant holding the BOOTSEL button &mdash; which makes a rate impossible to
@@ -208,7 +209,9 @@ of them genuinely were:</p>
 <div class="claims">
   <div class="claim">
     <h3><span class="tag is-bad">dead</span> probe-rs resets less thoroughly than openocd</h3>
-    <p>One occurrence came from each tool.</p>
+    <p>Both produce it. The rates differ &mdash; thirteen in thirteen against
+    one in six &mdash; but that tracks how late each one's reset lands in the
+    session, not how thoroughly it resets. See <a href="#s4">Section&nbsp;4</a>.</p>
   </div>
   <div class="claim">
     <h3><span class="tag is-bad">dead</span> rp2350's <code>Chip::init</code> is missing the <code>clear_all_pending()</code> that rp2040 has</h3>
@@ -218,9 +221,10 @@ of them genuinely were:</p>
   </div>
   <div class="claim">
     <h3><span class="tag is-bad">dead</span> the bootrom leaves the USB peripheral live</h3>
-    <p>Dead as stated: the peripheral <em>is</em> reset at startup and does come
-    back in its default state, which the register dump confirms. The bootrom's
-    involvement is real, but the peripheral is not what carries it across.</p>
+    <p>Dead as stated: the peripheral <em>is</em> reset at startup, and by the
+    time the kernel panics it reads exactly as it does on a boot that did not
+    panic. The bootrom's involvement is real, but the peripheral is not what
+    carries it across.</p>
   </div>
   <div class="claim">
     <h3><span class="tag is-ok">this was the mechanism</span> <code>ChipHw::init()</code> runs before the peripheral reset, so anything pending afterwards is never cleared</h3>
@@ -298,7 +302,7 @@ The size summary would have called them the same binary. Only
   </div>
 </div>
 
-<h2><span class="n">8</span>What this does not establish</h2>
+<h2 id="s8"><span class="n">8</span>What this does not establish</h2>
 
 <ul>
   <li><strong>The hardware is a Pico 2 W</strong> running the upstream
