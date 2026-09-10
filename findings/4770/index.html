@@ -218,9 +218,9 @@ zero-length <code>.relocate</code> matches the <code>.stack</code> segment first
 and comes back holding <code>.stack</code>'s load address: the
 <code>lma 20000000</code> above, on a section that lives at
 <code>0x20001500</code> and belongs in flash. <code>.attributes</code> sits at
-that same offset and escapes, because those first segments have
-<code>p_filesz&nbsp;0</code> and cannot cover its 0x2c bytes. Being zero-length
-is what lets <code>.relocate</code> fit anywhere.</p>
+that same offset and escapes, because a segment whose <code>p_filesz</code> is 0
+cannot cover its 0x2c bytes. Being zero-length is what lets
+<code>.relocate</code> fit anywhere.</p>
 
 <p><code>objcopy</code> then maps sections into segments by load address, so
 <code>.relocate</code> lands inside the <code>.stack</code> segment; its address
@@ -254,6 +254,102 @@ not a measurement: it is RISC-V, and the Arm <code>objcopy</code> here will not
 read it. <code>imxrt1050-evkb</code>, <code>psc3m5_evk</code> and
 <code>cy8cproto_62_4343_w</code> I have not built at all. None of the six hands
 its result to a UF2 converter, which is why none of them has noticed.</p>
+
+<h3 id="s3-source">Where that comes from, in binutils' own source</h3>
+
+<p>Everything above is behaviour, read off files. This is the code that produces
+it, from binutils-gdb at HEAD on sourceware &mdash; <code>bfd/elf.c</code> and
+<code>include/elf/internal.h</code>. It is not diffed against the 2.47 that
+produced the numbers, so: the behaviour is measured, the source is current
+master, and the two agree.</p>
+
+<p><b>Reading the file gives the section a load address it never had.</b>
+<code>_bfd_elf_make_section_from_shdr</code> walks the program headers for every
+allocated section. One that carries contents takes the second branch, and that
+branch works in <em>file offsets</em>:</p>
+
+<pre>  if ((newsect-&gt;flags &amp; SEC_LOAD) == 0)
+    newsect-&gt;lma = (phdr-&gt;p_paddr
+                    + hdr-&gt;sh_addr - phdr-&gt;p_vaddr) / opb;
+  else
+    /* We used to use the same adjustment for SEC_LOAD
+       sections, but that doesn't work if the segment
+       is packed with code from multiple VMAs.
+       Instead we calculate the section LMA based on
+       the segment LMA.  It is assumed that the
+       segment will contain sections with contiguous
+       LMAs, even if the VMAs are not.  */
+    <b>newsect-&gt;lma = (phdr-&gt;p_paddr
+                    + hdr-&gt;sh_offset - phdr-&gt;p_offset) / opb;</b></pre>
+
+<p><code>.relocate</code> is <code>PROGBITS</code> and allocated, so
+<code>SEC_LOAD</code> is set and the second form runs. Its
+<code>sh_offset</code> and the <code>.stack</code> segment's
+<code>p_offset</code> are the same number, the subtraction is zero, and it comes
+back holding that segment's <code>p_paddr</code> unchanged &mdash;
+<code>0x20000000</code>, the number <code>objdump</code> prints above. The
+comment there is worth reading: the file-offset form is deliberate, and it is
+the right answer for a segment packed with code from several VMAs. It is only
+wrong for a section with no size.</p>
+
+<p><b>Why <code>.relocate</code> and not <code>.attributes</code>.</b> A section
+is only offered a segment if <code>ELF_SECTION_IN_SEGMENT</code> accepts it, and
+for anything that is not <code>SHT_NOBITS</code> that means fitting inside the
+segment's file span:</p>
+
+<pre>/* Any section besides one of type SHT_NOBITS must have file
+   offsets within the segment.  */
+&amp;&amp; ((sec_hdr)-&gt;sh_type == SHT_NOBITS
+    || ((bfd_vma) (sec_hdr)-&gt;sh_offset &gt;= (segment)-&gt;p_offset
+        &amp;&amp; (!(strict)
+            || ((sec_hdr)-&gt;sh_offset - (segment)-&gt;p_offset
+                &lt;= (segment)-&gt;p_filesz - 1))
+        &amp;&amp; <b>(((sec_hdr)-&gt;sh_offset - (segment)-&gt;p_offset
+             + ELF_SECTION_SIZE(sec_hdr, segment))
+            &lt;= (segment)-&gt;p_filesz)</b>))</pre>
+
+<p>The bold clause decides it. The <code>.stack</code> segment has
+<code>p_filesz&nbsp;0</code>, so the only section that can fit inside its file
+span is one of size zero. <code>.relocate</code> is size zero and passes;
+<code>.attributes</code>, sharing the same <code>sh_offset</code>, is 0x2c bytes
+and fails. That is the entire difference between the section this breaks and the
+one sitting next to it in the file.</p>
+
+<p><b>The tie-break, which names the problem out loud.</b> The loop assigns a
+load address for every segment a section matches, and stops at the first one
+that passes this:</p>
+
+<pre>  /* With contiguous segments, we can't tell from file
+     offsets whether a section with zero size should
+     be placed at the end of one segment or the
+     beginning of the next.  Decide based on vaddr.  */
+  if (hdr-&gt;sh_addr &gt;= phdr-&gt;p_vaddr
+      &amp;&amp; (hdr-&gt;sh_addr + hdr-&gt;sh_size
+          &lt;= phdr-&gt;p_vaddr + phdr-&gt;p_memsz))
+    break;</pre>
+
+<p>For <code>.relocate</code>: <code>0x20001500 &ge; 0x20000000</code>, and
+<code>0x20001500 + 0 &le; 0x20000000 + 0x1500</code>. Both hold &mdash; the
+second is an inclusive bound, and the section has no size to push it over. So
+the loop breaks on the <code>.stack</code> segment and never reaches the segment
+that <em>begins</em> at <code>0x20001500</code>, which is the one the linker put
+it in.</p>
+
+<p>The same header defines a stricter form of that test, and its documentation
+describes this file exactly: <code>ELF_SECTION_IN_SEGMENT_STRICT</code>, under
+which <i>&ldquo;a zero size section won't match at the end of a segment, unless
+the segment is also zero size.&rdquo;</i> The reader calls the non-strict
+one.</p>
+
+<p>The write side is then mechanical, and <a href="#s1">Section&nbsp;1</a>
+already showed its output: <code>rewrite_elf_program_header</code> groups
+sections into segments by load address, so <code>.relocate</code> is placed in
+the <code>.stack</code> segment;
+<code>assign_file_positions_for_load_sections</code> finds its load address
+below the segment's running end, pushes it up to that end, and prints
+<code>section .relocate lma 0x20000000 adjusted to 0x20001500</code>; and a
+segment holding a section with contents 0x1500 bytes in is given a file span
+that reaches it.</p>
 
 <h2 id="s4"><span class="n">4</span>Every candidate fix, measured</h2>
 
@@ -664,9 +760,11 @@ toolchain.</p>
   <li><b>Still not a binutils bug report.</b> <a href="#s3">Section&nbsp;3</a> establishes the
   chain &mdash; which section, which address, which step &mdash; but not whose
   defect it is. BFD reconstructs a load address the linker never wrote down, and
-  gets it wrong for a zero-length section; whether that is a bug to file, or an
-  ambiguity the linker should not have emitted by giving five sections one file
-  offset, I have not established, and I have not searched the binutils tracker
+  gets it wrong for a zero-length section, using a test binutils also ships a
+  stricter form of &mdash; why the reader does not use that form, I did not
+  establish. Whether any of it is a bug to file, or an ambiguity the linker
+  should not have emitted by giving five sections one file offset, I have not
+  established either, and I have not searched the binutils tracker
   for it. Nothing here has been reported upstream. The Makefile fix does not
   depend on which it is.</li>
 </ul>
