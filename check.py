@@ -230,6 +230,142 @@ def check_intent(build, data, problems):
                 )
 
 
+WORD_NUMBERS = {w: i for i, w in enumerate(
+    "zero one two three four five six seven eight nine ten eleven twelve "
+    "thirteen fourteen fifteen sixteen seventeen eighteen nineteen twenty".split())}
+
+
+def _as_number(token):
+    token = token.lower().replace(",", "")
+    return int(token) if token.isdigit() else WORD_NUMBERS.get(token)
+
+
+def _shortstat(text):
+    """`git diff --shortstat` into a dict, or None when the branch is level."""
+    text = (text or "").strip()
+    if not text:
+        return None
+    files = re.search(r"(\d+) files? changed", text)
+    grab = lambda pat: (lambda m: int(m.group(1)) if m else 0)(re.search(pat, text))
+    return {"files": int(files.group(1)) if files else None,
+            "insertions": grab(r"(\d+) insertions?\("),
+            "deletions": grab(r"(\d+) deletions?\(")}
+
+
+def _size_claims(text):
+    """Every claim in a note about how big the change is."""
+    num = r"(\d[\d,]*|[A-Za-z]+)"
+    out = []
+    for m in re.finditer(r"\+(\d+)\s*[-\u2212\u2013]\s*(\d+)", text):
+        out.append(("insertions", int(m.group(1)), m.group(0)))
+        out.append(("deletions", int(m.group(2)), m.group(0)))
+    for m in re.finditer(r"\+(\d+)\s+lines\b", text):
+        out.append(("insertions", int(m.group(1)), m.group(0)))
+    for pattern, kind in ((num + r"\s+(?:added|inserted)\s+lines\b", "insertions"),
+                          (num + r"\s+(?:files?|Makefiles?)\b", "files")):
+        for m in re.finditer(pattern, text, re.I):
+            value = _as_number(m.group(1))
+            if value is not None:
+                out.append((kind, value, m.group(0)))
+    return out
+
+
+_CLAIM_NEGATED = re.compile(
+    r"\b(not|never|un\w+|cannot|would|if|once|when|before|until)\b", re.I)
+
+
+def _state_claims(text):
+    """Every claim in a note that a numbered pull request is in some state."""
+    for m in re.finditer(r"#(\d{4})\b(.{0,40}?)\b(approved|merged|closed|open)\b",
+                         text, re.I | re.S):
+        if not _CLAIM_NEGATED.search(m.group(2)):
+            yield int(m.group(1)), m.group(3).lower(), " ".join(m.group(0).split())
+    for m in re.finditer(r"\b(approved|merged|closed|open)\b(?: as|,)? #(\d{4})",
+                         text, re.I):
+        yield int(m.group(2)), m.group(1).lower(), m.group(0)
+
+
+def check_claims(build, data, problems):
+    """Numbers and states typed by hand, against the ones this page derives.
+
+    Every branch note is prose, and prose rots. Two kinds of claim in it have a
+    referent a few lines away in the same file -- how large a change is, and
+    whether a pull request is open, approved, merged or closed -- and until
+    2026-09-10 nothing compared them. An audit that day found five stale
+    claims, the worst of which said a pull request was approved by two
+    maintainers some hours after both approvals had been dismissed.
+
+    The comparison is worth something only because the two sides are
+    independent: the left is typed by a person, the right comes out of git and
+    the GitHub API. A gate that recomputed the prose from the data would be
+    comparing a number to itself.
+
+    Truth for a size claim is the branch's own diff while the branch is ahead,
+    because that is the artefact the note describes. Once it has landed the
+    diff is empty, so the pull request the note names with "as #NNNN" is used
+    instead -- which is the case that had drifted, a file count left behind
+    when a commit was dropped from the branch.
+
+    What it does NOT check, deliberately: bare commit counts, because "every
+    chapter pins one commit on it" is not a size claim and no pattern
+    separates the two; and any number whose referent is not on this page --
+    a pull request body's length, the house median it is measured against.
+    Those carry their measurement date in the prose instead.
+    """
+    prs = {pr["number"]: pr for pr in data["prs"]}
+    for row in build.queue_rows(data):
+        text = " ".join(x for x in (row.get("note"), row.get("blocked")) if x)
+        if not text:
+            continue
+        where = "%s:%s" % (row["repo"], row["branch"])
+
+        truth, source = _shortstat(row.get("stat")), "the branch diff"
+        if truth is None:
+            named = re.search(r"\bas #(\d{4})", text)
+            landed = prs.get(int(named.group(1))) if named else None
+            if landed:
+                truth = {"files": landed["changedFiles"],
+                         "insertions": landed["additions"],
+                         "deletions": landed["deletions"]}
+                source = "#%d" % landed["number"]
+        if truth is not None:
+            for kind, claimed, phrase in _size_claims(text):
+                actual = truth.get(kind)
+                if actual is not None and claimed != actual:
+                    problems.append(
+                        f"claims: {where} says {phrase!r}, but {source} has "
+                        f"{kind}={actual}")
+
+        _check_states(text, where, prs, problems)
+
+    # The third prose surface: why one queue item waits on another. These are
+    # about the relationship to some *other* pull request, so only their state
+    # claims are checked -- a size in here would be describing something else.
+    # This is where the 2026-09-10 audit's worst finding lived, a wait note
+    # still calling #5156 approved after both approvals had been dismissed,
+    # and a first cut of this check missed it by reading only note and blocked.
+    for key, waits in getattr(build, "QUEUE_DEPS", {}).items():
+        for entry in waits:
+            text = entry[1] if isinstance(entry, (tuple, list)) else entry
+            if isinstance(text, str):
+                _check_states(text, "%s (waits)" % key, prs, problems)
+
+
+def _check_states(text, where, prs, problems):
+    for number, word, phrase in _state_claims(text):
+        pr = prs.get(number)
+        if pr is None:
+            continue
+        if word == "approved":
+            ok = pr.get("reviewDecision") == "APPROVED"
+        else:
+            ok = pr["state"] == word.upper()
+        if not ok:
+            problems.append(
+                f"claims: {where} says {phrase!r}, but #{number} is "
+                f"{pr['state']}/{pr.get('reviewDecision') or 'no decision'}")
+
+
 def check_facts(build, data, problems):
     _, ready, _ = build.queue_groups(build.queue_rows(data))
     for r in ready:
@@ -842,33 +978,42 @@ def main():
     html = (ROOT / "index.html").read_text()
 
     problems = []
-    check_drift(build, data, html, problems)
-    check_annotated(build, data, problems)
-    check_intent(build, data, problems)
-    check_facts(build, data, problems)
-    check_refs(build, data, problems)
-    check_private(html, problems)
-    check_contrast(build, problems)
-    check_blocks(build, data, problems)
-    check_nav(build, html, problems)
-    check_grid(build, html, problems)
-    check_trace(build, html, problems)
-    check_styles(build, html, problems)
-    check_pins(build, data, problems)
-    check_header(build, problems)
-    check_pinmaps(build, html, problems)
-    check_bits(html, problems)
-    check_queue(build, data, html, problems)
-    check_basis(build, data, problems)
-    check_findings(build, data, problems)
-    check_names(build, data, problems)
-    check_quotes(build, data, problems)
-    check_learning(problems)
+    # Each check is a thunk so the tally below is the list's own length.
+    # It used to be a literal, which is the same hand-maintained number
+    # with an unchecked referent that check_claims exists to catch.
+    checks = [
+        lambda: check_drift(build, data, html, problems),
+        lambda: check_annotated(build, data, problems),
+        lambda: check_intent(build, data, problems),
+        lambda: check_facts(build, data, problems),
+        lambda: check_claims(build, data, problems),
+        lambda: check_refs(build, data, problems),
+        lambda: check_private(html, problems),
+        lambda: check_contrast(build, problems),
+        lambda: check_blocks(build, data, problems),
+        lambda: check_nav(build, html, problems),
+        lambda: check_grid(build, html, problems),
+        lambda: check_trace(build, html, problems),
+        lambda: check_styles(build, html, problems),
+        lambda: check_pins(build, data, problems),
+        lambda: check_header(build, problems),
+        lambda: check_pinmaps(build, html, problems),
+        lambda: check_bits(html, problems),
+        lambda: check_queue(build, data, html, problems),
+        lambda: check_basis(build, data, problems),
+        lambda: check_findings(build, data, problems),
+        lambda: check_names(build, data, problems),
+        lambda: check_quotes(build, data, problems),
+        lambda: check_learning(problems),
+    ]
+    for run_check in checks:
+        run_check()
     skipped = check_interactions(problems)
+    ran = len(checks) + (0 if skipped else 1)
     if not args.offline:
         check_fresh(build, data, problems)
+        ran += 1
 
-    ran = (22 if args.offline else 23) + (0 if skipped else 1)
     if skipped:
         print(f"note: the interaction check did not run — {skipped}\n")
     if problems:
