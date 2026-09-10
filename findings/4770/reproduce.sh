@@ -14,13 +14,19 @@
 #             from the block headers rather than assumed from an exit code
 #   _estack   whether the stack symbols survive, which some fixes cost
 #
-# Needs arm-none-eabi-objcopy, arm-none-eabi-readelf, elf2uf2-rs and python3.
+# It then prints a second, smaller table isolating what causes the FileSiz in
+# the first place -- which is not the section flags the Makefile sets.
+#
+# Needs arm-none-eabi-objcopy, arm-none-eabi-readelf, arm-none-eabi-objdump,
+# elf2uf2-rs and python3. Set LLVM_OBJCOPY to add one more row.
 
 set -eu
 
 KERNEL=${1:?usage: reproduce.sh path/to/raspberry_pi_pico.elf}
 OC=${OBJCOPY:-arm-none-eabi-objcopy}
 RE=${READELF:-arm-none-eabi-readelf}
+OD=${OBJDUMP:-arm-none-eabi-objdump}
+LOC=${LLVM_OBJCOPY:-llvm-objcopy}
 
 # Every objcopy below sends its stderr to /dev/null, because the whole point is
 # to compare exit statuses rather than to read warnings. That makes a wrong
@@ -31,7 +37,7 @@ RE=${READELF:-arm-none-eabi-readelf}
     echo "  build one first:  (cd boards/raspberry_pi_pico && make)" >&2
     exit 2
 }
-for tool in "$OC" "$RE" elf2uf2-rs python3; do
+for tool in "$OC" "$RE" "$OD" elf2uf2-rs python3; do
     command -v "$tool" >/dev/null 2>&1 || {
         echo "reproduce.sh: '$tool' is not on PATH" >&2
         exit 2
@@ -41,9 +47,10 @@ done
 WORK=$(mktemp -d)
 trap 'rm -rf "$WORK"' EXIT
 
-# A stand-in for a real .tbf. The bug is in the section flags, not the
-# payload, so any 4096 bytes reproduce it -- and a recognisable filler is
-# what lets the decoder below prove the app reached the image.
+# A stand-in for a real .tbf. Nothing about the failure depends on what is
+# spliced in -- the last section of this script shows the FileSiz appearing
+# with no splice at all -- so any 4096 bytes reproduce it, and a recognisable
+# filler is what lets the decoder below prove the app reached the image.
 python3 -c "open('$WORK/app.tbf','wb').write(b'\xAA'*4096)"
 
 # Decode the UF2 and report which blocks carry the filler, so "it converted"
@@ -109,3 +116,50 @@ rm -f "$WORK/k.uf2"
 elf2uf2-rs "$KERNEL" "$WORK/k.uf2" >/dev/null 2>&1 \
     && echo "  converts, $(python3 "$WORK/decode.py" "$WORK/k.uf2")" \
     || echo "  REFUSED -- then the kernel itself is the problem, not .apps"
+
+# ---------------------------------------------------------------------------
+# Where the FileSiz comes from.
+#
+# The table above measures fixes. This one measures the cause, and it is not
+# the section flags: an objcopy with no arguments at all does the same thing,
+# with no application spliced in. What does it is the empty .relocate section,
+# so removing that alone is enough to stop it.
+#
+# ELF section headers carry no load address, so BFD reconstructs one on read
+# from file offsets. The linker gives .stack, .relocate, .apps and .sram one
+# shared offset, and zero-length .relocate matches the .stack segment first --
+# which is why objdump reports it at an LMA that is not where it lives. objcopy
+# then maps sections into segments by LMA, .relocate lands inside the .stack
+# segment, and because it is PROGBITS the segment is given file bytes to cover
+# it: exactly .stack's size.
+
+seg() {  # the LOAD segment at the .stack address, as FileSiz/MemSiz
+    $RE -lW "$1" | awk '$1=="LOAD" && $3=="0x20000000"{print $5"/"$6}'
+}
+
+echo
+echo "Where the FileSiz comes from. Three copies, with no app spliced into any."
+printf '%-34s %s\n' 'VARIANT' 'STACK-FILE/MEM'
+printf '%-34s %s\n' '-------' '--------------'
+printf '%-34s %s\n' 'as linked, no objcopy at all' "$(seg "$KERNEL")"
+
+$OC "$KERNEL" "$WORK/m-plain.elf" 2>"$WORK/m-plain.err" || true
+printf '%-34s %s\n' 'objcopy, no arguments at all' "$(seg "$WORK/m-plain.elf")"
+
+$OC -R .relocate "$KERNEL" "$WORK/m-norel.elf" 2>/dev/null || true
+printf '%-34s %s\n' 'objcopy -R .relocate' "$(seg "$WORK/m-norel.elf")"
+
+if command -v "$LOC" >/dev/null 2>&1; then
+    "$LOC" "$KERNEL" "$WORK/m-llvm.elf" 2>/dev/null || true
+    printf '%-34s %s\n' 'llvm-objcopy, no arguments' "$(seg "$WORK/m-llvm.elf")"
+else
+    printf '%-34s %s\n' 'llvm-objcopy, no arguments' 'skipped, not on PATH'
+fi
+
+echo
+echo "  .relocate's reconstructed load address, and where the section says it is:"
+$OD -h "$KERNEL" | awk '$2==".stack" || $2==".relocate" {
+    printf "    %-10s size %s  vma %s  lma %s\n", $2, $3, $4, $5 }'
+echo
+echo "  the warning the bare copy prints, and -R .relocate does not:"
+sed "s|$WORK/||; s/^/    /" "$WORK/m-plain.err"

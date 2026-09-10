@@ -43,7 +43,7 @@
     <dt>Fix</dt>
     <dd>One <code>objcopy -R .stack</code> per splice rule &mdash; five rules,
     four Makefiles, +21 &minus;0. Proposed as
-    <a href="https://github.com/tock/tock/pull/5154">tock/tock#5154</a>.</dd>
+    <a href="https://github.com/tock/tock/pull/5156">tock/tock#5156</a>.</dd>
     <dt>Status</dt>
     <dd><span class="tag is-ok">confirmed on hardware</span> The reporter ran
     the fix on an RP2040 and <code>program-openocd</code> was A/B'd on an
@@ -52,7 +52,7 @@
   </dl>
 </div>
 
-<h2><span class="n">1</span>What happens</h2>
+<h2 id="s1"><span class="n">1</span>What happens</h2>
 
 <p>Building any application into the Pico kernel fails at the last step:</p>
 
@@ -159,7 +159,7 @@ in the table below is collateral.</p>
   not.</figcaption>
 </figure>
 
-<h2><span class="n">3</span>The section itself never changed</h2>
+<h2 id="s3"><span class="n">3</span>The section never changed, and the flags are not the cause</h2>
 
 <p>This is the part that rules out the converter, and it is worth stating
 plainly because it is counter-intuitive: <code>.stack</code> is still
@@ -186,14 +186,74 @@ sections &mdash; correctly, since segments are what a loader uses.</p>
   <code>.apps</code> going <code>NOBITS</code>&rarr;<code>PROGBITS</code> is the
   requested change. <code>.stack</code> does not move, which is why nothing that
   reads the section table can see this bug. <code>.relocate</code> is reported
-  as <code>REL</code> afterwards, which is odd, but it is a zero-length section
-  and nothing downstream reads it &mdash; noted rather than explained.</figcaption>
+  as <code>REL</code> afterwards, which is odd and still unexplained. The row
+  matters for another reason: that empty section is what moves the
+  <code>.stack</code> program header, which is the next thing below.</figcaption>
 </figure>
 
-<p>So the mechanism is: giving <code>.apps</code> contents forces BFD to lay the
-segments out again instead of copying the input's program headers, and in the
-new layout the <code>NOBITS</code> <code>.stack</code> is assigned a non-zero
-<code>p_filesz</code>. That is the whole defect.</p>
+<p>The obvious reading is that giving <code>.apps</code> contents is what forces
+BFD to lay the segments out again, and that is what this page said until
+2026-09-10. It is wrong. An <code>objcopy</code> with no arguments at all, on
+the kernel with nothing spliced into it, produces the same program header
+&mdash; and deleting one empty section stops it:</p>
+
+<pre>Where the FileSiz comes from. Three copies, with no app spliced into any.
+VARIANT                            STACK-FILE/MEM
+-------                            --------------
+as linked, no objcopy at all       0x00000/0x01500
+<b>objcopy, no arguments at all       0x01500/0x01500</b>
+objcopy -R .relocate               0x00000/0x01500
+llvm-objcopy, no arguments         0x00000/0x01500
+
+  .relocate's reconstructed load address, and where the section says it is:
+    .stack     size 00001500  vma 20000000  lma 20000000
+    <b>.relocate  size 00000000  vma 20001500  lma 20000000</b></pre>
+
+<p>The trigger is <code>.relocate</code> &mdash; the empty one. ELF section
+headers carry no load address, so BFD reconstructs one as it reads the file, and
+it does so from file offsets rather than addresses. The linker gives
+<code>.stack</code>, <code>.relocate</code>, <code>.apps</code>,
+<code>.sram</code> and <code>.attributes</code> a single shared offset, so
+zero-length <code>.relocate</code> matches the <code>.stack</code> segment first
+and comes back holding <code>.stack</code>'s load address: the
+<code>lma 20000000</code> above, on a section that lives at
+<code>0x20001500</code> and belongs in flash. <code>.attributes</code> sits at
+that same offset and escapes, because those first segments have
+<code>p_filesz&nbsp;0</code> and cannot cover its 0x2c bytes. Being zero-length
+is what lets <code>.relocate</code> fit anywhere.</p>
+
+<p><code>objcopy</code> then maps sections into segments by load address, so
+<code>.relocate</code> lands inside the <code>.stack</code> segment; its address
+is pushed out to that segment's end, which is the warning
+<a href="#s1">Section&nbsp;1</a> already showed happening; and because it is
+<code>PROGBITS</code> the segment has to be given file bytes reaching it. That
+distance is <code>.stack</code>'s size. In every file produced this way,
+<code>.relocate</code>'s file offset minus <code>.stack</code>'s is
+<code>0x1500</code> &mdash; and so is the <code>p_filesz</code>.</p>
+
+<p>Two things follow that the flags reading had backwards. The section flags are
+innocent: <code>program</code> is simply the only rule that runs
+<code>objcopy</code> at all, which is why <code>make flash</code>, handing the
+linker's own ELF straight to the converter, has never failed. And so is the
+linker &mdash; it wrote <code>p_filesz&nbsp;0</code>, and
+<code>llvm-objcopy</code>, which copies program headers instead of rebuilding
+them, hands that number back unchanged. The defect enters in the round trip
+through BFD, and nowhere before it.</p>
+
+<p>The reach is wider than the RP2 boards, and the emptiness predicts which
+ones. Of the 25 Arm board ELFs I had built, 24 pick up the same bogus
+<code>p_filesz</code> from a bare <code>objcopy</code>; the only one that does
+not, <code>nrf52840dk-test-kernel</code>, is the only one whose
+<code>.relocate</code> is not empty. Six boards outside the RP2 family run this
+same splice rule. Two of them I have builds for and both carry it &mdash;
+<code>teensy40</code> and <code>weact_f401ccu6</code>, at
+<code>0x2000</code> each, because the number is always <code>.stack</code>'s own
+size. <code>opentitan/earlgrey-cw310</code> should be clean, its
+<code>.relocate</code> being 0x1c rather than empty, but that is a prediction and
+not a measurement: it is RISC-V, and the Arm <code>objcopy</code> here will not
+read it. <code>imxrt1050-evkb</code>, <code>psc3m5_evk</code> and
+<code>cy8cproto_62_4343_w</code> I have not built at all. None of the six hands
+its result to a UF2 converter, which is why none of them has noticed.</p>
 
 <h2 id="s4"><span class="n">4</span>Every candidate fix, measured</h2>
 
@@ -304,10 +364,9 @@ produced these numbers rather than a description of one. Pick a row.</p>
           <div><dt>_estack symbol</dt><dd>&mdash;</dd></div>
         </dl>
         <p><code>alloc,contents</code> and <code>alloc,load,contents</code> both
-        behave exactly as <code>LOAD,ALLOC</code> does. The trigger is
-        <code>.apps</code> acquiring file content at all, not how the request is
-        worded, so there is no spelling of this rule that avoids the
-        problem.</p>
+        behave exactly as <code>LOAD,ALLOC</code> does. No spelling of the flags
+        avoids the problem, and <a href="#s3">Section&nbsp;3</a> says why: the flags are not what
+        causes it. Running <code>objcopy</code> at all is.</p>
       </div>
     </div>
   </div>
@@ -334,7 +393,10 @@ and I would not recommend copying it.</p>
   <code>raspberry_pi_pico_w</code>, <code>pico_explorer_base</code> and
   <code>nano_rp2040_connect</code>. The day any kernel change introduces one
   initialised static, this workaround starts producing a kernel with garbage in
-  <code>.data</code>, and nothing in the build will say so. (Those are not the
+  <code>.data</code>, and nothing in the build will say so. That same emptiness
+  is what causes the bug in the first place &mdash; <a href="#s3">Section&nbsp;3</a> &mdash; so
+  this removal does work, and works by deleting the trigger rather than the
+  symptom. It is still the one I would not ship. (Those are not the
   same four as the boards fixed below, which swap
   <code>raspberry_pi_pico_w</code> &mdash; it has no <code>program</code> rule
   at all &mdash; for the RP2350 <code>raspberry_pi_pico_2</code>.)</li>
@@ -531,8 +593,9 @@ boards expose different numbers of drivers.</p>
 
 <h2><span class="n">9</span>Reproducing it</h2>
 
-<p>No board and no application are needed &mdash; the trigger is the section
-flags, so any 4,096 bytes stand in for a <code>.tbf</code>. Save
+<p>No board and no application are needed. Nothing about the failure depends
+on what is spliced in, so any 4,096 bytes stand in for a <code>.tbf</code>.
+Save
 <a href="reproduce.sh"><code>reproduce.sh</code></a> at the root of a Tock
 checkout, build a kernel, and hand it the ELF:</p>
 
@@ -549,12 +612,30 @@ set .stack=noload              removed         REFUSED  kept     -
 set .apps=alloc,load,contents  0x01500/0x01500 REFUSED  -        -
 
 The control: the same kernel with no objcopy at all.
-  converts, 400 blocks, app in 0 at nowhere</pre>
+  converts, 400 blocks, app in 0 at nowhere
+
+Where the FileSiz comes from. Three copies, with no app spliced into any.
+VARIANT                            STACK-FILE/MEM
+-------                            --------------
+as linked, no objcopy at all       0x00000/0x01500
+objcopy, no arguments at all       0x01500/0x01500
+objcopy -R .relocate               0x00000/0x01500
+llvm-objcopy, no arguments         0x00000/0x01500
+
+  .relocate's reconstructed load address, and where the section says it is:
+    .stack     size 00001500  vma 20000000  lma 20000000
+    .relocate  size 00000000  vma 20001500  lma 20000000
+
+  the warning the bare copy prints, and -R .relocate does not:
+    arm-none-eabi-objcopy: m-plain.elf: section .relocate lma 0x20000000 adjusted to 0x20001500</pre>
 
 <p><a href="reproduce.sh"><code>reproduce.sh</code></a> is the script that
 printed that. It needs <code>arm-none-eabi-objcopy</code>,
-<code>arm-none-eabi-readelf</code>, <code>elf2uf2-rs</code> and
-<code>python3</code>.</p>
+<code>arm-none-eabi-readelf</code>, <code>arm-none-eabi-objdump</code>,
+<code>elf2uf2-rs</code> and <code>python3</code>. The last row of the second
+table needs <code>llvm-objcopy</code> as well, and says so when it is missing;
+the run above set <code>LLVM_OBJCOPY</code> to the copy inside a rustup
+toolchain.</p>
 
 <h2><span class="n">10</span>What this does not establish</h2>
 
@@ -580,10 +661,14 @@ printed that. It needs <code>arm-none-eabi-objcopy</code>,
   on a different machine and a different binutils &mdash; so neither the bug nor
   the fix is version-specific. The six-candidate matrix in
   <a href="#s4">Section&nbsp;4</a> is the part only ever run on mine.</li>
-  <li><b>Not a binutils bug report.</b> Whether BFD is wrong to assign a
-  <code>p_filesz</code> to a <code>NOBITS</code> segment, or whether the rule is
-  asking for something it should not, I have not established. The Makefile fix
-  does not depend on which it is.</li>
+  <li><b>Still not a binutils bug report.</b> <a href="#s3">Section&nbsp;3</a> establishes the
+  chain &mdash; which section, which address, which step &mdash; but not whose
+  defect it is. BFD reconstructs a load address the linker never wrote down, and
+  gets it wrong for a zero-length section; whether that is a bug to file, or an
+  ambiguity the linker should not have emitted by giving five sections one file
+  offset, I have not established, and I have not searched the binutils tracker
+  for it. Nothing here has been reported upstream. The Makefile fix does not
+  depend on which it is.</li>
 </ul>
 
 </main>
