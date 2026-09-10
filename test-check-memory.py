@@ -1,100 +1,130 @@
 #!/usr/bin/env python3
-"""Break the memory gate on purpose, one way at a time, and put it back.
+"""Break check-memory.py on purpose, one way at a time.
 
-A check that has never failed has never been tested. Each case edits one file,
-runs check-memory.py, restores from a backup taken before anything ran, and
-reports whether the gate noticed.
+A check that has never failed has never been tested. Each case builds a small
+memory directory in a temp dir, plants exactly one defect, runs the checker
+against it, and reports whether the checker noticed.
+
+**It never touches a real memory directory.** The first version of this file
+mutated the live one and restored from a backup, which was wrong twice over. A
+stale backup silently reverts whatever memory has learned since -- it did, once,
+within an hour of that version being written. And the injection points it needed
+were filenames and verbatim lines out of private notes, which is not something
+to keep in a public repository. Fixtures are written here instead; the only
+outside facts are pull request numbers, which are public.
+
+    ./test-check-memory.py
+
+Exits 0 when every injection is caught and a clean fixture is silent.
 """
-import pathlib, shutil, subprocess, sys, tempfile
 
-MEM = (pathlib.Path.home() / ".claude/projects"
-       / str(pathlib.Path.home() / "forge/tock").replace("/", "-") / "memory")
-# Taken fresh each run into a temp dir, so this never depends on a backup some
-# earlier session happened to leave behind -- restoring from a stale one would
-# silently revert whatever the memory has learned since.
-BAK = pathlib.Path(tempfile.mkdtemp(prefix="memory-gate-backup-"))
+import pathlib
+import subprocess
+import sys
+import tempfile
+
 GATE = pathlib.Path(__file__).resolve().parent / "check-memory.py"
 
-
-def snapshot():
-    for f in MEM.glob("*.md"):
-        shutil.copy2(f, BAK / f.name)
-
-
-def restore():
-    for f in BAK.glob("*.md"):
-        shutil.copy2(f, MEM / f.name)
-    for f in MEM.glob("*.md"):
-        if not (BAK / f.name).exists():
-            f.unlink()
+# Two real pull requests whose states are settled, so the claim checks have
+# something true to disagree with.
+MERGED_PR = 5118      # the AI policy; merged and staying merged
+OPEN_PR = 5156        # open, its approvals dismissed 2026-09-10
 
 
-def run(offline):
-    cmd = [str(GATE)] + (["--offline"] if offline else [])
+def memory(name, kind, body):
+    return (f'---\nname: {name}\ndescription: "A fixture."\n'
+            f"metadata:\n  type: {kind}\n---\n\n{body}\n")
+
+
+def build(root):
+    """A minimal but valid memory directory."""
+    files = {
+        "alpha-note": ("project", "Alpha. It links to [[beta-note]]."),
+        "beta-note": ("feedback", "Beta, which exists so that link resolves."),
+        "gamma-note": ("reference", f"Gamma mentions #{MERGED_PR} in passing."),
+    }
+    for name, (kind, body) in files.items():
+        (root / f"{name}.md").write_text(memory(name, kind, body))
+    (root / "MEMORY.md").write_text(
+        "\n".join(f"- [{n}]({n}.md) — a fixture hook" for n in files) + "\n")
+    return root
+
+
+def run(root, offline):
+    cmd = [sys.executable, str(GATE), str(root)] + (["--offline"] if offline else [])
     r = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
-    return [l for l in r.stdout.splitlines() if l.startswith("  ")]
+    return [l.strip() for l in r.stdout.splitlines() if l.startswith("  ")]
 
 
-def case(label, mutate, offline=True):
-    try:
-        mutate()
-        hits = run(offline)
-    finally:
-        restore()
-    mark = "CAUGHT " if hits else "MISSED "
-    print(f"  {mark} {label}")
-    for h in hits[:1]:
-        print(f"          {h.strip()[:112]}")
+def case(label, plant, offline=True):
+    with tempfile.TemporaryDirectory(prefix="memory-gate-") as tmp:
+        root = build(pathlib.Path(tmp))
+        plant(root)
+        hits = run(root, offline)
+    print(f"  {'CAUGHT ' if hits else 'MISSED '} {label}")
+    if hits:
+        print(f"          {hits[0][:110]}")
     return bool(hits)
 
 
 def edit(name, old, new):
-    def go():
-        p = MEM / name
+    def go(root):
+        p = root / name
         s = p.read_text()
-        assert old in s, f"injection point missing in {name}: {old[:40]!r}"
+        assert old in s, f"fixture missing {old!r}"
         p.write_text(s.replace(old, new, 1))
     return go
 
 
-snapshot()
-print(f"backed up {len(list(BAK.glob('*.md')))} memories to {BAK}\n")
+def append(name, text):
+    def go(root):
+        p = root / name
+        p.write_text(p.read_text().rstrip() + "\n\n" + text + "\n")
+    return go
+
 
 results = []
+
 print("=== structure ===")
 results.append(case("a memory dropped from the index",
-    edit("MEMORY.md", "- [Prose concision](prose-concision.md)",
-                      "- [Prose concision](prose-concision-TYPO.md)")))
-results.append(case("frontmatter name not matching the filename",
-    edit("close-the-loop.md", "name: close-the-loop", "name: close-the-loops")))
-results.append(case("a wikilink to a memory that does not exist",
-    edit("close-the-loop.md", "\n\n", "\n\nSee [[a-memory-that-never-existed]].\n\n")))
-results.append(case("a type outside the four allowed",
-    edit("close-the-loop.md", "type: user", "type: notes")))
-results.append(case("an index line missing its hook",
-    edit("MEMORY.md", "- [Prose concision](prose-concision.md) —",
-                      "- [Prose concision](prose-concision.md)")))
+                    edit("MEMORY.md", "- [alpha-note](alpha-note.md)",
+                         "- [alpha-note](alpha-note-TYPO.md)")))
+results.append(case("an index line pointing at nothing",
+                    append("MEMORY.md", "- [ghost](ghost.md) — never existed")))
+results.append(case("a name not matching its filename",
+                    edit("alpha-note.md", "name: alpha-note", "name: alpha-notes")))
+results.append(case("a dangling wikilink",
+                    edit("alpha-note.md", "[[beta-note]]",
+                         "[[a-memory-that-never-was]]")))
+results.append(case("a type outside the four",
+                    edit("alpha-note.md", "type: project", "type: notes")))
+results.append(case("an index line with no hook",
+                    edit("MEMORY.md", "- [alpha-note](alpha-note.md) — a fixture hook",
+                         "- [alpha-note](alpha-note.md)")))
+results.append(case("frontmatter with no body",
+                    lambda root: (root / "beta-note.md").write_text(
+                        memory("beta-note", "feedback", ""))))
 
 print("\n=== claims, against live GitHub ===")
-results.append(case("#5156 listed as approved again — today's actual defect",
-    edit("work-order.md", "**Approved, waiting on a merge: #5126, #5140.**",
-                          "**Approved, waiting on a merge: #5126, #5140, #5156.**"),
-    offline=False))
-results.append(case("a stale pull request size",
-    edit("objcopy-stack-filesz-mechanism.md", "the PR went +21 → **+13**",
-                                              "#5156 is +21 -0 today"),
-    offline=False))
 results.append(case("a merged pull request called open",
-    edit("tock-book-facts.md", "---\n\n", "---\n\nThe policy landed in #5118, open right now.\n\n"),
-    offline=False))
+                    append("alpha-note.md", f"#{MERGED_PR} is open."),
+                    offline=False))
+results.append(case("a list under a state word — the shape the real drift took",
+                    append("alpha-note.md",
+                           f"Approved and waiting on a merge: #{OPEN_PR}."),
+                    offline=False))
+results.append(case("a stale pull request size",
+                    append("alpha-note.md", f"#{OPEN_PR} is +9999 -8888 today."),
+                    offline=False))
 
-print("\n=== the guard ===")
-clean_off = run(True)
-clean_on = run(False)
-print(f"  {'MISSED ' if clean_off or clean_on else 'SILENT '} nothing injected"
-      f" (offline hits={len(clean_off)}, live hits={len(clean_on)})")
+print("\n=== the guard: a clean fixture must be silent ===")
+with tempfile.TemporaryDirectory(prefix="memory-gate-") as tmp:
+    fixture = build(pathlib.Path(tmp))
+    off, live = run(fixture, True), run(fixture, False)
+clean = not off and not live
+print(f"  {'SILENT ' if clean else 'NOISY  '} nothing injected "
+      f"(offline hits={len(off)}, live hits={len(live)})")
 
-ok = all(results) and not clean_off and not clean_on
-print(f"\n{sum(results)}/{len(results)} injections caught; guard "
-      f"{'clean' if not (clean_off or clean_on) else 'DIRTY'}")
-sys.exit(0 if ok else 1)
+print(f"\n{sum(results)}/{len(results)} injections caught; "
+      f"guard {'clean' if clean else 'DIRTY'}")
+sys.exit(0 if all(results) and clean else 1)
