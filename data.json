@@ -362,7 +362,7 @@
         "boards/raspberry_pi_pico/Makefile",
         "boards/raspberry_pi_pico_2/Makefile"
       ],
-      "thread": "### Pull Request Overview\r\n\r\nThis PR supersedes #5154.\r\n\r\nSplicing an app into the kernel breaks the relevant make target on 4 of the 5 RP2\r\nboards: \"ELF contains memory contents for uninitialized memory at 20000000\". The\r\n`.apps` flag change is a red herring: ELF section headers carry no LMA, so BFD\r\nfabricates one for the empty `.relocate` section from file offsets - the shared\r\noffset with `.stack` makes that fabricated LMA `.stack`'s load address, pulling\r\n`.relocate` into the `.stack` segment, after which `.stack` (NOLOAD) ends up\r\nclaiming file contents for SRAM. Add `-R .stack` to each objcopy splice rule.\r\nFixes #4770.\r\n\r\n<details>\r\n<summary>AI-generated measurement data</summary>\r\n\r\nhttps://via-balaena.github.io/tock-rp2350/findings/4770/\r\n\r\n</details>\r\n\r\n### Testing Strategy\r\n\r\npotto216's RP2040: reporter verified on his machine via program/elf2uf2-rs/BOOTSEL. App ran; console \"Hello world!\". (https://github.com/tock/tock/issues/4770#issuecomment-5573463328)\r\n\r\nprogram-openocd on RP2350: Pico 2 W over Debug Probe. rc=2 \u2192 rc=0. Without fix, openocd verify_image fails at 0x20000000 and aborts before reset, leaving board halted.\r\n\r\nFile-level: all 4 boards pass (raspberry_pi_pico, raspberry_pi_pico_2, pico_explorer_base, nano_rp2040_connect). pico_explorer_base and nano_rp2040_connect are file-level only. No hardware run yet.\r\n\r\n### TODO or Help Wanted\r\n\r\nprogram-probe (probe-rs): not run. Could someone with an RP2040 and probe-rs try it? @potto216 ?\r\n\r\n### Checklist\r\n\r\n- [x] Ran `make prepush`.\r\n\r\n### PR Contents\r\n\r\n#### Documentation\r\n\r\n- [ ] Updated the relevant files in `/docs` and the [Book](https://github.com/tock/book).\r\n- [x] No documentation updates are required.\r\n\r\n#### AI Use\r\n\r\n- [ ] No AI was used in this PR.\r\n- [x] AI was used in this PR. I have read [Tock's AI policy](https://github.com/tock/tock/blob/master/.github/CONTRIBUTING.md#ai-policy) and have properly disclosed my AI use below. This PR comment, and any subsequent PR interactions must not be generated using AI, except for under a `<details>` drawer.\r\n\r\nCode written with Claude Opus 5\r\n \u241f > I would rather see this move to use `tockloader local-board`, but if this improves things then fine.\r\n\r\n@bradjc \r\n\r\nI can look into that for a future pr. This fixes the immediate breakage. \u241f --set-section-flags .apps=LOAD,ALLOC gives .apps file content, which forces BFD to recompute the program headers. \r\n\r\n.stack is (NOLOAD) and lives in SRAM at 0x20000000; during that recompute its p_filesz changes from 0x0 to its full size. The ELF then claims file content for memory that has none, and elf2uf2-rs refuses it with:\r\nError: \"ELF contains memory contents for uninitialized memory at 20000000\"\r\n-R .stack drops it from the flashed artifact only. The kernel ELF keeps its symbols, and .stack reserves stack space with no bytes to carry, so it costs nothing.\r\n\r\nThe section itself stays NOBITS in the section table; the issue is in the program header (p_filesz), which is why it's not obvious from reading the section headers alone. \u241f > .stack is (NOLOAD) and lives in SRAM at 0x20000000; during that recompute its p_filesz changes from 0x0 to its full size.\r\n\r\nGot it. Doesn't this sound like a linker bug? Why does the linker change the `p_filesz` segment header for a `NOLOAD` segment, effectively materializing its contents out of thin air?\r\n\r\nAgain, not disagreeing with this fix, just trying to fully understand the issue. \u241f > > .stack is (NOLOAD) and lives in SRAM at 0x20000000; during that recompute its p_filesz changes from 0x0 to its full size.\r\n> \r\n> Got it. Doesn't this sound like a linker bug? Why does the linker change the `p_filesz` segment header for a `NOLOAD` segment, effectively materializing its contents out of thin air?\r\n> \r\n> Again, not disagreeing with this fix, just trying to fully understand the issue.\r\n\r\nNot the linker, and not `--set-section-flags`. rust-lld writes `p_filesz 0` for the `.stack` segment and that ELF is correct. The flag change is innocent, a bare `objcopy in.elf out.elf` with no options at all reproduces the bogus `p_filesz`, so my earlier comment was wrong.\r\n\r\nWhat actually happens: ELF section headers carry no LMA, so BFD reconstructs one on read from file offsets. The empty `.relocate` section shares `.stack`'s file offset, so it inherits `.stack`'s load address and gets pulled into the `.stack` segment. Because `.relocate` is PROGBITS, the segment then has to carry file bytes reaching it, exactly `.stack`'s size, whatever that is on the board in question.\r\n\r\n`-R .stack` is still the right fix. `-R .relocate` also works but would be a hazard on any board that has initialized data.\r\n\r\nThe tables, the board survey, and the source walk - the three functions, the containment test and the `_STRICT` variant, are on the findings page, linked from the `<details>` drawer in the PR body. If you want more after that, happy to answer follow-ups here."
+      "thread": "### Pull Request Overview\r\n\r\nThis PR supersedes #5154.\r\n\r\nSplicing an app into the kernel breaks the relevant make target on 4 of the 5 RP2\r\nboards: \"ELF contains memory contents for uninitialized memory at 20000000\". The\r\n`.apps` flag change is a red herring: ELF section headers carry no LMA, so BFD\r\nfabricates one for the empty `.relocate` section from file offsets - the shared\r\noffset with `.stack` makes that fabricated LMA `.stack`'s load address, pulling\r\n`.relocate` into the `.stack` segment, after which `.stack` (NOLOAD) ends up\r\nclaiming file contents for SRAM. Add `-R .stack` to each objcopy splice rule.\r\nFixes #4770.\r\n\r\n<details>\r\n<summary>AI-generated measurement data</summary>\r\n\r\nhttps://via-balaena.github.io/tock-rp2350/findings/4770/\r\n\r\n</details>\r\n\r\n### Testing Strategy\r\n\r\npotto216's RP2040: reporter verified on his machine via program/elf2uf2-rs/BOOTSEL. App ran; console \"Hello world!\". (https://github.com/tock/tock/issues/4770#issuecomment-5573463328)\r\n\r\nprogram-openocd on RP2350: Pico 2 W over Debug Probe. rc=2 \u2192 rc=0. Without fix, openocd verify_image fails at 0x20000000 and aborts before reset, leaving board halted.\r\n\r\nFile-level: all 4 boards pass (raspberry_pi_pico, raspberry_pi_pico_2, pico_explorer_base, nano_rp2040_connect). pico_explorer_base and nano_rp2040_connect are file-level only. No hardware run yet.\r\n\r\n### TODO or Help Wanted\r\n\r\nprogram-probe (probe-rs): not run. Could someone with an RP2040 and probe-rs try it? @potto216 ?\r\n\r\n### Checklist\r\n\r\n- [x] Ran `make prepush`.\r\n\r\n### PR Contents\r\n\r\n#### Documentation\r\n\r\n- [ ] Updated the relevant files in `/docs` and the [Book](https://github.com/tock/book).\r\n- [x] No documentation updates are required.\r\n\r\n#### AI Use\r\n\r\n- [ ] No AI was used in this PR.\r\n- [x] AI was used in this PR. I have read [Tock's AI policy](https://github.com/tock/tock/blob/master/.github/CONTRIBUTING.md#ai-policy) and have properly disclosed my AI use below. This PR comment, and any subsequent PR interactions must not be generated using AI, except for under a `<details>` drawer.\r\n\r\nCode written with Claude Opus 5\r\n \u241f > I would rather see this move to use `tockloader local-board`, but if this improves things then fine.\r\n\r\n@bradjc \r\n\r\nI can look into that for a future pr. This fixes the immediate breakage. \u241f --set-section-flags .apps=LOAD,ALLOC gives .apps file content, which forces BFD to recompute the program headers. \r\n\r\n.stack is (NOLOAD) and lives in SRAM at 0x20000000; during that recompute its p_filesz changes from 0x0 to its full size. The ELF then claims file content for memory that has none, and elf2uf2-rs refuses it with:\r\nError: \"ELF contains memory contents for uninitialized memory at 20000000\"\r\n-R .stack drops it from the flashed artifact only. The kernel ELF keeps its symbols, and .stack reserves stack space with no bytes to carry, so it costs nothing.\r\n\r\nThe section itself stays NOBITS in the section table; the issue is in the program header (p_filesz), which is why it's not obvious from reading the section headers alone. \u241f > .stack is (NOLOAD) and lives in SRAM at 0x20000000; during that recompute its p_filesz changes from 0x0 to its full size.\r\n\r\nGot it. Doesn't this sound like a linker bug? Why does the linker change the `p_filesz` segment header for a `NOLOAD` segment, effectively materializing its contents out of thin air?\r\n\r\nAgain, not disagreeing with this fix, just trying to fully understand the issue. \u241f > > .stack is (NOLOAD) and lives in SRAM at 0x20000000; during that recompute its p_filesz changes from 0x0 to its full size.\r\n> \r\n> Got it. Doesn't this sound like a linker bug? Why does the linker change the `p_filesz` segment header for a `NOLOAD` segment, effectively materializing its contents out of thin air?\r\n> \r\n> Again, not disagreeing with this fix, just trying to fully understand the issue.\r\n\r\nNot the linker, and not `--set-section-flags`. rust-lld writes `p_filesz 0` for the `.stack` segment and that ELF is correct. The flag change is innocent, a bare `objcopy in.elf out.elf` with no options at all reproduces the bogus `p_filesz`, so my earlier comment was wrong.\r\n\r\nWhat actually happens: ELF section headers carry no LMA, so BFD reconstructs one on read from file offsets. The empty `.relocate` section shares `.stack`'s file offset, so it inherits `.stack`'s load address and gets pulled into the `.stack` segment. Because `.relocate` is PROGBITS, the segment then has to carry file bytes reaching it, exactly `.stack`'s size, whatever that is on the board in question.\r\n\r\n`-R .stack` is still the right fix. `-R .relocate` also works but would be a hazard on any board that has initialized data.\r\n\r\nThe tables, the board survey, and the source walk - the three functions, the containment test and the `_STRICT` variant, are on the findings page, linked from the `<details>` drawer in the PR body. If you want more after that, happy to answer follow-ups here. \u241f > > > .stack is (NOLOAD) and lives in SRAM at 0x20000000; during that recompute its p_filesz changes from 0x0 to its full size.\r\n> > \r\n> > \r\n> > Got it. Doesn't this sound like a linker bug? Why does the linker change the `p_filesz` segment header for a `NOLOAD` segment, effectively materializing its contents out of thin air?\r\n> > Again, not disagreeing with this fix, just trying to fully understand the issue.\r\n> \r\n> Not the linker, and not `--set-section-flags`. rust-lld writes `p_filesz 0` for the `.stack` segment and that ELF is correct. The flag change is innocent, a bare `objcopy in.elf out.elf` with no options at all reproduces the bogus `p_filesz`, so my earlier comment was wrong.\r\n> \r\n> What actually happens: ELF section headers carry no LMA, so BFD reconstructs one on read from file offsets. The empty `.relocate` section shares `.stack`'s file offset, so it inherits `.stack`'s load address and gets pulled into the `.stack` segment. Because `.relocate` is PROGBITS, the segment then has to carry file bytes reaching it, exactly `.stack`'s size, whatever that is on the board in question.\r\n> \r\n> `-R .stack` is still the right fix. `-R .relocate` also works but would be a hazard on any board that has initialized data.\r\n> \r\n> The tables, the board survey, and the source walk - the three functions, the containment test and the `_STRICT` variant, are on the findings page, linked from the `<details>` drawer in the PR body. If you want more after that, happy to answer follow-ups here.\r\n\r\nWe've having some trouble understanding this comment. First, it reads as AI-generated -- can you confirm it was written by a human?\r\n\r\nAnd if so, do you have a clearer explanation for what is going on? \u241f I'm an aspiring end user looking to create a stable RP2350 Tock ecosystem to learn. My preferred board is the Pi Pico 2/2W. I don't want to try to be learning a moving target, so yes, there is heavy AI assistance, but it's not slop. Everything is rigorously reviewed to the best of my abilities. Once the RP2350 ecosystem is stable, I plan on learning it inside out (see the docs/learning materials I have made)\r\n\r\nRegarding my writing/communication style: I'm trying the best I can to fact-check everything. I even created a `constraints.md` based on every comment a maintainer has left so far on my PRs. I am trying to optimize the information in my PRs and comments to be as considerate of your cognitive load as possible, while minimizing ambiguity as much as I can. \r\n\r\nThank you."
     },
     {
       "additions": 502,
@@ -618,7 +618,7 @@
         "stat": "3 files changed, 190 insertions(+), 1 deletion(-)",
         "base": "upstream/master",
         "base_sha": "0c6e7b184",
-        "behind": 28,
+        "behind": 30,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -653,7 +653,7 @@
         "stat": "46 files changed, 5446 insertions(+), 2771 deletions(-)",
         "base": "upstream/master",
         "base_sha": "479b61829",
-        "behind": 57,
+        "behind": 59,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -666,7 +666,7 @@
         "stat": "2 files changed, 35 insertions(+), 9 deletions(-)",
         "base": "upstream/master",
         "base_sha": "b3234a172",
-        "behind": 3615,
+        "behind": 3617,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -677,7 +677,7 @@
         "stat": "",
         "base": "upstream/master",
         "base_sha": "0b5b4753e",
-        "behind": 111,
+        "behind": 113,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -690,7 +690,7 @@
         "stat": "5 files changed, 30 deletions(-)",
         "base": "upstream/master",
         "base_sha": "08894c2e0",
-        "behind": 126,
+        "behind": 128,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -890,7 +890,7 @@
         "stat": "48 files changed, 4913 insertions(+), 3812 deletions(-)",
         "base": "upstream/master",
         "base_sha": "8e7431d08",
-        "behind": 82,
+        "behind": 84,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -901,7 +901,7 @@
         "stat": "",
         "base": "upstream/master",
         "base_sha": "38e3744f4",
-        "behind": 97,
+        "behind": 99,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -931,7 +931,7 @@
         "stat": "48 files changed, 5032 insertions(+), 3812 deletions(-)",
         "base": "upstream/master",
         "base_sha": "8e7431d08",
-        "behind": 82,
+        "behind": 84,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -954,7 +954,7 @@
         "stat": "38 files changed, 4423 insertions(+), 2550 deletions(-)",
         "base": "upstream/master",
         "base_sha": "479b61829",
-        "behind": 57,
+        "behind": 59,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -969,7 +969,7 @@
         "stat": "8 files changed, 431 insertions(+), 238 deletions(-)",
         "base": "upstream/master",
         "base_sha": "e2ec78ff5",
-        "behind": 14,
+        "behind": 16,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -980,7 +980,7 @@
         "stat": "",
         "base": "upstream/master",
         "base_sha": "6319b0ca4",
-        "behind": 15,
+        "behind": 17,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -994,7 +994,7 @@
         "stat": "9 files changed, 159 insertions(+), 126 deletions(-)",
         "base": "upstream/master",
         "base_sha": "52aa1b684",
-        "behind": 11,
+        "behind": 13,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1007,7 +1007,7 @@
         "stat": "4 files changed, 13 insertions(+)",
         "base": "upstream/master",
         "base_sha": "73af792ec",
-        "behind": 17,
+        "behind": 19,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1021,7 +1021,7 @@
         "stat": "4 files changed, 51 insertions(+), 19 deletions(-)",
         "base": "upstream/master",
         "base_sha": "834bbbc26",
-        "behind": 46,
+        "behind": 48,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1034,7 +1034,7 @@
         "stat": "4 files changed, 136 insertions(+), 280 deletions(-)",
         "base": "upstream/master",
         "base_sha": "479b61829",
-        "behind": 57,
+        "behind": 59,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1051,7 +1051,7 @@
         "stat": "4 files changed, 502 insertions(+), 263 deletions(-)",
         "base": "upstream/master",
         "base_sha": "73af792ec",
-        "behind": 17,
+        "behind": 19,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1066,7 +1066,7 @@
         "stat": "4 files changed, 57 insertions(+), 13 deletions(-)",
         "base": "upstream/master",
         "base_sha": "e2ec78ff5",
-        "behind": 14,
+        "behind": 16,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1079,7 +1079,7 @@
         "stat": "1 file changed, 4 insertions(+)",
         "base": "upstream/master",
         "base_sha": "e2ec78ff5",
-        "behind": 14,
+        "behind": 16,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1093,7 +1093,7 @@
         "stat": "4 files changed, 698 insertions(+), 4 deletions(-)",
         "base": "upstream/master",
         "base_sha": "65608d717",
-        "behind": 112,
+        "behind": 114,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1106,7 +1106,7 @@
         "stat": "1 file changed, 7 insertions(+)",
         "base": "upstream/master",
         "base_sha": "d0d478657",
-        "behind": 0,
+        "behind": 2,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1121,7 +1121,7 @@
         "stat": "5 files changed, 487 insertions(+)",
         "base": "upstream/master",
         "base_sha": "e2ec78ff5",
-        "behind": 14,
+        "behind": 16,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1359,7 +1359,7 @@
     "ok": true,
     "upstream_ref": "upstream/master",
     "fork_ref": "bench/stepper-pico2w",
-    "head": "d0d478657",
+    "head": "111179c84",
     "resets": {
       "rp2040": {
         "USBCTRL": 24,
