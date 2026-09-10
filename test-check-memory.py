@@ -101,6 +101,9 @@ results.append(case("a type outside the four",
 results.append(case("an index line with no hook",
                     edit("MEMORY.md", "- [alpha-note](alpha-note.md) — a fixture hook",
                          "- [alpha-note](alpha-note.md)")))
+results.append(case("two sections under one heading",
+                    append("alpha-note.md",
+                           "## A heading\n\nOne.\n\n## A heading\n\nTwo.")))
 results.append(case("frontmatter with no body",
                     lambda root: (root / "beta-note.md").write_text(
                         memory("beta-note", "feedback", ""))))

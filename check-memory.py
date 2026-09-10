@@ -143,6 +143,17 @@ def check_structure(files, index_text, problems):
         if not re.match(r"^- \[[^\]]+\]\(\S+\.md\)\s+—\s+\S", row):
             problems.append(f"index: line is not `- [Title](file.md) — hook`: {row[:60]!r}")
 
+    # Two sections with one heading make a memory ambiguous to navigate and easy
+    # to append to twice. Added after doing exactly that: a second "# jrvanwhy"
+    # section restating the first, written minutes after the checker that did
+    # not look for it.
+    for path in files:
+        heads = re.findall(r"^#{1,3} .+$", strip_code(path.read_text()), re.M)
+        for head in sorted({h for h in heads if heads.count(h) > 1}):
+            problems.append(
+                f"structure: {path.name} has {heads.count(head)} sections headed "
+                f"{head.strip()[:60]!r}")
+
     # Wikilinks, ignoring anything inside code.
     for path in files:
         body = strip_code(path.read_text())
