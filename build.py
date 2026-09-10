@@ -103,7 +103,7 @@ INTENT = {
     "tock:rp2-doc-fixes": ("upstream", "Three places the documentation disagrees with the code: two RP2 board READMEs name a `make` target that does not exist, the ADC syscall document never states the left-justification the HIL guarantees, and the GPIO capsule's pull encoding is rotated by one from the enum it translates into. Three files, +7 -3.", "**MERGED 2026-09-09** as #5158, head `6319b0ca4`. lschuermann approved it within the hour and that approval was then **dismissed by the force-push** that dropped a commit -- a review is made against a head, and moving the head discards it. Two commits now, not three: he objected to the GPIO comment and was right — `FloatingState` has no `#[repr()]`, integer-to-enum `as` does not compile (E0605), and `unsafe` is banned in capsules outright, so the hazard that comment described was unreachable. Dropped rather than defended. The ADC commit was also amended before opening: it said the HIL promises left-justification three times, and it is seven, across all three of its traits."),
     "tock:rp2-pad-controls": ("upstream", "Shared pad enums and the RP2350 pad controls.", None),
     "tock:pico2w-typed": ("upstream", "The Pico 2 W board and the radio.", None),
-    "tock:rp2-pio-tests": ("upstream", "Five PIO fixes and the driver's first host tests. Four defects demonstrated by tests that fail on unmodified upstream; one of them panics the kernel.", "**Was #5150, closed 2026-09-07** -- for a PR body written by AI under a checkbox promising it would not be, which is the one part of that close not worth contesting. **Whether it can be reopened is untested**, and the note that used to sit here -- that this one was reopenable where #5154 was not -- asserted a difference nothing observable supports. The two are identical on every axis that can be checked: both closed, both drafts, both head commits still present on GitHub, and both branches since force-pushed away from that head. `9aafaa665` is no longer an ancestor of this branch, so the precaution this note used to carry (reopen first, rebase after) is already spent. Clicking reopen is the only thing that would settle it. A description in Jon's own words is needed either way; the existing one is 2,245 characters against a house median of 1,062 -- measured 2026-09-10 across the last 200 merged pull requests."),
+    "tock:rp2-pio-tests": ("upstream", "Five PIO fixes and the driver's first host tests. Four defects demonstrated by tests that fail on unmodified upstream; one of them panics the kernel.", "**Open as #5157**, in review, the same five commits. #5150 was the first attempt and was closed 2026-09-07 for a body written by AI under a checkbox promising it would not be, which is the one part of that close not worth contesting. **Whether #5150 could be reopened is moot** -- this work is already open as its successor, and the two notes that used to sit here, arguing that it was reopenable where #5154 was not, were arguing about a door nobody needs. #5157 carries a rewritten body of its own, 2,233 characters against a house median of 1,062 measured 2026-09-10 across the last 200 merged pull requests, so roughly twice the house length rather than the 5,714 this note used to claim for a body that is in fact 2,203."),
     "tock:boards-fix-ram-layout": ("upstream", "Merged.", None),
     "tock:boards-remove-dead-ram-layout": ("upstream", "Closed in favour of fixing the addresses.", None),
     "tock:stepper-capsule": ("upstream", "A stepper motor capsule: four phase pins driven from the capsule's own alarm, with the owning process's liveness checked before every step.", "Undecided whether it goes upstream at all. A new syscall driver means a new driver number and new API surface, which is a materially different ask from a bug fix — it must not become a fourth thing waiting behind the three descriptions."),
@@ -1567,12 +1567,32 @@ def queue_rows(data):
             key = f"{repo}:{branch}"
             intent, note, blocked = INTENT.get(key, (None, "", None))
             mine = set(info["commits"])
-            match, overlap = None, 0
-            if repo == "tock" and mine:
+            match, overlap, best = None, 0, None
+            # A branch whose intent is "never" is a bench branch. It may well
+            # carry a commit that was also proposed, and that does not make it
+            # that pull request -- matching it would file the bench branch
+            # under someone else's review state.
+            if repo == "tock" and mine and intent != "never":
                 for num, commits in pr_commits.items():
                     shared = len(mine & commits)
-                    if shared > overlap:
-                        match, overlap = num, shared
+                    if not shared:
+                        continue
+                    # Most overlap wins. A tie is what a superseded pull
+                    # request looks like -- the same commits proposed twice,
+                    # once closed and once live -- so prefer the one still
+                    # open, then the most recent. Without this the branch
+                    # takes its predecessor's number and reads as closed,
+                    # and its note never reaches the live card.
+                    # Ordered by what makes a pull request *this* branch:
+                    # overlap first; then live over closed, which separates a
+                    # superseded pair proposing identical commits; then the
+                    # tightest pull request, so an exact match beats a stack
+                    # that merely contains the same commit; then the newest.
+                    rank = (shared, prs[num]["state"] != "CLOSED",
+                            -len(commits), num)
+                    if best is None or rank > best:
+                        match, best = num, rank
+                overlap = best[0] if best else 0
             drifted = bool(match) and overlap < len(pr_commits[match])
             rows.append({
                 "repo": repo, "branch": branch, "ahead": info["ahead"],
