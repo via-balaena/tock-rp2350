@@ -434,14 +434,14 @@
     {
       "additions": 159,
       "changedFiles": 9,
-      "closedAt": null,
+      "closedAt": "2026-09-13T14:50:30Z",
       "createdAt": "2026-09-09T13:32:30Z",
       "deletions": 126,
       "isDraft": false,
       "mergedAt": null,
       "number": 5160,
       "reviewDecision": "REVIEW_REQUIRED",
-      "state": "OPEN",
+      "state": "CLOSED",
       "title": "rp2: build the flashed image with tockloader instead of splicing an ELF",
       "url": "https://github.com/tock/tock/pull/5160",
       "closes": [],
@@ -469,14 +469,14 @@
     {
       "additions": 7,
       "changedFiles": 1,
-      "closedAt": null,
+      "closedAt": "2026-09-13T14:50:27Z",
       "createdAt": "2026-09-09T20:32:52Z",
       "deletions": 0,
       "isDraft": false,
       "mergedAt": null,
       "number": 5165,
       "reviewDecision": "REVIEW_REQUIRED",
-      "state": "OPEN",
+      "state": "CLOSED",
       "title": "boards: rp2350: clear stale NVIC pending after the peripheral reset",
       "url": "https://github.com/tock/tock/pull/5165",
       "closes": [],
@@ -591,7 +591,7 @@
       ],
       "createdAt": "2026-09-09T13:32:30Z",
       "number": 5160,
-      "state": "OPEN",
+      "state": "CLOSED",
       "title": "rp2: build the flashed image with tockloader instead of splicing an ELF",
       "url": "https://github.com/tock/tock/pull/5160"
     },
@@ -606,7 +606,7 @@
       "comments": [],
       "createdAt": "2026-09-09T20:32:52Z",
       "number": 5165,
-      "state": "OPEN",
+      "state": "CLOSED",
       "title": "boards: rp2350: clear stale NVIC pending after the peripheral reset",
       "url": "https://github.com/tock/tock/pull/5165"
     }
@@ -706,20 +706,6 @@
         "base": "upstream/master",
         "base_sha": "b3234a172",
         "behind": 3653,
-        "pushed": true,
-        "on_remote": true,
-        "unpushed": 0
-      },
-      "crc-stale-sam4l-docs": {
-        "ahead": 2,
-        "commits": [
-          "capsules: crc: document the algorithms that exist",
-          "kernel: crc: drop the note about Sam4L algorithms"
-        ],
-        "stat": "2 files changed, 8 insertions(+), 28 deletions(-)",
-        "base": "upstream/master",
-        "base_sha": "0cc36ca6c",
-        "behind": 2,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -925,8 +911,14 @@
         "unpushed": 0
       },
       "main": {
-        "ahead": 76,
+        "ahead": 92,
         "commits": [
+          "Merge branch 'rp2350-gpio-irq'",
+          "Merge branch 'rp2-local-board'",
+          "Merge branch 'stepper-capsule'",
+          "Merge branch 'rp2350-stale-nvic-pending'",
+          "Merge branch 'stm32u5-adc-justify'",
+          "Merge branch 'crc-stale-sam4l-docs'",
           "Merge branch 'uart-receive-busy' into rp2350-distro",
           "Merge branch 'lpc55s6x-abort-callback' into rp2350-distro",
           "Merge branch 'uart-size-contract' into rp2350-distro",
@@ -952,8 +944,18 @@
           "kernel: declare MMIO blocks with their provenance",
           "kernel: pin the capability macros' forbid claim",
           "kernel: check StaticRef alignment at compile time",
+          "chips: stm32u5xx: left-justify ADC samples",
           "boards: pico 2 w: refresh Cargo.lock after the 2.4-dev bump",
+          "capsules: crc: document the algorithms that exist",
+          "kernel: crc: drop the note about Sam4L algorithms",
           "Merge remote-tracking branch 'upstream/master' into rp2350-distro",
+          "chips: rp2350: route the GPIO bank interrupt, which panics the kernel",
+          "capsules: stepper: return the step count from a stop",
+          "capsules: stepper: report a stop, and refuse one from a non-owner",
+          "capsules: add a stepper motor driver",
+          "rp2350: clear stale NVIC pending after the peripheral reset",
+          "rp2040: the same image route, and one UF2 converter instead of two",
+          "rp2350: build the flashed image with tockloader, not by splicing an ELF",
           "boards: pico 2 w: point GP13 at the PWM slice that is driving it",
           "boards: pico 2 w: stop handing out GP13, which belongs to the buzzer",
           "chips: rp2350: add PWM, and give the Pico 2 W's beeper a square wave",
@@ -1004,7 +1006,7 @@
           "chips: rp2350: gpio: add the pad controls the RP2040 has",
           "chips: rp2040: pio: retire the examples module"
         ],
-        "stat": "83 files changed, 7864 insertions(+), 2975 deletions(-)",
+        "stat": "86 files changed, 7890 insertions(+), 3008 deletions(-)",
         "base": "upstream/master",
         "base_sha": "a7b14ffaf",
         "behind": 0,
@@ -1089,20 +1091,6 @@
         "on_remote": true,
         "unpushed": 0
       },
-      "rp2-local-board": {
-        "ahead": 2,
-        "commits": [
-          "rp2040: the same image route, and one UF2 converter instead of two",
-          "rp2350: build the flashed image with tockloader, not by splicing an ELF"
-        ],
-        "stat": "9 files changed, 159 insertions(+), 126 deletions(-)",
-        "base": "upstream/master",
-        "base_sha": "0cc36ca6c",
-        "behind": 2,
-        "pushed": true,
-        "on_remote": true,
-        "unpushed": 0
-      },
       "rp2-make-program-fix": {
         "ahead": 1,
         "commits": [
@@ -1160,66 +1148,12 @@
         "on_remote": true,
         "unpushed": 0
       },
-      "rp2350-gpio-irq": {
-        "ahead": 1,
-        "commits": [
-          "chips: rp2350: route the GPIO bank interrupt, which panics the kernel"
-        ],
-        "stat": "1 file changed, 4 insertions(+)",
-        "base": "upstream/master",
-        "base_sha": "0cc36ca6c",
-        "behind": 2,
-        "pushed": true,
-        "on_remote": true,
-        "unpushed": 0
-      },
       "rp2350-spi-bench": {
         "ahead": 1,
         "commits": [
           "boards: pico 2: bench harness for the SPI loopback test"
         ],
         "stat": "1 file changed, 38 insertions(+), 4 deletions(-)",
-        "base": "upstream/master",
-        "base_sha": "0cc36ca6c",
-        "behind": 2,
-        "pushed": true,
-        "on_remote": true,
-        "unpushed": 0
-      },
-      "rp2350-stale-nvic-pending": {
-        "ahead": 1,
-        "commits": [
-          "rp2350: clear stale NVIC pending after the peripheral reset"
-        ],
-        "stat": "1 file changed, 7 insertions(+)",
-        "base": "upstream/master",
-        "base_sha": "0cc36ca6c",
-        "behind": 2,
-        "pushed": true,
-        "on_remote": true,
-        "unpushed": 0
-      },
-      "stepper-capsule": {
-        "ahead": 3,
-        "commits": [
-          "capsules: stepper: return the step count from a stop",
-          "capsules: stepper: report a stop, and refuse one from a non-owner",
-          "capsules: add a stepper motor driver"
-        ],
-        "stat": "5 files changed, 487 insertions(+)",
-        "base": "upstream/master",
-        "base_sha": "0cc36ca6c",
-        "behind": 2,
-        "pushed": true,
-        "on_remote": true,
-        "unpushed": 0
-      },
-      "stm32u5-adc-justify": {
-        "ahead": 1,
-        "commits": [
-          "chips: stm32u5xx: left-justify ADC samples"
-        ],
-        "stat": "1 file changed, 11 insertions(+), 5 deletions(-)",
         "base": "upstream/master",
         "base_sha": "0cc36ca6c",
         "behind": 2,
@@ -1629,51 +1563,6 @@
           "spi": 638
         }
       },
-      "crc-stale-sam4l-docs": {
-        "rp2040": {
-          "adc": 240,
-          "chip": 246,
-          "clocks": 1419,
-          "deferred_calls": 33,
-          "dma": 606,
-          "gpio": 727,
-          "i2c": 729,
-          "interrupts": 30,
-          "lib": 109,
-          "mod": 5,
-          "pio": 1947,
-          "pio_gspi": 270,
-          "pio_pwm": 95,
-          "pio_spi": 572,
-          "pwm": 76,
-          "resets": 371,
-          "rtc": 448,
-          "spi": 36,
-          "sysinfo": 98,
-          "timer": 277,
-          "uart": 761,
-          "usb": 2484,
-          "watchdog": 129,
-          "xosc": 117
-        },
-        "rp2350": {
-          "chip": 175,
-          "clocks": 1530,
-          "gpio": 1555,
-          "interrupts": 56,
-          "lib": 118,
-          "resets": 400,
-          "spi": 36,
-          "ticks": 174,
-          "timer": 274,
-          "uart": 811,
-          "xosc": 125
-        },
-        "rp2xxx": {
-          "lib": 29,
-          "spi": 638
-        }
-      },
       "pico2w-typed": {
         "rp2040": {
           "adc": 240,
@@ -1773,51 +1662,6 @@
           "spi": 638
         }
       },
-      "rp2-local-board": {
-        "rp2040": {
-          "adc": 240,
-          "chip": 246,
-          "clocks": 1419,
-          "deferred_calls": 33,
-          "dma": 606,
-          "gpio": 727,
-          "i2c": 729,
-          "interrupts": 30,
-          "lib": 109,
-          "mod": 5,
-          "pio": 1947,
-          "pio_gspi": 270,
-          "pio_pwm": 95,
-          "pio_spi": 572,
-          "pwm": 76,
-          "resets": 371,
-          "rtc": 448,
-          "spi": 36,
-          "sysinfo": 98,
-          "timer": 277,
-          "uart": 761,
-          "usb": 2484,
-          "watchdog": 129,
-          "xosc": 117
-        },
-        "rp2350": {
-          "chip": 175,
-          "clocks": 1530,
-          "gpio": 1555,
-          "interrupts": 56,
-          "lib": 118,
-          "resets": 400,
-          "spi": 36,
-          "ticks": 174,
-          "timer": 274,
-          "uart": 811,
-          "xosc": 125
-        },
-        "rp2xxx": {
-          "lib": 29,
-          "spi": 638
-        }
-      },
       "rp2-make-program-fix": {
         "rp2040": {
           "adc": 240,
@@ -1860,52 +1704,6 @@
         },
         "rp2xxx": {
           "lib": 29,
-          "spi": 638
-        }
-      },
-      "rp2-pad-controls": {
-        "rp2040": {
-          "adc": 240,
-          "chip": 246,
-          "clocks": 1419,
-          "deferred_calls": 33,
-          "dma": 606,
-          "gpio": 710,
-          "i2c": 729,
-          "interrupts": 30,
-          "lib": 109,
-          "mod": 5,
-          "pio": 1947,
-          "pio_gspi": 270,
-          "pio_pwm": 95,
-          "pio_spi": 572,
-          "pwm": 76,
-          "resets": 371,
-          "rtc": 448,
-          "spi": 36,
-          "sysinfo": 98,
-          "timer": 277,
-          "uart": 761,
-          "usb": 2484,
-          "watchdog": 129,
-          "xosc": 117
-        },
-        "rp2350": {
-          "chip": 175,
-          "clocks": 1530,
-          "gpio": 1572,
-          "interrupts": 56,
-          "lib": 118,
-          "resets": 400,
-          "spi": 36,
-          "ticks": 174,
-          "timer": 274,
-          "uart": 811,
-          "xosc": 125
-        },
-        "rp2xxx": {
-          "lib": 32,
-          "pads": 29,
           "spi": 638
         }
       },
@@ -1968,186 +1766,6 @@
           "mod": 5,
           "pio": 2171,
           "pio_gspi": 273,
-          "pio_pwm": 95,
-          "pio_spi": 572,
-          "pwm": 76,
-          "resets": 371,
-          "rtc": 448,
-          "spi": 36,
-          "sysinfo": 98,
-          "timer": 277,
-          "uart": 761,
-          "usb": 2484,
-          "watchdog": 129,
-          "xosc": 117
-        },
-        "rp2350": {
-          "chip": 175,
-          "clocks": 1530,
-          "gpio": 1555,
-          "interrupts": 56,
-          "lib": 118,
-          "resets": 400,
-          "spi": 36,
-          "ticks": 174,
-          "timer": 274,
-          "uart": 811,
-          "xosc": 125
-        },
-        "rp2xxx": {
-          "lib": 29,
-          "spi": 638
-        }
-      },
-      "rp2350-gpio-irq": {
-        "rp2040": {
-          "adc": 240,
-          "chip": 246,
-          "clocks": 1419,
-          "deferred_calls": 33,
-          "dma": 606,
-          "gpio": 727,
-          "i2c": 729,
-          "interrupts": 30,
-          "lib": 109,
-          "mod": 5,
-          "pio": 1947,
-          "pio_gspi": 270,
-          "pio_pwm": 95,
-          "pio_spi": 572,
-          "pwm": 76,
-          "resets": 371,
-          "rtc": 448,
-          "spi": 36,
-          "sysinfo": 98,
-          "timer": 277,
-          "uart": 761,
-          "usb": 2484,
-          "watchdog": 129,
-          "xosc": 117
-        },
-        "rp2350": {
-          "chip": 179,
-          "clocks": 1530,
-          "gpio": 1555,
-          "interrupts": 56,
-          "lib": 118,
-          "resets": 400,
-          "spi": 36,
-          "ticks": 174,
-          "timer": 274,
-          "uart": 811,
-          "xosc": 125
-        },
-        "rp2xxx": {
-          "lib": 29,
-          "spi": 638
-        }
-      },
-      "rp2350-stale-nvic-pending": {
-        "rp2040": {
-          "adc": 240,
-          "chip": 246,
-          "clocks": 1419,
-          "deferred_calls": 33,
-          "dma": 606,
-          "gpio": 727,
-          "i2c": 729,
-          "interrupts": 30,
-          "lib": 109,
-          "mod": 5,
-          "pio": 1947,
-          "pio_gspi": 270,
-          "pio_pwm": 95,
-          "pio_spi": 572,
-          "pwm": 76,
-          "resets": 371,
-          "rtc": 448,
-          "spi": 36,
-          "sysinfo": 98,
-          "timer": 277,
-          "uart": 761,
-          "usb": 2484,
-          "watchdog": 129,
-          "xosc": 117
-        },
-        "rp2350": {
-          "chip": 175,
-          "clocks": 1530,
-          "gpio": 1555,
-          "interrupts": 56,
-          "lib": 118,
-          "resets": 400,
-          "spi": 36,
-          "ticks": 174,
-          "timer": 274,
-          "uart": 811,
-          "xosc": 125
-        },
-        "rp2xxx": {
-          "lib": 29,
-          "spi": 638
-        }
-      },
-      "stepper-capsule": {
-        "rp2040": {
-          "adc": 240,
-          "chip": 246,
-          "clocks": 1419,
-          "deferred_calls": 33,
-          "dma": 606,
-          "gpio": 727,
-          "i2c": 729,
-          "interrupts": 30,
-          "lib": 109,
-          "mod": 5,
-          "pio": 1947,
-          "pio_gspi": 270,
-          "pio_pwm": 95,
-          "pio_spi": 572,
-          "pwm": 76,
-          "resets": 371,
-          "rtc": 448,
-          "spi": 36,
-          "sysinfo": 98,
-          "timer": 277,
-          "uart": 761,
-          "usb": 2484,
-          "watchdog": 129,
-          "xosc": 117
-        },
-        "rp2350": {
-          "chip": 175,
-          "clocks": 1530,
-          "gpio": 1555,
-          "interrupts": 56,
-          "lib": 118,
-          "resets": 400,
-          "spi": 36,
-          "ticks": 174,
-          "timer": 274,
-          "uart": 811,
-          "xosc": 125
-        },
-        "rp2xxx": {
-          "lib": 29,
-          "spi": 638
-        }
-      },
-      "stm32u5-adc-justify": {
-        "rp2040": {
-          "adc": 240,
-          "chip": 246,
-          "clocks": 1419,
-          "deferred_calls": 33,
-          "dma": 606,
-          "gpio": 727,
-          "i2c": 729,
-          "interrupts": 30,
-          "lib": 109,
-          "mod": 5,
-          "pio": 1947,
-          "pio_gspi": 270,
           "pio_pwm": 95,
           "pio_spi": 572,
           "pwm": 76,
@@ -14130,10 +13748,6 @@
         "doc/syscalls/00011_stepper.md",
         "doc/syscalls/README.md"
       ],
-      "crc-stale-sam4l-docs": [
-        "capsules/extra/src/crc.rs",
-        "kernel/src/hil/crc.rs"
-      ],
       "pico2w-typed": [
         "Cargo.lock",
         "Cargo.toml",
@@ -14184,28 +13798,11 @@
         "chips/rp2xxx/src/adc.rs",
         "chips/rp2xxx/src/lib.rs"
       ],
-      "rp2-local-board": [
-        "boards/nano_rp2040_connect/Makefile",
-        "boards/nano_rp2040_connect/README.md",
-        "boards/pico_explorer_base/Makefile",
-        "boards/pico_explorer_base/README.md",
-        "boards/raspberry_pi_pico/Makefile",
-        "boards/raspberry_pi_pico/README.md",
-        "boards/raspberry_pi_pico_2/Makefile",
-        "boards/raspberry_pi_pico_2/README.md",
-        "boards/raspberry_pi_pico_w/Makefile"
-      ],
       "rp2-make-program-fix": [
         "boards/nano_rp2040_connect/Makefile",
         "boards/pico_explorer_base/Makefile",
         "boards/raspberry_pi_pico/Makefile",
         "boards/raspberry_pi_pico_2/Makefile"
-      ],
-      "rp2-pad-controls": [
-        "chips/rp2040/src/gpio.rs",
-        "chips/rp2350/src/gpio.rs",
-        "chips/rp2xxx/src/lib.rs",
-        "chips/rp2xxx/src/pads.rs"
       ],
       "rp2-pio-prep": [
         "chips/rp2040/src/pio.rs",
@@ -14218,22 +13815,6 @@
         "chips/rp2040/src/chip.rs",
         "chips/rp2040/src/pio.rs",
         "chips/rp2040/src/pio_gspi.rs"
-      ],
-      "rp2350-gpio-irq": [
-        "chips/rp2350/src/chip.rs"
-      ],
-      "rp2350-stale-nvic-pending": [
-        "boards/raspberry_pi_pico_2/src/main.rs"
-      ],
-      "stepper-capsule": [
-        "capsules/core/src/driver.rs",
-        "capsules/extra/src/lib.rs",
-        "capsules/extra/src/stepper.rs",
-        "doc/syscalls/00011_stepper.md",
-        "doc/syscalls/README.md"
-      ],
-      "stm32u5-adc-justify": [
-        "chips/stm32u5xx/src/adc.rs"
       ]
     }
   }
