@@ -710,6 +710,19 @@
         "on_remote": true,
         "unpushed": 0
       },
+      "elf-loadable-check": {
+        "ahead": 1,
+        "commits": [
+          "ci: check no ELF claims content it does not have"
+        ],
+        "stat": "2 files changed, 210 insertions(+)",
+        "base": "upstream/master",
+        "base_sha": "0cc36ca6c",
+        "behind": 0,
+        "pushed": true,
+        "on_remote": true,
+        "unpushed": 0
+      },
       "learning/series": {
         "ahead": 188,
         "commits": [
@@ -1678,6 +1691,51 @@
         }
       },
       "crc-stale-sam4l-docs": {
+        "rp2040": {
+          "adc": 240,
+          "chip": 246,
+          "clocks": 1419,
+          "deferred_calls": 33,
+          "dma": 606,
+          "gpio": 727,
+          "i2c": 729,
+          "interrupts": 30,
+          "lib": 109,
+          "mod": 5,
+          "pio": 1947,
+          "pio_gspi": 270,
+          "pio_pwm": 95,
+          "pio_spi": 572,
+          "pwm": 76,
+          "resets": 371,
+          "rtc": 448,
+          "spi": 36,
+          "sysinfo": 98,
+          "timer": 277,
+          "uart": 761,
+          "usb": 2484,
+          "watchdog": 129,
+          "xosc": 117
+        },
+        "rp2350": {
+          "chip": 175,
+          "clocks": 1530,
+          "gpio": 1555,
+          "interrupts": 56,
+          "lib": 118,
+          "resets": 400,
+          "spi": 36,
+          "ticks": 174,
+          "timer": 274,
+          "uart": 811,
+          "xosc": 125
+        },
+        "rp2xxx": {
+          "lib": 29,
+          "spi": 638
+        }
+      },
+      "elf-loadable-check": {
         "rp2040": {
           "adc": 240,
           "chip": 246,
@@ -14319,6 +14377,10 @@
       "crc-stale-sam4l-docs": [
         "capsules/extra/src/crc.rs",
         "kernel/src/hil/crc.rs"
+      ],
+      "elf-loadable-check": [
+        "Makefile",
+        "tools/ci/check-elf-loadable.py"
       ],
       "mmio-macro": [
         "chips/rp2350/src/clocks.rs",
