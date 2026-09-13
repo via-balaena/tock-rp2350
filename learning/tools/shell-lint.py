@@ -52,7 +52,12 @@ RULES = [
         "PCRE class in a git grep ERE",
         re.compile(
             r"git\s+grep\b(?![^|;&]*\s-[a-zA-Z]*P\b)[^|;&]*"
-            r"\s-[a-zA-Z]*E\b[^|;&]*\\[sdwSDW]"
+            # \b belongs here too: a word boundary in PCRE, nothing in POSIX
+            # ERE. Measured 2026-09-13 -- a -lE search for it over a tree with
+            # 589 matching files returned 0, and that zero was
+            # indistinguishable from a clean tree. A CONTROL caught it, not
+            # the search itself.
+            r"\s-[a-zA-Z]*E\b[^|;&]*\\[sdwSDWb]"
         ),
         "git grep -E is POSIX ERE: the backslash is dropped and \\s matches a "
         "literal 's'. Measured: ^\\s*/// matched 16 lines where "
