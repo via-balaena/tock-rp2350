@@ -21,6 +21,7 @@
 #   ./gates.sh drift        just how far main has drifted from upstream
 #   ./gates.sh uart         the hil::uart conformance test on both qemu boards
 #   ./gates.sh parity       just the rp2040/rp2350 paired-block check
+#   ./gates.sh errnames     just the documented-ErrorCode-name check
 #   ./gates.sh bench        the conformance tests that need real hardware
 #
 # Exit status is the number of suites that failed, so `&&` chains work.
@@ -234,6 +235,21 @@ parity_gate() {
 }
 if [ "$WHICH" = all ] || [ "$WHICH" = parity ]; then
     run "rp2 uart parity — rp2040 vs rp2350" parity_gate
+fi
+
+# `hil::uart` documented `Err(ENOSUPPORT)`, which is not an ErrorCode variant,
+# so it described a return no implementation could produce -- and because doc
+# comments are not compiled, nothing noticed for two years. Quoting a HIL
+# sentence into the driver that obeys it then carried the wrong name into 37
+# more comments in a day. One wrong word is cheap; one wrong word everything
+# downstream quotes is not.
+errnames_gate() {
+    runner="$TOCK_MAIN/tools/ci/check-hil-error-names.py"
+    [ -x "$runner" ] || { echo "  skip  no runner at $runner"; return 0; }
+    "$runner"
+}
+if [ "$WHICH" = all ] || [ "$WHICH" = errnames ]; then
+    run "documented error names — every Err(NAME) resolves" errnames_gate
 fi
 
 # The conformance tests that need hardware: nothing emulated exposes SPI or
