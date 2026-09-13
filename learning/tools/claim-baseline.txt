@@ -1,0 +1,14 @@
+# Claims judged and accepted. One fingerprint per line.
+# Rewriting a sentence changes its fingerprint, so it comes
+# back for judging -- which is when it should be looked at.
+942e5c372508  The constraint is on what can be written next, not on what is already there -- which is why it can g
+e98af9865336  They run under `ci-job-kernel`, which already runs `cargo test` in this crate, so there is no new de
+579230c87a87  `APP` is gone rather than redefined -- applications are installed with `tockloader install --local-b
+ddb322536794  The channel set is a trait the chip crate implements, so the package question is answered where it b
+1242208eb8be  The pad belongs to GPIO, not to the converter, so the board configures it: `set_function(NULL)` clea
+7b0b01e7a5ec  The third case is the one that matters, because it shows the behaviour restored rather than the erro
+a330810c9673  That policy is device knowledge, so it belongs where it can be enforced.
+4e396bb1fadf  It is an ABI change: a libtock-rs client reading `to_result::<(), ErrorCode>()` now gets BADRVAL, be
+621fbc39262e  The fake lives in the crate's own tests rather than in libtock_unittest, since there is no upstream 
+ba040a1cf36a  From the blocking API the owner cannot reach `stop`: `step_forward` blocks in a yield loop for the w
+45e2f22bec28  The page tells the reader to check where the volume mounted before naming it, so the literal path is

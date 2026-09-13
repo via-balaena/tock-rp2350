@@ -64,6 +64,7 @@ a count. Re-run the positive controls after every loosening.
 """
 
 import argparse
+import hashlib
 import re
 import sys
 
@@ -197,6 +198,35 @@ def own_words(sentence):
     return QUOTED.sub(" ", sentence)
 
 
+def fingerprint(sentence):
+    """A stable id for one sentence, so a baseline survives renumbering.
+
+    Numbering shifts whenever any earlier sentence is edited -- during this
+    pass claim 125 became 127 without changing a word -- so a baseline keyed
+    to position would go stale on the first edit. Keyed to content, an
+    accepted sentence stays accepted until someone rewrites it, which is
+    exactly when it should be looked at again.
+    """
+    norm = " ".join(sentence.split()).lower()
+    return hashlib.sha1(norm.encode("utf-8")).hexdigest()[:12]
+
+
+def load_baseline(path):
+    """Fingerprints of claims already judged and accepted. Missing file is
+    not an error: no baseline means everything is new, which is the safe
+    direction for a report like this."""
+    accepted = set()
+    try:
+        with open(path, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#"):
+                    accepted.add(line.split()[0])
+    except OSError:
+        pass
+    return accepted
+
+
 def referents(sentence):
     return [name for name, pat in REFERENT if pat.search(sentence)]
 
@@ -233,6 +263,15 @@ def main():
     )
     ap.add_argument("--width", type=int, default=110)
     ap.add_argument("--quiet", action="store_true", help="only print findings")
+    ap.add_argument(
+        "--baseline",
+        help="file of fingerprints already judged; report only what is new",
+    )
+    ap.add_argument(
+        "--write-baseline",
+        action="store_true",
+        help="print a baseline for everything currently flagged, and exit 0",
+    )
     args = ap.parse_args()
 
     try:
@@ -261,6 +300,21 @@ def main():
             causal.append((i, s, why))
         elif verdict == "bare-absolute":
             absolute.append((i, s, why))
+
+    if args.write_baseline:
+        print("# Claims judged and accepted. One fingerprint per line.")
+        print("# Rewriting a sentence changes its fingerprint, so it comes")
+        print("# back for judging -- which is when it should be looked at.")
+        for _i, s, _why in causal:
+            print(f"{fingerprint(s)}  {' '.join(s.split())[:100]}")
+        return 0
+
+    if args.baseline:
+        accepted = load_baseline(args.baseline)
+        held = len([1 for _i, s, _w in causal if fingerprint(s) in accepted])
+        causal = [(i, s, w) for i, s, w in causal if fingerprint(s) not in accepted]
+        if held:
+            print(f"({held} previously judged and accepted, not shown)")
 
     if causal:
         print(f"UNREFERENCED CAUSAL CLAIM x{len(causal)}", file=sys.stderr)

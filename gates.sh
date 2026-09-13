@@ -90,18 +90,27 @@ if [ "$WHICH" = all ] || [ "$WHICH" = commits ]; then
     fi
 fi
 
-# Unreferenced causal claims in the oracle's own prose. ADVISORY, not a
-# gate: precision was measured at about half on a 318-claim facts document,
-# because design reasoning and mechanism claims have the same shape and no
-# regex separates them. A blocking gate at that precision would be switched
-# off within a week, and then it would guard nothing. So this prints the
-# count and the sentences, and never fails the run. Pointed at a single
-# draft -- claim-gauge.py pr-facts.md -- it does exit non-zero, which is
-# the right severity for a document about to be handed to a maintainer.
-if [ "$WHICH" = all ] || [ "$WHICH" = claims ]; then
-    printf "\n\033[1m=== claims — unreferenced causal (advisory) ===\033[0m\n"
-    if [ -x learning/tools/claim-gauge.py ]; then
-        python3 - <<'PY' > /tmp/.claim-surface.md 2>/dev/null
+# Unreferenced causal claims in the oracle's own prose -- a sentence that
+# asserts a mechanism while carrying nothing anyone could re-check. That is
+# what cost tock#5156 its approvals.
+#
+# This is a GATE rather than a report, but only because of the baseline.
+# Raw precision is about half: design reasoning and mechanism claims have
+# the same shape and no regex separates them. Filtering the claims already
+# judged leaves only what is NEW, and judging one new claim is cheap:
+#
+#   fix it            give it a file:line, a command, a number, a test
+#   or say so         write that it is not established
+#   or accept it      learning/tools/claim-gauge.py --write-baseline <file>
+#                     >> learning/tools/claim-baseline.txt
+#
+# The baseline is keyed to sentence content, not position, so it survives
+# renumbering and a reworded sentence correctly comes back for judging.
+CLAIM_SURFACE=/tmp/.claim-surface.md
+claims_gate() {
+    [ -x learning/tools/claim-gauge.py ] || {
+        echo "  skip  learning/tools/claim-gauge.py is not executable here"; return 0; }
+    python3 - > "$CLAIM_SURFACE" 2>/dev/null <<'PY'
 import importlib.util
 spec = importlib.util.spec_from_file_location("b", "build.py")
 b = importlib.util.module_from_spec(spec)
@@ -116,25 +125,19 @@ for key, entries in b.FACTS.items():
         out.append(body)
 print("\n\n".join(out))
 PY
-        if [ -s /tmp/.claim-surface.md ]; then
-            # The tool exits 1 by design when it finds something, and this
-            # script runs under `set -o pipefail`. Reading it through a pipe
-            # made the whole pipeline non-zero, the `||` fallback fired, and
-            # the report printed 0 while the tool had found 22. Capture
-            # first, grep the string afterwards -- never read a status
-            # through a pipe (memory: citation-checking).
-            OUT=$(learning/tools/claim-gauge.py /tmp/.claim-surface.md 2>&1 || true)
-            printf '%s\n' "$OUT" | grep -E '^ +[0-9]+\. ' | head -12 | sed 's/^ */    /'
-            N=$(printf '%s\n' "$OUT" | grep -oE '[0-9]+ are unreferenced causal' | head -1)
-            printf "  %s of %s claims — about half are real; look, do not assume.\n" \
-                "${N:-unknown}" "$(printf '%s\n' "$OUT" | grep -oE '^[0-9]+' | head -1)"
-        else
-            printf "  skip  could not extract the FACTS prose\n"
-        fi
-        rm -f /tmp/.claim-surface.md
-    else
-        printf "  skip  learning/tools/claim-gauge.py is not executable here\n"
+    if [ ! -s "$CLAIM_SURFACE" ]; then
+        echo "  could not extract the FACTS prose -- that is a fact about the"
+        echo "  parse, not the claims, so it is a failure and not a pass."
+        rm -f "$CLAIM_SURFACE"; return 1
     fi
+    learning/tools/claim-gauge.py --baseline learning/tools/claim-baseline.txt \
+        "$CLAIM_SURFACE"
+    rc=$?
+    rm -f "$CLAIM_SURFACE"
+    return $rc
+}
+if [ "$WHICH" = all ] || [ "$WHICH" = claims ]; then
+    run "claims — unreferenced causal in FACTS" claims_gate
 fi
 
 printf "\n"
