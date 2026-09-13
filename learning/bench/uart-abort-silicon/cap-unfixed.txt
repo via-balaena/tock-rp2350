@@ -1,0 +1,4 @@
+Initialization complete. Enter main loop
+console_read_busy: waiting out the process console's startup alarm
+tock$ issuing one console read
+read -> 0 bytes, Err(BUSY)
