@@ -19,6 +19,7 @@
 #   ./gates.sh commits      just the tock commit messages
 #   ./gates.sh claims       just the unreferenced-claim report (advisory)
 #   ./gates.sh drift        just how far main has drifted from upstream
+#   ./gates.sh uart         just the hil::uart conformance test, under qemu
 #
 # Exit status is the number of suites that failed, so `&&` chains work.
 
@@ -175,6 +176,33 @@ drift_gate() {
 }
 if [ "$WHICH" = all ] || [ "$WHICH" = drift ]; then
     run "upstream drift — main vs upstream/master" drift_gate
+fi
+
+# The hil::uart conformance test, run for real rather than read. An audit on
+# 2026-09-13 found ELEVEN of eleven guarantees violated somewhere in the tree,
+# and the fixes for them are only protected if something executes the clauses.
+# qemu_rv32_virt boots in about two seconds and reports a verdict, so this is
+# cheap enough to run on every pass.
+#
+# It cannot cover the clauses that need hardware -- the byte-matching ones run
+# on the Pico. What it does cover is the virtualizer, which is where the
+# word-transmit wedge lived, and qemu_virt_chip underneath it.
+#
+# The runner's own exit codes matter: 1 is a broken clause, 2 is a test that
+# said nothing at all. The second is the one worth having, because a stalled
+# conformance test and a passing one look identical from a distance.
+TOCK_MAIN="${TOCK_MAIN_TREE:-$HOME/forge/tock-wt/distro}"
+uart_gate() {
+    runner="$TOCK_MAIN/tools/ci/uart-contract-qemu.sh"
+    [ -x "$runner" ] || { echo "  skip  no runner at $runner"; return 0; }
+    if ! command -v qemu-system-riscv32 > /dev/null 2>&1; then
+        echo "  skip  qemu-system-riscv32 is not installed, so the clauses went unrun"
+        return 0
+    fi
+    "$runner"
+}
+if [ "$WHICH" = all ] || [ "$WHICH" = uart ]; then
+    run "hil::uart conformance — qemu_rv32_virt" uart_gate
 fi
 
 printf "\n"
