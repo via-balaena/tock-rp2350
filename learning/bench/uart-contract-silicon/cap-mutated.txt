@@ -1,0 +1,16 @@
+uart-contract: ok   transmit_buffer(len+1) must answer Err(SIZE)
+uart-contract: ok   receive_buffer(len+1) must answer Err(SIZE)
+uart-contract: ok   transmit_abort() with nothing outstanding must answer Ok(())
+uart-contract: ok   receive_abort() with nothing outstanding must answer Ok(())
+uart-contract: ok   receive_buffer() while one is outstanding must answer Err(BUSY)
+Initialization complete. Enter main loop
+uart-contract: ok   a cancelled receive must call back and return the buffer
+uart-contract: ok   a cancelled receive reports Err(CANCEL)
+uart-contract: ok   transmit_buffer() while one is outstanding must answer Err(BUSY)
+uart-contract: ok   a completed transmit must call back and return the buffer
+uart-contract: ok   a completed transmit reports Ok(())
+uart-contract: ok   a completed transmit reports the length it was given
+uart-contract: FAIL transmit_word() must answer a code the HIL enumerates
+uart-contract: ok   receive_word() must answer a code the HIL enumerates
+uart-contract: 13 clauses, 1 BROKEN
+tock$ 
