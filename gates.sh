@@ -16,6 +16,7 @@
 #   ./gates.sh site         just the oracle
 #   ./gates.sh learning     just the chapters
 #   ./gates.sh memory       just the memory directory
+#   ./gates.sh commits      just the tock commit messages
 #
 # Exit status is the number of suites that failed, so `&&` chains work.
 
@@ -58,6 +59,33 @@ if [ "$WHICH" = all ] || [ "$WHICH" = memory ]; then
     else
         printf "\n\033[1m=== memory — check-memory.py ===\033[0m\n"
         printf "  skip  %s is not here\n" "$MEMORY_GATE"
+    fi
+fi
+
+# Commit messages on the tock branches. CONTRIBUTING.md:125-133 caps the
+# subject at 50 columns and wraps everything else at 72, and that rule was
+# broken four times in one session by someone who had it quoted in front of
+# them -- which is the argument for a gauge rather than another note. The
+# commit-msg hook gives the fast local answer, but a hook in .git/hooks is
+# never cloned and never reviewed, so this is the copy that endures. It reads
+# only UNPUSHED commits, which is the set still amendable. Skipped
+# rather than failed when the tock checkout is not on this machine.
+TOCK_REPO="${TOCK_TREE:-$HOME/forge/tock}"
+COMMIT_GATE="learning/tools/commit-msg-check.sh"
+if [ "$WHICH" = all ] || [ "$WHICH" = commits ]; then
+    # -e not -d: in a linked worktree .git is a FILE, and -d silently skips.
+    if [ -e "$TOCK_REPO/.git" ] && [ -x "$COMMIT_GATE" ]; then
+        BR=$(git -C "$TOCK_REPO" branch --show-current 2>/dev/null)
+        # Scope: commits that are not yet pushed, which is exactly the set
+        # still amendable without a force-push. Pushed history is deliberately
+        # NOT audited -- 188 commits on learning/series predate the rule and
+        # nobody is going to rewrite them, and a gate that fails work that
+        # cannot be fixed is a gate that gets switched off.
+        run "commit messages — unpushed on $BR" sh -c \
+            "cd '$TOCK_REPO' && '$PWD/$COMMIT_GATE' --range '@{upstream}..HEAD'"
+    else
+        printf "\n\033[1m=== commit messages ===\033[0m\n"
+        printf "  skip  %s is not a checkout here\n" "$TOCK_REPO"
     fi
 fi
 

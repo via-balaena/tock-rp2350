@@ -629,8 +629,8 @@
         ],
         "stat": "3 files changed, 190 insertions(+), 1 deletion(-)",
         "base": "upstream/master",
-        "base_sha": "0c6e7b184",
-        "behind": 64,
+        "base_sha": "0cc36ca6c",
+        "behind": 0,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -664,8 +664,8 @@
         ],
         "stat": "46 files changed, 5446 insertions(+), 2771 deletions(-)",
         "base": "upstream/master",
-        "base_sha": "479b61829",
-        "behind": 93,
+        "base_sha": "0cc36ca6c",
+        "behind": 0,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -933,7 +933,7 @@
         "unpushed": 0
       },
       "pico2w-radio-bench": {
-        "ahead": 18,
+        "ahead": 16,
         "commits": [
           "NOT FOR UPSTREAM: defer each command by one kernel loop iteration",
           "NOT FOR UPSTREAM: extend the bring-up to station mode and a scan",
@@ -946,18 +946,16 @@
           "chips: rp2350: add PIO and DMA",
           "chips: rp2040: move the DMA driver into the shared rp2xxx crate",
           "chips: rp2040: move the PIO driver into the shared rp2xxx crate",
-          "chips: rp2350: add SPI driver",
-          "chips: rp2040: move the PL022 SPI driver into a shared rp2xxx crate",
           "chips: rp2350: gpio: add the pad controls the RP2040 has",
           "chips: rp2040: pio: move gpio_init out of the driver",
           "chips: rp2040: pio: take pin numbers, derive FIFO addresses",
           "chips: rp2040: dma: compute the PIO transfer request number",
           "chips: rp2040: pio: retire the examples module"
         ],
-        "stat": "48 files changed, 5032 insertions(+), 3812 deletions(-)",
+        "stat": "39 files changed, 4252 insertions(+), 3175 deletions(-)",
         "base": "upstream/master",
-        "base_sha": "8e7431d08",
-        "behind": 118,
+        "base_sha": "0cc36ca6c",
+        "behind": 0,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1046,8 +1044,8 @@
         ],
         "stat": "4 files changed, 51 insertions(+), 19 deletions(-)",
         "base": "upstream/master",
-        "base_sha": "834bbbc26",
-        "behind": 82,
+        "base_sha": "0cc36ca6c",
+        "behind": 0,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1059,8 +1057,8 @@
         ],
         "stat": "4 files changed, 136 insertions(+), 280 deletions(-)",
         "base": "upstream/master",
-        "base_sha": "479b61829",
-        "behind": 93,
+        "base_sha": "0cc36ca6c",
+        "behind": 0,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1174,15 +1172,14 @@
         "unpushed": 0
       },
       "rp2350-spi-bench": {
-        "ahead": 2,
+        "ahead": 1,
         "commits": [
-          "boards: pico 2: bench harness for the SPI loopback test",
-          "chips: rp2350: add SPI driver"
+          "boards: pico 2: bench harness for the SPI loopback test"
         ],
-        "stat": "4 files changed, 698 insertions(+), 4 deletions(-)",
+        "stat": "1 file changed, 38 insertions(+), 4 deletions(-)",
         "base": "upstream/master",
-        "base_sha": "65608d717",
-        "behind": 148,
+        "base_sha": "0cc36ca6c",
+        "behind": 0,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
