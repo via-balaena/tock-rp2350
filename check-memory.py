@@ -138,6 +138,23 @@ def check_structure(files, index_text, problems):
     for dangling in sorted(linked - stems):
         problems.append(f"index: MEMORY.md links {dangling}.md, which does not exist")
 
+    # MEMORY.md is loaded WHOLE into every session, and past a size limit the
+    # loader TRUNCATES it -- silently, from the bottom. On 2026-09-13 it was
+    # 27.4KB against a 24.4KB limit and fourteen entries were simply not there,
+    # which nothing but the loader's own warning would ever have shown. Fail
+    # below the limit, not at it, so there is room to react.
+    #
+    # The fix is always the same: the index carries a one-line hook and the
+    # detail lives in the topic file, so the longest rows are named here.
+    INDEX_BUDGET = 23_000
+    size = len(index_text.encode())
+    if size > INDEX_BUDGET:
+        worst = sorted(index_text.splitlines(), key=len, reverse=True)[:3]
+        problems.append(
+            f"index: MEMORY.md is {size} bytes, over the {INDEX_BUDGET} budget "
+            f"(the loader truncates near 24.4KB and says nothing). Longest rows: "
+            + "; ".join(f"{len(w)}ch {w[2:40]}..." for w in worst))
+
     rows = [l for l in index_text.strip().splitlines() if l.strip()]
     for row in rows:
         if not re.match(r"^- \[[^\]]+\]\(\S+\.md\)\s+—\s+\S", row):
