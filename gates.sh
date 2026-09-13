@@ -20,6 +20,7 @@
 #   ./gates.sh claims       just the unreferenced-claim report (advisory)
 #   ./gates.sh drift        just how far main has drifted from upstream
 #   ./gates.sh uart         just the hil::uart conformance test, under qemu
+#   ./gates.sh parity       just the rp2040/rp2350 paired-block check
 #   ./gates.sh bench        the conformance tests that need real hardware
 #
 # Exit status is the number of suites that failed, so `&&` chains work.
@@ -204,6 +205,21 @@ uart_gate() {
 }
 if [ "$WHICH" = all ] || [ "$WHICH" = uart ]; then
     run "hil::uart conformance — qemu_rv32_virt" uart_gate
+fi
+
+# chips/rp2040 and chips/rp2350 are separate files driving the same PL011. The
+# overrun report was measured on an rp2350 and COPIED to the rp2040, where
+# there is no board to run it on -- so that copy is the whole warrant for the
+# rp2040 half, and it is a claim about two files rather than about hardware.
+# Which means it can be checked. Without this it is a comment that keeps
+# reading true after someone fixes one driver and not the other.
+parity_gate() {
+    runner="$TOCK_MAIN/tools/ci/check-rp2-uart-parity.py"
+    [ -x "$runner" ] || { echo "  skip  no runner at $runner"; return 0; }
+    "$runner"
+}
+if [ "$WHICH" = all ] || [ "$WHICH" = parity ]; then
+    run "rp2 uart parity — rp2040 vs rp2350" parity_gate
 fi
 
 # The conformance tests that need hardware: nothing emulated exposes SPI or
