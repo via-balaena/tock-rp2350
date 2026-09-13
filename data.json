@@ -683,26 +683,15 @@
         "on_remote": true,
         "unpushed": 0
       },
-      "boards-fix-ram-layout": {
-        "ahead": 0,
-        "commits": [],
-        "stat": "",
-        "base": "upstream/master",
-        "base_sha": "0b5b4753e",
-        "behind": 147,
-        "pushed": true,
-        "on_remote": true,
-        "unpushed": 0
-      },
-      "boards-remove-dead-ram-layout": {
+      "capability-compile-fail": {
         "ahead": 1,
         "commits": [
-          "boards: remove dead boot-from-RAM layout"
+          "kernel: pin the capability macros' forbid claim"
         ],
-        "stat": "5 files changed, 30 deletions(-)",
+        "stat": "1 file changed, 36 insertions(+)",
         "base": "upstream/master",
-        "base_sha": "08894c2e0",
-        "behind": 162,
+        "base_sha": "0cc36ca6c",
+        "behind": 0,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -932,6 +921,20 @@
         "on_remote": true,
         "unpushed": 0
       },
+      "mmio-macro": {
+        "ahead": 2,
+        "commits": [
+          "kernel: declare MMIO blocks with their provenance",
+          "kernel: check StaticRef alignment at compile time"
+        ],
+        "stat": "9 files changed, 229 insertions(+), 29 deletions(-)",
+        "base": "upstream/master",
+        "base_sha": "0cc36ca6c",
+        "behind": 0,
+        "pushed": true,
+        "on_remote": true,
+        "unpushed": 0
+      },
       "pico2w-radio-bench": {
         "ahead": 16,
         "commits": [
@@ -997,17 +1000,6 @@
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
-      },
-      "rp2-doc-fixes": {
-        "ahead": 0,
-        "commits": [],
-        "stat": "",
-        "base": "upstream/master",
-        "base_sha": "0cc36ca6c",
-        "behind": 0,
-        "pushed": false,
-        "on_remote": true,
-        "unpushed": 51
       },
       "rp2-local-board": {
         "ahead": 2,
@@ -1190,6 +1182,19 @@
           "rp2350: clear stale NVIC pending after the peripheral reset"
         ],
         "stat": "1 file changed, 7 insertions(+)",
+        "base": "upstream/master",
+        "base_sha": "0cc36ca6c",
+        "behind": 0,
+        "pushed": true,
+        "on_remote": true,
+        "unpushed": 0
+      },
+      "staticref-checked-addr": {
+        "ahead": 1,
+        "commits": [
+          "kernel: check StaticRef alignment at compile time"
+        ],
+        "stat": "9 files changed, 96 insertions(+), 28 deletions(-)",
         "base": "upstream/master",
         "base_sha": "0cc36ca6c",
         "behind": 0,
@@ -1627,11 +1632,11 @@
           "spi": 638
         }
       },
-      "boards-fix-ram-layout": {
+      "capability-compile-fail": {
         "rp2040": {
           "adc": 240,
           "chip": 246,
-          "clocks": 1411,
+          "clocks": 1419,
           "deferred_calls": 33,
           "dma": 606,
           "gpio": 727,
@@ -1646,7 +1651,7 @@
           "pwm": 76,
           "resets": 371,
           "rtc": 448,
-          "spi": 652,
+          "spi": 36,
           "sysinfo": 98,
           "timer": 277,
           "uart": 761,
@@ -1655,59 +1660,22 @@
           "xosc": 117
         },
         "rp2350": {
-          "chip": 168,
-          "clocks": 1522,
+          "chip": 175,
+          "clocks": 1530,
           "gpio": 1555,
           "interrupts": 56,
-          "lib": 117,
+          "lib": 118,
           "resets": 400,
+          "spi": 36,
           "ticks": 174,
           "timer": 274,
           "uart": 811,
           "xosc": 125
         },
-        "rp2xxx": {}
-      },
-      "boards-remove-dead-ram-layout": {
-        "rp2040": {
-          "adc": 240,
-          "chip": 246,
-          "clocks": 1411,
-          "deferred_calls": 33,
-          "dma": 606,
-          "gpio": 727,
-          "i2c": 729,
-          "interrupts": 30,
-          "lib": 109,
-          "mod": 5,
-          "pio": 1947,
-          "pio_gspi": 270,
-          "pio_pwm": 95,
-          "pio_spi": 572,
-          "pwm": 76,
-          "resets": 371,
-          "rtc": 448,
-          "spi": 652,
-          "sysinfo": 98,
-          "timer": 277,
-          "uart": 761,
-          "usb": 2484,
-          "watchdog": 129,
-          "xosc": 117
-        },
-        "rp2350": {
-          "chip": 168,
-          "clocks": 1522,
-          "gpio": 1555,
-          "interrupts": 56,
-          "lib": 117,
-          "resets": 400,
-          "ticks": 174,
-          "timer": 274,
-          "uart": 811,
-          "xosc": 125
-        },
-        "rp2xxx": {}
+        "rp2xxx": {
+          "lib": 29,
+          "spi": 638
+        }
       },
       "crc-stale-sam4l-docs": {
         "rp2040": {
@@ -1748,6 +1716,51 @@
           "timer": 274,
           "uart": 811,
           "xosc": 125
+        },
+        "rp2xxx": {
+          "lib": 29,
+          "spi": 638
+        }
+      },
+      "mmio-macro": {
+        "rp2040": {
+          "adc": 240,
+          "chip": 246,
+          "clocks": 1419,
+          "deferred_calls": 33,
+          "dma": 606,
+          "gpio": 727,
+          "i2c": 729,
+          "interrupts": 30,
+          "lib": 109,
+          "mod": 5,
+          "pio": 1947,
+          "pio_gspi": 270,
+          "pio_pwm": 95,
+          "pio_spi": 572,
+          "pwm": 76,
+          "resets": 371,
+          "rtc": 448,
+          "spi": 36,
+          "sysinfo": 98,
+          "timer": 277,
+          "uart": 761,
+          "usb": 2484,
+          "watchdog": 129,
+          "xosc": 117
+        },
+        "rp2350": {
+          "chip": 175,
+          "clocks": 1532,
+          "gpio": 1557,
+          "interrupts": 56,
+          "lib": 118,
+          "resets": 403,
+          "spi": 37,
+          "ticks": 177,
+          "timer": 277,
+          "uart": 813,
+          "xosc": 128
         },
         "rp2xxx": {
           "lib": 29,
@@ -1850,51 +1863,6 @@
         "rp2xxx": {
           "adc": 253,
           "lib": 36,
-          "spi": 638
-        }
-      },
-      "rp2-doc-fixes": {
-        "rp2040": {
-          "adc": 240,
-          "chip": 246,
-          "clocks": 1419,
-          "deferred_calls": 33,
-          "dma": 606,
-          "gpio": 727,
-          "i2c": 729,
-          "interrupts": 30,
-          "lib": 109,
-          "mod": 5,
-          "pio": 1947,
-          "pio_gspi": 270,
-          "pio_pwm": 95,
-          "pio_spi": 572,
-          "pwm": 76,
-          "resets": 371,
-          "rtc": 448,
-          "spi": 36,
-          "sysinfo": 98,
-          "timer": 277,
-          "uart": 761,
-          "usb": 2484,
-          "watchdog": 129,
-          "xosc": 117
-        },
-        "rp2350": {
-          "chip": 175,
-          "clocks": 1530,
-          "gpio": 1555,
-          "interrupts": 56,
-          "lib": 118,
-          "resets": 400,
-          "spi": 36,
-          "ticks": 174,
-          "timer": 274,
-          "uart": 811,
-          "xosc": 125
-        },
-        "rp2xxx": {
-          "lib": 29,
           "spi": 638
         }
       },
@@ -2253,6 +2221,51 @@
           "timer": 274,
           "uart": 811,
           "xosc": 125
+        },
+        "rp2xxx": {
+          "lib": 29,
+          "spi": 638
+        }
+      },
+      "staticref-checked-addr": {
+        "rp2040": {
+          "adc": 240,
+          "chip": 246,
+          "clocks": 1419,
+          "deferred_calls": 33,
+          "dma": 606,
+          "gpio": 727,
+          "i2c": 729,
+          "interrupts": 30,
+          "lib": 109,
+          "mod": 5,
+          "pio": 1947,
+          "pio_gspi": 270,
+          "pio_pwm": 95,
+          "pio_spi": 572,
+          "pwm": 76,
+          "resets": 371,
+          "rtc": 448,
+          "spi": 36,
+          "sysinfo": 98,
+          "timer": 277,
+          "uart": 761,
+          "usb": 2484,
+          "watchdog": 129,
+          "xosc": 117
+        },
+        "rp2350": {
+          "chip": 175,
+          "clocks": 1527,
+          "gpio": 1552,
+          "interrupts": 56,
+          "lib": 118,
+          "resets": 399,
+          "spi": 34,
+          "ticks": 173,
+          "timer": 273,
+          "uart": 809,
+          "xosc": 124
         },
         "rp2xxx": {
           "lib": 29,
@@ -14300,17 +14313,23 @@
         "doc/syscalls/00011_stepper.md",
         "doc/syscalls/README.md"
       ],
-      "boards-fix-ram-layout": [],
-      "boards-remove-dead-ram-layout": [
-        "boards/nano_rp2040_connect/layout.ld",
-        "boards/pico_explorer_base/layout.ld",
-        "boards/raspberry_pi_pico/layout.ld",
-        "boards/raspberry_pi_pico_2/layout.ld",
-        "boards/raspberry_pi_pico_w/layout.ld"
+      "capability-compile-fail": [
+        "kernel/src/utilities/helpers.rs"
       ],
       "crc-stale-sam4l-docs": [
         "capsules/extra/src/crc.rs",
         "kernel/src/hil/crc.rs"
+      ],
+      "mmio-macro": [
+        "chips/rp2350/src/clocks.rs",
+        "chips/rp2350/src/gpio.rs",
+        "chips/rp2350/src/resets.rs",
+        "chips/rp2350/src/spi.rs",
+        "chips/rp2350/src/ticks.rs",
+        "chips/rp2350/src/timer.rs",
+        "chips/rp2350/src/uart.rs",
+        "chips/rp2350/src/xosc.rs",
+        "kernel/src/utilities/static_ref.rs"
       ],
       "pico2w-typed": [
         "Cargo.lock",
@@ -14362,7 +14381,6 @@
         "chips/rp2xxx/src/adc.rs",
         "chips/rp2xxx/src/lib.rs"
       ],
-      "rp2-doc-fixes": [],
       "rp2-local-board": [
         "boards/nano_rp2040_connect/Makefile",
         "boards/nano_rp2040_connect/README.md",
@@ -14409,6 +14427,17 @@
       ],
       "rp2350-stale-nvic-pending": [
         "boards/raspberry_pi_pico_2/src/main.rs"
+      ],
+      "staticref-checked-addr": [
+        "chips/rp2350/src/clocks.rs",
+        "chips/rp2350/src/gpio.rs",
+        "chips/rp2350/src/resets.rs",
+        "chips/rp2350/src/spi.rs",
+        "chips/rp2350/src/ticks.rs",
+        "chips/rp2350/src/timer.rs",
+        "chips/rp2350/src/uart.rs",
+        "chips/rp2350/src/xosc.rs",
+        "kernel/src/utilities/static_ref.rs"
       ],
       "stepper-capsule": [
         "capsules/core/src/driver.rs",
