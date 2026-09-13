@@ -1,5 +1,5 @@
 {
-  "fetched": "2026-09-10",
+  "fetched": "2026-09-13",
   "prs": [
     {
       "additions": 1,
@@ -362,7 +362,7 @@
         "boards/raspberry_pi_pico/Makefile",
         "boards/raspberry_pi_pico_2/Makefile"
       ],
-      "thread": "### Pull Request Overview\r\n\r\nThis PR supersedes #5154.\r\n\r\nSplicing an app into the kernel breaks the relevant make target on 4 of the 5 RP2\r\nboards: \"ELF contains memory contents for uninitialized memory at 20000000\". The\r\n`.apps` flag change is a red herring: ELF section headers carry no LMA, so BFD\r\nfabricates one for the empty `.relocate` section from file offsets - the shared\r\noffset with `.stack` makes that fabricated LMA `.stack`'s load address, pulling\r\n`.relocate` into the `.stack` segment, after which `.stack` (NOLOAD) ends up\r\nclaiming file contents for SRAM. Add `-R .stack` to each objcopy splice rule.\r\nFixes #4770.\r\n\r\n<details>\r\n<summary>AI-generated measurement data</summary>\r\n\r\nhttps://via-balaena.github.io/tock-rp2350/findings/4770/\r\n\r\n</details>\r\n\r\n### Testing Strategy\r\n\r\npotto216's RP2040: reporter verified on his machine via program/elf2uf2-rs/BOOTSEL. App ran; console \"Hello world!\". (https://github.com/tock/tock/issues/4770#issuecomment-5573463328)\r\n\r\nprogram-openocd on RP2350: Pico 2 W over Debug Probe. rc=2 \u2192 rc=0. Without fix, openocd verify_image fails at 0x20000000 and aborts before reset, leaving board halted.\r\n\r\nFile-level: all 4 boards pass (raspberry_pi_pico, raspberry_pi_pico_2, pico_explorer_base, nano_rp2040_connect). pico_explorer_base and nano_rp2040_connect are file-level only. No hardware run yet.\r\n\r\n### TODO or Help Wanted\r\n\r\nprogram-probe (probe-rs): not run. Could someone with an RP2040 and probe-rs try it? @potto216 ?\r\n\r\n### Checklist\r\n\r\n- [x] Ran `make prepush`.\r\n\r\n### PR Contents\r\n\r\n#### Documentation\r\n\r\n- [ ] Updated the relevant files in `/docs` and the [Book](https://github.com/tock/book).\r\n- [x] No documentation updates are required.\r\n\r\n#### AI Use\r\n\r\n- [ ] No AI was used in this PR.\r\n- [x] AI was used in this PR. I have read [Tock's AI policy](https://github.com/tock/tock/blob/master/.github/CONTRIBUTING.md#ai-policy) and have properly disclosed my AI use below. This PR comment, and any subsequent PR interactions must not be generated using AI, except for under a `<details>` drawer.\r\n\r\nCode written with Claude Opus 5\r\n \u241f > I would rather see this move to use `tockloader local-board`, but if this improves things then fine.\r\n\r\n@bradjc \r\n\r\nI can look into that for a future pr. This fixes the immediate breakage. \u241f --set-section-flags .apps=LOAD,ALLOC gives .apps file content, which forces BFD to recompute the program headers. \r\n\r\n.stack is (NOLOAD) and lives in SRAM at 0x20000000; during that recompute its p_filesz changes from 0x0 to its full size. The ELF then claims file content for memory that has none, and elf2uf2-rs refuses it with:\r\nError: \"ELF contains memory contents for uninitialized memory at 20000000\"\r\n-R .stack drops it from the flashed artifact only. The kernel ELF keeps its symbols, and .stack reserves stack space with no bytes to carry, so it costs nothing.\r\n\r\nThe section itself stays NOBITS in the section table; the issue is in the program header (p_filesz), which is why it's not obvious from reading the section headers alone. \u241f > .stack is (NOLOAD) and lives in SRAM at 0x20000000; during that recompute its p_filesz changes from 0x0 to its full size.\r\n\r\nGot it. Doesn't this sound like a linker bug? Why does the linker change the `p_filesz` segment header for a `NOLOAD` segment, effectively materializing its contents out of thin air?\r\n\r\nAgain, not disagreeing with this fix, just trying to fully understand the issue. \u241f > > .stack is (NOLOAD) and lives in SRAM at 0x20000000; during that recompute its p_filesz changes from 0x0 to its full size.\r\n> \r\n> Got it. Doesn't this sound like a linker bug? Why does the linker change the `p_filesz` segment header for a `NOLOAD` segment, effectively materializing its contents out of thin air?\r\n> \r\n> Again, not disagreeing with this fix, just trying to fully understand the issue.\r\n\r\nNot the linker, and not `--set-section-flags`. rust-lld writes `p_filesz 0` for the `.stack` segment and that ELF is correct. The flag change is innocent, a bare `objcopy in.elf out.elf` with no options at all reproduces the bogus `p_filesz`, so my earlier comment was wrong.\r\n\r\nWhat actually happens: ELF section headers carry no LMA, so BFD reconstructs one on read from file offsets. The empty `.relocate` section shares `.stack`'s file offset, so it inherits `.stack`'s load address and gets pulled into the `.stack` segment. Because `.relocate` is PROGBITS, the segment then has to carry file bytes reaching it, exactly `.stack`'s size, whatever that is on the board in question.\r\n\r\n`-R .stack` is still the right fix. `-R .relocate` also works but would be a hazard on any board that has initialized data.\r\n\r\nThe tables, the board survey, and the source walk - the three functions, the containment test and the `_STRICT` variant, are on the findings page, linked from the `<details>` drawer in the PR body. If you want more after that, happy to answer follow-ups here. \u241f > > > .stack is (NOLOAD) and lives in SRAM at 0x20000000; during that recompute its p_filesz changes from 0x0 to its full size.\r\n> > \r\n> > \r\n> > Got it. Doesn't this sound like a linker bug? Why does the linker change the `p_filesz` segment header for a `NOLOAD` segment, effectively materializing its contents out of thin air?\r\n> > Again, not disagreeing with this fix, just trying to fully understand the issue.\r\n> \r\n> Not the linker, and not `--set-section-flags`. rust-lld writes `p_filesz 0` for the `.stack` segment and that ELF is correct. The flag change is innocent, a bare `objcopy in.elf out.elf` with no options at all reproduces the bogus `p_filesz`, so my earlier comment was wrong.\r\n> \r\n> What actually happens: ELF section headers carry no LMA, so BFD reconstructs one on read from file offsets. The empty `.relocate` section shares `.stack`'s file offset, so it inherits `.stack`'s load address and gets pulled into the `.stack` segment. Because `.relocate` is PROGBITS, the segment then has to carry file bytes reaching it, exactly `.stack`'s size, whatever that is on the board in question.\r\n> \r\n> `-R .stack` is still the right fix. `-R .relocate` also works but would be a hazard on any board that has initialized data.\r\n> \r\n> The tables, the board survey, and the source walk - the three functions, the containment test and the `_STRICT` variant, are on the findings page, linked from the `<details>` drawer in the PR body. If you want more after that, happy to answer follow-ups here.\r\n\r\nWe've having some trouble understanding this comment. First, it reads as AI-generated -- can you confirm it was written by a human?\r\n\r\nAnd if so, do you have a clearer explanation for what is going on? \u241f I'm an aspiring end user looking to create a stable RP2350 Tock ecosystem to learn. My preferred board is the Pi Pico 2/2W. I don't want to try to be learning a moving target, so yes, there is heavy AI assistance, but it's not slop. Everything is rigorously reviewed to the best of my abilities. Once the RP2350 ecosystem is stable, I plan on learning it inside out (see the docs/learning materials I have made)\r\n\r\nRegarding my writing/communication style: I'm trying the best I can to fact-check everything. I even created a `constraints.md` based on every comment a maintainer has left so far on my PRs. I am trying to optimize the information in my PRs and comments to be as considerate of your cognitive load as possible, while minimizing ambiguity as much as I can. \r\n\r\nThank you."
+      "thread": "### Pull Request Overview\r\n\r\nThis PR supersedes #5154.\r\n\r\nSplicing an app into the kernel breaks the relevant make target on 4 of the 5 RP2\r\nboards: \"ELF contains memory contents for uninitialized memory at 20000000\". The\r\n`.apps` flag change is a red herring: ELF section headers carry no LMA, so BFD\r\nfabricates one for the empty `.relocate` section from file offsets - the shared\r\noffset with `.stack` makes that fabricated LMA `.stack`'s load address, pulling\r\n`.relocate` into the `.stack` segment, after which `.stack` (NOLOAD) ends up\r\nclaiming file contents for SRAM. Add `-R .stack` to each objcopy splice rule.\r\nFixes #4770.\r\n\r\n<details>\r\n<summary>AI-generated measurement data</summary>\r\n\r\nhttps://via-balaena.github.io/tock-rp2350/findings/4770/\r\n\r\n</details>\r\n\r\n### Testing Strategy\r\n\r\npotto216's RP2040: reporter verified on his machine via program/elf2uf2-rs/BOOTSEL. App ran; console \"Hello world!\". (https://github.com/tock/tock/issues/4770#issuecomment-5573463328)\r\n\r\nprogram-openocd on RP2350: Pico 2 W over Debug Probe. rc=2 \u2192 rc=0. Without fix, openocd verify_image fails at 0x20000000 and aborts before reset, leaving board halted.\r\n\r\nFile-level: all 4 boards pass (raspberry_pi_pico, raspberry_pi_pico_2, pico_explorer_base, nano_rp2040_connect). pico_explorer_base and nano_rp2040_connect are file-level only. No hardware run yet.\r\n\r\n### TODO or Help Wanted\r\n\r\nprogram-probe (probe-rs): not run. Could someone with an RP2040 and probe-rs try it? @potto216 ?\r\n\r\n### Checklist\r\n\r\n- [x] Ran `make prepush`.\r\n\r\n### PR Contents\r\n\r\n#### Documentation\r\n\r\n- [ ] Updated the relevant files in `/docs` and the [Book](https://github.com/tock/book).\r\n- [x] No documentation updates are required.\r\n\r\n#### AI Use\r\n\r\n- [ ] No AI was used in this PR.\r\n- [x] AI was used in this PR. I have read [Tock's AI policy](https://github.com/tock/tock/blob/master/.github/CONTRIBUTING.md#ai-policy) and have properly disclosed my AI use below. This PR comment, and any subsequent PR interactions must not be generated using AI, except for under a `<details>` drawer.\r\n\r\nCode written with Claude Opus 5\r\n \u241f > I would rather see this move to use `tockloader local-board`, but if this improves things then fine.\r\n\r\n@bradjc \r\n\r\nI can look into that for a future pr. This fixes the immediate breakage. \u241f --set-section-flags .apps=LOAD,ALLOC gives .apps file content, which forces BFD to recompute the program headers. \r\n\r\n.stack is (NOLOAD) and lives in SRAM at 0x20000000; during that recompute its p_filesz changes from 0x0 to its full size. The ELF then claims file content for memory that has none, and elf2uf2-rs refuses it with:\r\nError: \"ELF contains memory contents for uninitialized memory at 20000000\"\r\n-R .stack drops it from the flashed artifact only. The kernel ELF keeps its symbols, and .stack reserves stack space with no bytes to carry, so it costs nothing.\r\n\r\nThe section itself stays NOBITS in the section table; the issue is in the program header (p_filesz), which is why it's not obvious from reading the section headers alone. \u241f > .stack is (NOLOAD) and lives in SRAM at 0x20000000; during that recompute its p_filesz changes from 0x0 to its full size.\r\n\r\nGot it. Doesn't this sound like a linker bug? Why does the linker change the `p_filesz` segment header for a `NOLOAD` segment, effectively materializing its contents out of thin air?\r\n\r\nAgain, not disagreeing with this fix, just trying to fully understand the issue. \u241f > > .stack is (NOLOAD) and lives in SRAM at 0x20000000; during that recompute its p_filesz changes from 0x0 to its full size.\r\n> \r\n> Got it. Doesn't this sound like a linker bug? Why does the linker change the `p_filesz` segment header for a `NOLOAD` segment, effectively materializing its contents out of thin air?\r\n> \r\n> Again, not disagreeing with this fix, just trying to fully understand the issue.\r\n\r\nNot the linker, and not `--set-section-flags`. rust-lld writes `p_filesz 0` for the `.stack` segment and that ELF is correct. The flag change is innocent, a bare `objcopy in.elf out.elf` with no options at all reproduces the bogus `p_filesz`, so my earlier comment was wrong.\r\n\r\nWhat actually happens: ELF section headers carry no LMA, so BFD reconstructs one on read from file offsets. The empty `.relocate` section shares `.stack`'s file offset, so it inherits `.stack`'s load address and gets pulled into the `.stack` segment. Because `.relocate` is PROGBITS, the segment then has to carry file bytes reaching it, exactly `.stack`'s size, whatever that is on the board in question.\r\n\r\n`-R .stack` is still the right fix. `-R .relocate` also works but would be a hazard on any board that has initialized data.\r\n\r\nThe tables, the board survey, and the source walk - the three functions, the containment test and the `_STRICT` variant, are on the findings page, linked from the `<details>` drawer in the PR body. If you want more after that, happy to answer follow-ups here. \u241f > > > .stack is (NOLOAD) and lives in SRAM at 0x20000000; during that recompute its p_filesz changes from 0x0 to its full size.\r\n> > \r\n> > \r\n> > Got it. Doesn't this sound like a linker bug? Why does the linker change the `p_filesz` segment header for a `NOLOAD` segment, effectively materializing its contents out of thin air?\r\n> > Again, not disagreeing with this fix, just trying to fully understand the issue.\r\n> \r\n> Not the linker, and not `--set-section-flags`. rust-lld writes `p_filesz 0` for the `.stack` segment and that ELF is correct. The flag change is innocent, a bare `objcopy in.elf out.elf` with no options at all reproduces the bogus `p_filesz`, so my earlier comment was wrong.\r\n> \r\n> What actually happens: ELF section headers carry no LMA, so BFD reconstructs one on read from file offsets. The empty `.relocate` section shares `.stack`'s file offset, so it inherits `.stack`'s load address and gets pulled into the `.stack` segment. Because `.relocate` is PROGBITS, the segment then has to carry file bytes reaching it, exactly `.stack`'s size, whatever that is on the board in question.\r\n> \r\n> `-R .stack` is still the right fix. `-R .relocate` also works but would be a hazard on any board that has initialized data.\r\n> \r\n> The tables, the board survey, and the source walk - the three functions, the containment test and the `_STRICT` variant, are on the findings page, linked from the `<details>` drawer in the PR body. If you want more after that, happy to answer follow-ups here.\r\n\r\nWe've having some trouble understanding this comment. First, it reads as AI-generated -- can you confirm it was written by a human?\r\n\r\nAnd if so, do you have a clearer explanation for what is going on? \u241f I'm an aspiring end user looking to create a stable RP2350 Tock ecosystem to learn. My preferred board is the Pi Pico 2/2W. I don't want to try to be learning a moving target, so yes, there is heavy AI assistance, but it's not slop. Everything is rigorously reviewed to the best of my abilities. Once the RP2350 ecosystem is stable, I plan on learning it inside out (see the docs/learning materials I have made)\r\n\r\nRegarding my writing/communication style: I'm trying the best I can to fact-check everything. I even created a `constraints.md` based on every comment a maintainer has left so far on my PRs. I am trying to optimize the information in my PRs and comments to be as considerate of your cognitive load as possible, while minimizing ambiguity as much as I can. \r\n\r\nThank you. \u241f Without digging into this deeply (sorry for the drive-by comment, linker details are complex and I don't have the bandwidth today to page this all in) I think this is tripping up over some issues known in my head from sporadic work on #4464.\r\n\r\nIn particular, I __think__ we don't do our relocations the way that standard tooling expects, so using non-Tock-authored tooling for loading (i.e. UF2 here) tends to break quietly. I have some ***very much still WIP*** patches, https://github.com/ppannuto/elf2tab/pull/1 and https://github.com/ppannuto/libtock-c/pull/2 that I think are related (but insufficient) and will ultimately be better long-term fixes, but on a quick read I think this is a reasonable temporary patch until I have the time to fixup how we generate ELF metadata. \u241f I'm just worried that we're tricking ourselves into thinking we have a grasp of these issues, whereas it sounds like we don't actually confidently know what the root cause is. It's obvious that LLMs like Claude will confidently proclaim to have found such a root cause, but express it in such a way that we don't understand and can't verify, and that has been refuted at least once already. I'm fine fixing this issue, but if we aren't sure we know what's happening, we shouldn't proclaim we do. \u241f > I'm an aspiring end user looking to create a stable RP2350 Tock ecosystem to learn ... yes, there is heavy AI assistance, but it's not slop\r\n\r\nPerhaps this points to something we need to refine in our AI policy.\r\n\r\n[This comment](https://github.com/tock/tock/pull/5156#issuecomment-5617622718) reads like it's written by AI, and it does things that AI does like assert \"facts\" that are plainly false, e.g., \"ELF section headers carry no LMA\" (section headers absolutely have an LMA, it's just that tools don't show them by default [e.g., llvm docs on this](https://releases.llvm.org/19.1.0/docs/CommandGuide/llvm-objdump.html#cmdoption-llvm-objdump-show-lma)).\r\n\r\nWhat we're looking for in human-written content is for human understanding of the presented facts. If you're new and leaning on AI to get things done, that's totally fine! _But_, the human-written content should say something more like, \"I asked Claude to fix this, and here's its proposed fix. I don't really understand exactly why it works, and Claude's explanation requires a deeper understanding of linkers and ELF than I have\" \u2014\u00a0I write stuff like that _all the time_ :)\r\n\r\nThe point to take away from here is, succinctly, **don't trust Cluade**. When writing the \"human-facing\" communications, it needs to be all things that *you* write with *your personal knowledge* of how things work. My day job is a professor, and one of the ways I give guidance to students is that it's fine to work with AI, and even to have it give you a summary to work from, but when it comes time to do your final writeup, it's important to (1) give yourself at least 10 minutes from when you last looked at whatever the AI said and trying to write your own summary, and (2) do your own writing \"cold\"\u2014from a blank text entry box. That really helps to ensure that things that you as a human write reflect your own personal understanding."
     },
     {
       "additions": 502,
@@ -536,6 +536,18 @@
         {
           "author": "protodoatt",
           "body": "Hello! I think I fixed it(for me at least). Tested on both Linux( CachyOS) and, painfully, on Windows 11 with a RP2040 Seeduino Xiao in PuTTY.\nCheck out my branch and let me know if it works for you.\nhttps://github.com/protodoatt/tock/tree/rp2040-usb-cdc-fix\n\nIf yes, maybe we can PR this. Also it should work on any baud rate now."
+        },
+        {
+          "author": "brghena",
+          "body": "@protodoatt Awesome! Please do open a PR for this. We'd be happy to review and even happier to have the problem solved."
+        },
+        {
+          "author": "potto216",
+          "body": "@protodoatt I tried your code changes to the tock kernel and CDC capsule and it fixed the problem on both my HP Envy and Dell. I was able to interact with the process console and see the console app run. \nLooking at the USB line traffic with a Teledyne LeCroy analyzer the device correctly issues a stall since it is only a full speed device (USB 2.0 9.2.6.6 & 9.2.7) as shown below.\n\n<img width=\"1287\" height=\"140\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/1251b5b8-0102-4b4f-89c2-44ea364ed8c7\" />\n\nAlso, as you pointed out in your [commit](https://github.com/protodoatt/tock/commit/93bc75a8a162abd57bd271a56e86dc23e2130e76#diff-204aa98cbdcd27d67ec56148d814fb534823de9b051d70610577cfca9bb9ccd3R490) for the GET_LINE_CODING transfer, Windows will send back the values it read in the SET_LINE_CODING. And these values 0x0A, 0x0B, 0x0C (below) are resulting from `capsules/extra/src/usb/usbc_client_ctrl.rs`'s `ctrl_setup` when a request is not supported.\n\n<img width=\"1415\" height=\"672\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/253d1712-c777-4724-a40d-863560670106\" />\n\nThe baud rate is set by Windows here and then data is sent back and forth.\n\n<img width=\"1424\" height=\"533\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/d4f37a9d-d52e-4e76-8928-6c577e5d6e30\" />\n\nThanks and please do open a PR. What are your thoughts on the level of effort to get USB CDC ACM working on the RP2350?\nI have not tested it on baud rates other than 115200 yet"
+        },
+        {
+          "author": "protodoatt",
+          "body": "I will open a PR! Thanks for testing this out!\n\nRegarding the RP2350, I don't know. Taking a quick look at it's current chip folder, I see no usb.rs. The peripheral is potentially similar to the one on the RP2040, but I don't know and my USB experience isn't advanced enough to properly estimate this sort of thing.\n\nAlso, if anyone has any of the nrf boards that use the cdc.rs capsule, it would be nice to also test those to make sure the capsule changes haven't messed anything up. I will mention this in the PR."
         }
       ],
       "createdAt": "2026-09-06T16:54:20Z",
@@ -618,7 +630,7 @@
         "stat": "3 files changed, 190 insertions(+), 1 deletion(-)",
         "base": "upstream/master",
         "base_sha": "0c6e7b184",
-        "behind": 30,
+        "behind": 64,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -653,7 +665,7 @@
         "stat": "46 files changed, 5446 insertions(+), 2771 deletions(-)",
         "base": "upstream/master",
         "base_sha": "479b61829",
-        "behind": 59,
+        "behind": 93,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -666,7 +678,7 @@
         "stat": "2 files changed, 35 insertions(+), 9 deletions(-)",
         "base": "upstream/master",
         "base_sha": "b3234a172",
-        "behind": 3617,
+        "behind": 3651,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -677,7 +689,7 @@
         "stat": "",
         "base": "upstream/master",
         "base_sha": "0b5b4753e",
-        "behind": 113,
+        "behind": 147,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -690,7 +702,21 @@
         "stat": "5 files changed, 30 deletions(-)",
         "base": "upstream/master",
         "base_sha": "08894c2e0",
-        "behind": 128,
+        "behind": 162,
+        "pushed": true,
+        "on_remote": true,
+        "unpushed": 0
+      },
+      "crc-stale-sam4l-docs": {
+        "ahead": 2,
+        "commits": [
+          "capsules: crc: document the algorithms that exist",
+          "kernel: crc: drop the note about Sam4L algorithms"
+        ],
+        "stat": "2 files changed, 8 insertions(+), 28 deletions(-)",
+        "base": "upstream/master",
+        "base_sha": "0cc36ca6c",
+        "behind": 0,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -890,7 +916,7 @@
         "stat": "48 files changed, 4913 insertions(+), 3812 deletions(-)",
         "base": "upstream/master",
         "base_sha": "8e7431d08",
-        "behind": 84,
+        "behind": 118,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -900,8 +926,8 @@
         "commits": [],
         "stat": "",
         "base": "upstream/master",
-        "base_sha": "38e3744f4",
-        "behind": 99,
+        "base_sha": "0cc36ca6c",
+        "behind": 0,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -931,7 +957,7 @@
         "stat": "48 files changed, 5032 insertions(+), 3812 deletions(-)",
         "base": "upstream/master",
         "base_sha": "8e7431d08",
-        "behind": 84,
+        "behind": 118,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -953,8 +979,8 @@
         ],
         "stat": "38 files changed, 4423 insertions(+), 2550 deletions(-)",
         "base": "upstream/master",
-        "base_sha": "479b61829",
-        "behind": 59,
+        "base_sha": "0cc36ca6c",
+        "behind": 0,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -968,8 +994,8 @@
         ],
         "stat": "8 files changed, 431 insertions(+), 238 deletions(-)",
         "base": "upstream/master",
-        "base_sha": "e2ec78ff5",
-        "behind": 16,
+        "base_sha": "0cc36ca6c",
+        "behind": 0,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -979,11 +1005,11 @@
         "commits": [],
         "stat": "",
         "base": "upstream/master",
-        "base_sha": "6319b0ca4",
-        "behind": 17,
-        "pushed": true,
+        "base_sha": "0cc36ca6c",
+        "behind": 0,
+        "pushed": false,
         "on_remote": true,
-        "unpushed": 0
+        "unpushed": 51
       },
       "rp2-local-board": {
         "ahead": 2,
@@ -993,8 +1019,8 @@
         ],
         "stat": "9 files changed, 159 insertions(+), 126 deletions(-)",
         "base": "upstream/master",
-        "base_sha": "52aa1b684",
-        "behind": 13,
+        "base_sha": "0cc36ca6c",
+        "behind": 0,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1006,8 +1032,8 @@
         ],
         "stat": "4 files changed, 13 insertions(+)",
         "base": "upstream/master",
-        "base_sha": "73af792ec",
-        "behind": 19,
+        "base_sha": "0cc36ca6c",
+        "behind": 0,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1021,7 +1047,7 @@
         "stat": "4 files changed, 51 insertions(+), 19 deletions(-)",
         "base": "upstream/master",
         "base_sha": "834bbbc26",
-        "behind": 48,
+        "behind": 82,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1034,7 +1060,7 @@
         "stat": "4 files changed, 136 insertions(+), 280 deletions(-)",
         "base": "upstream/master",
         "base_sha": "479b61829",
-        "behind": 59,
+        "behind": 93,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1050,8 +1076,8 @@
         ],
         "stat": "4 files changed, 502 insertions(+), 263 deletions(-)",
         "base": "upstream/master",
-        "base_sha": "73af792ec",
-        "behind": 19,
+        "base_sha": "0cc36ca6c",
+        "behind": 0,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1065,8 +1091,71 @@
         ],
         "stat": "4 files changed, 57 insertions(+), 13 deletions(-)",
         "base": "upstream/master",
-        "base_sha": "e2ec78ff5",
-        "behind": 16,
+        "base_sha": "0cc36ca6c",
+        "behind": 0,
+        "pushed": true,
+        "on_remote": true,
+        "unpushed": 0
+      },
+      "rp2350-distro": {
+        "ahead": 51,
+        "commits": [
+          "boards: pico 2 w: refresh Cargo.lock after the 2.4-dev bump",
+          "Merge remote-tracking branch 'upstream/master' into rp2350-distro",
+          "boards: pico 2 w: point GP13 at the PWM slice that is driving it",
+          "boards: pico 2 w: stop handing out GP13, which belongs to the buzzer",
+          "chips: rp2350: add PWM, and give the Pico 2 W's beeper a square wave",
+          "capsules: wifi: report the SSID bytes delivered, not the SSID's length",
+          "capsules: wifi: do not panic the kernel when a scan outlives its process",
+          "chips: rp2xxx: pio: say which chip the interrupt model is the RP2040's",
+          "Merge branch 'pico2w-typed' into rp2350-distro",
+          "Merge branch 'rp2-local-board' into rp2350-distro",
+          "Merge branch 'rp2-make-program-fix' into rp2350-distro",
+          "Merge branch 'rp2-pio-tests' into rp2350-distro",
+          "Merge branch 'rp2-adc' into rp2350-distro",
+          "Merge branch 'rp2-pio-prep' into rp2350-distro",
+          "Merge branch 'stepper-capsule' into rp2350-distro",
+          "Merge branch 'rp2-pad-controls' into rp2350-distro",
+          "Merge branch 'rp2-uart-abort-fix' into rp2350-distro",
+          "Merge branch 'rp2350-gpio-irq' into rp2350-distro",
+          "Merge branch 'rp2350-stale-nvic-pending' into rp2350-distro",
+          "rp2: strip .stack from the ELF that make program flashes",
+          "rp2350: clear stale NVIC pending after the peripheral reset",
+          "rp2040: the same image route, and one UF2 converter instead of two",
+          "rp2350: build the flashed image with tockloader, not by splicing an ELF",
+          "capsules: stepper: return the step count from a stop",
+          "capsules: stepper: report a stop, and refuse one from a non-owner",
+          "capsules: add a stepper motor driver",
+          "capsules: virtual_uart: do not drop a buffer the teardown cannot deliver",
+          "capsules: virtual_uart: hand back the caller's buffer, not the mux's",
+          "chips: rp2040, rp2350, sifive: finish an abort before calling the client",
+          "boards: raspberry_pi_pico_2: expose the ADC to userspace",
+          "chips: rp2350: add the SAR ADC",
+          "chips: rp2040: move the SAR ADC driver into the shared rp2xxx crate",
+          "chips: rp2350: route the GPIO bank interrupt, which panics the kernel",
+          "chips: rp2040: an irq flag belongs to the block, not a state machine",
+          "chips: rp2040: service every PIO interrupt line, not one of four",
+          "chips: rp2040: test the PIO arithmetic that has no other check",
+          "chips: rp2040: stop add_program panicking on half of its own range",
+          "chips: rp2040: fix the PIO RX FIFO join, which never happened",
+          "boards: raspberry_pi_pico_2_w: bring up the CYW43439",
+          "chips: rp2350: hold the DMA and PIO0 in the default peripherals",
+          "boards: add Raspberry Pi Pico 2 W",
+          "chips: rp2350: gpio: add the pad controls the RP2040 has",
+          "chips: rp2xxx: share the GPIO pad control enums",
+          "boards: pico 2: split into library and binary",
+          "boards: pico 2: resolve openocd config path",
+          "chips: rp2040: move the PIO gSPI driver into the shared rp2xxx crate",
+          "chips: rp2350: add DMA",
+          "chips: rp2350: add PIO",
+          "chips: rp2040: move the PIO driver into the shared rp2xxx crate",
+          "chips: rp2350: gpio: add the pad controls the RP2040 has",
+          "chips: rp2040: pio: retire the examples module"
+        ],
+        "stat": "60 files changed, 7213 insertions(+), 2917 deletions(-)",
+        "base": "upstream/master",
+        "base_sha": "0cc36ca6c",
+        "behind": 0,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1078,8 +1167,8 @@
         ],
         "stat": "1 file changed, 4 insertions(+)",
         "base": "upstream/master",
-        "base_sha": "e2ec78ff5",
-        "behind": 16,
+        "base_sha": "0cc36ca6c",
+        "behind": 0,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1093,7 +1182,7 @@
         "stat": "4 files changed, 698 insertions(+), 4 deletions(-)",
         "base": "upstream/master",
         "base_sha": "65608d717",
-        "behind": 114,
+        "behind": 148,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1105,8 +1194,8 @@
         ],
         "stat": "1 file changed, 7 insertions(+)",
         "base": "upstream/master",
-        "base_sha": "d0d478657",
-        "behind": 2,
+        "base_sha": "0cc36ca6c",
+        "behind": 0,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1120,8 +1209,21 @@
         ],
         "stat": "5 files changed, 487 insertions(+)",
         "base": "upstream/master",
-        "base_sha": "e2ec78ff5",
-        "behind": 16,
+        "base_sha": "0cc36ca6c",
+        "behind": 0,
+        "pushed": true,
+        "on_remote": true,
+        "unpushed": 0
+      },
+      "stm32u5-adc-justify": {
+        "ahead": 1,
+        "commits": [
+          "chips: stm32u5xx: left-justify ADC samples"
+        ],
+        "stat": "1 file changed, 11 insertions(+), 5 deletions(-)",
+        "base": "upstream/master",
+        "base_sha": "0cc36ca6c",
+        "behind": 0,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1173,8 +1275,16 @@
         "unpushed": 0
       },
       "hw/pico2w-async": {
-        "ahead": 51,
+        "ahead": 59,
         "commits": [
+          "examples: kit_hush is a reproducer, not a rescue",
+          "examples: give the beeper an off switch that is not the power lead",
+          "examples: drive the kit's beeper with PWM, and hear what SWD could not",
+          "examples: stop_scan cannot stop a scan, measured in four states",
+          "examples: ask whether stop_scan can stop a scan, in four states",
+          "examples: the wifi apps are regression tests now, and upcall 7 changed meaning",
+          "examples: a process that exits mid-scan takes the kernel with it",
+          "examples: a wifi scan proves the interrupt, and a short buffer catches the length",
           "examples: the kit's beeper is passive, and userspace plays it flat",
           "adc: the sample is the third upcall argument, not the first",
           "examples: the motor stops on a press, and three arguments become measurements",
@@ -1227,7 +1337,7 @@
           "alarm: add a Future-returning sleep and a block_on executor",
           "Add the Raspberry Pi Pico 2 as a build platform"
         ],
-        "stat": "53 files changed, 5845 insertions(+), 58 deletions(-)",
+        "stat": "58 files changed, 7768 insertions(+), 58 deletions(-)",
         "base": "upstream/master",
         "base_sha": "469d9a037",
         "behind": 0,
@@ -1359,7 +1469,7 @@
     "ok": true,
     "upstream_ref": "upstream/master",
     "fork_ref": "bench/stepper-pico2w",
-    "head": "111179c84",
+    "head": "0cc36ca6c",
     "resets": {
       "rp2040": {
         "USBCTRL": 24,
@@ -1601,6 +1711,51 @@
           "xosc": 125
         },
         "rp2xxx": {}
+      },
+      "crc-stale-sam4l-docs": {
+        "rp2040": {
+          "adc": 240,
+          "chip": 246,
+          "clocks": 1419,
+          "deferred_calls": 33,
+          "dma": 606,
+          "gpio": 727,
+          "i2c": 729,
+          "interrupts": 30,
+          "lib": 109,
+          "mod": 5,
+          "pio": 1947,
+          "pio_gspi": 270,
+          "pio_pwm": 95,
+          "pio_spi": 572,
+          "pwm": 76,
+          "resets": 371,
+          "rtc": 448,
+          "spi": 36,
+          "sysinfo": 98,
+          "timer": 277,
+          "uart": 761,
+          "usb": 2484,
+          "watchdog": 129,
+          "xosc": 117
+        },
+        "rp2350": {
+          "chip": 175,
+          "clocks": 1530,
+          "gpio": 1555,
+          "interrupts": 56,
+          "lib": 118,
+          "resets": 400,
+          "spi": 36,
+          "ticks": 174,
+          "timer": 274,
+          "uart": 811,
+          "xosc": 125
+        },
+        "rp2xxx": {
+          "lib": 29,
+          "spi": 638
+        }
       },
       "pico2w-typed": {
         "rp2040": {
@@ -2108,6 +2263,51 @@
         }
       },
       "stepper-capsule": {
+        "rp2040": {
+          "adc": 240,
+          "chip": 246,
+          "clocks": 1419,
+          "deferred_calls": 33,
+          "dma": 606,
+          "gpio": 727,
+          "i2c": 729,
+          "interrupts": 30,
+          "lib": 109,
+          "mod": 5,
+          "pio": 1947,
+          "pio_gspi": 270,
+          "pio_pwm": 95,
+          "pio_spi": 572,
+          "pwm": 76,
+          "resets": 371,
+          "rtc": 448,
+          "spi": 36,
+          "sysinfo": 98,
+          "timer": 277,
+          "uart": 761,
+          "usb": 2484,
+          "watchdog": 129,
+          "xosc": 117
+        },
+        "rp2350": {
+          "chip": 175,
+          "clocks": 1530,
+          "gpio": 1555,
+          "interrupts": 56,
+          "lib": 118,
+          "resets": 400,
+          "spi": 36,
+          "ticks": 174,
+          "timer": 274,
+          "uart": 811,
+          "xosc": 125
+        },
+        "rp2xxx": {
+          "lib": 29,
+          "spi": 638
+        }
+      },
+      "stm32u5-adc-justify": {
         "rp2040": {
           "adc": 240,
           "chip": 246,
@@ -14111,6 +14311,10 @@
         "boards/raspberry_pi_pico_2/layout.ld",
         "boards/raspberry_pi_pico_w/layout.ld"
       ],
+      "crc-stale-sam4l-docs": [
+        "capsules/extra/src/crc.rs",
+        "kernel/src/hil/crc.rs"
+      ],
       "pico2w-typed": [
         "Cargo.lock",
         "Cargo.toml",
@@ -14215,6 +14419,9 @@
         "capsules/extra/src/stepper.rs",
         "doc/syscalls/00011_stepper.md",
         "doc/syscalls/README.md"
+      ],
+      "stm32u5-adc-justify": [
+        "chips/stm32u5xx/src/adc.rs"
       ]
     }
   }
