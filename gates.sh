@@ -18,6 +18,7 @@
 #   ./gates.sh memory       just the memory directory
 #   ./gates.sh commits      just the tock commit messages
 #   ./gates.sh claims       just the unreferenced-claim report (advisory)
+#   ./gates.sh drift        just how far main has drifted from upstream
 #
 # Exit status is the number of suites that failed, so `&&` chains work.
 
@@ -138,6 +139,42 @@ PY
 }
 if [ "$WHICH" = all ] || [ "$WHICH" = claims ]; then
     run "claims — unreferenced causal in FACTS" claims_gate
+fi
+
+# How far the fork's trunk has drifted from upstream. Since 2026-09-13 there
+# are no pull requests, so a rebase or merge of upstream into `main` is the
+# ONLY channel their work reaches us by -- see memory: fork-not-upstream.
+#
+# Threshold, not zero: upstream lands about 42 commits a week (measured
+# 2026-09-13 over 7, 14 and 30 days), so failing on any drift would cry wolf
+# daily. It fails at 75, which is under two weeks and below the 82-commit
+# drift that cost a full re-pin pass once already.
+#
+# A stale answer is worse than none, so this fetches. With --offline it says
+# it cannot tell rather than reporting a number it did not check.
+TOCK_REPO="${TOCK_TREE:-$HOME/forge/tock}"
+drift_gate() {
+    [ -e "$TOCK_REPO/.git" ] || { echo "  skip  $TOCK_REPO is not a checkout here"; return 0; }
+    if [ -n "$OFFLINE" ]; then
+        echo "  skip  --offline: cannot tell how far main has drifted without fetching"
+        return 0
+    fi
+    git -C "$TOCK_REPO" fetch upstream --quiet 2>/dev/null || {
+        echo "  could not fetch upstream, so the drift is unknown rather than zero"
+        return 1
+    }
+    behind=$(git -C "$TOCK_REPO" rev-list --count main..upstream/master 2>/dev/null)
+    ahead=$(git -C "$TOCK_REPO" rev-list --count upstream/master..main 2>/dev/null)
+    printf "  main is %s ahead of upstream/master and %s behind\n" "${ahead:-?}" "${behind:-?}"
+    if [ "${behind:-0}" -ge 75 ]; then
+        echo "  Absorb upstream into main. There is no other channel for their work,"
+        echo "  and past 75 this becomes a re-pin pass rather than a merge."
+        return 1
+    fi
+    return 0
+}
+if [ "$WHICH" = all ] || [ "$WHICH" = drift ]; then
+    run "upstream drift — main vs upstream/master" drift_gate
 fi
 
 printf "\n"
