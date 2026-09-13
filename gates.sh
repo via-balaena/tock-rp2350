@@ -19,7 +19,7 @@
 #   ./gates.sh commits      just the tock commit messages
 #   ./gates.sh claims       just the unreferenced-claim report (advisory)
 #   ./gates.sh drift        just how far main has drifted from upstream
-#   ./gates.sh uart         just the hil::uart conformance test, under qemu
+#   ./gates.sh uart         the hil::uart conformance test on both qemu boards
 #   ./gates.sh parity       just the rp2040/rp2350 paired-block check
 #   ./gates.sh bench        the conformance tests that need real hardware
 #
@@ -194,17 +194,31 @@ fi
 # said nothing at all. The second is the one worth having, because a stalled
 # conformance test and a passing one look identical from a distance.
 TOCK_MAIN="${TOCK_MAIN_TREE:-$HOME/forge/tock-wt/distro}"
+#
+# TWO platforms since 2026-09-13, and they are not redundant: rv32 runs the
+# test on a UartDevice from the console's mux, so it covers the VIRTUALIZER,
+# while q35 hits x86_q35::serial::SerialPort directly -- the driver the audit
+# found panicking on both word methods, guarded by nothing until now.
 uart_gate() {
     runner="$TOCK_MAIN/tools/ci/uart-contract-qemu.sh"
     [ -x "$runner" ] || { echo "  skip  no runner at $runner"; return 0; }
-    if ! command -v qemu-system-riscv32 > /dev/null 2>&1; then
-        echo "  skip  qemu-system-riscv32 is not installed, so the clauses went unrun"
-        return 0
+    rc=0
+    # One missing emulator must not hide the other platform, and must not
+    # pass as though its clauses had run.
+    if command -v qemu-system-riscv32 > /dev/null 2>&1; then
+        "$runner" rv32 || rc=1
+    else
+        echo "  skip  qemu-system-riscv32 is not installed, so rv32 went unrun"
     fi
-    "$runner"
+    if command -v qemu-system-i386 > /dev/null 2>&1; then
+        "$runner" q35 || rc=1
+    else
+        echo "  skip  qemu-system-i386 is not installed, so q35 went unrun"
+    fi
+    return "$rc"
 }
 if [ "$WHICH" = all ] || [ "$WHICH" = uart ]; then
-    run "hil::uart conformance — qemu_rv32_virt" uart_gate
+    run "hil::uart conformance — qemu, two architectures" uart_gate
 fi
 
 # chips/rp2040 and chips/rp2350 are separate files driving the same PL011. The
