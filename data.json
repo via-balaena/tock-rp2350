@@ -630,7 +630,7 @@
         "stat": "3 files changed, 190 insertions(+), 1 deletion(-)",
         "base": "upstream/master",
         "base_sha": "0cc36ca6c",
-        "behind": 0,
+        "behind": 2,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -665,7 +665,34 @@
         "stat": "46 files changed, 5446 insertions(+), 2771 deletions(-)",
         "base": "upstream/master",
         "base_sha": "0cc36ca6c",
-        "behind": 0,
+        "behind": 2,
+        "pushed": true,
+        "on_remote": true,
+        "unpushed": 0
+      },
+      "bench/uart-abort-pico2w": {
+        "ahead": 15,
+        "commits": [
+          "Merge branch 'rp2-uart-abort-fix' into pico2w-uartfix",
+          "capsules: virtual_uart: do not drop a buffer the teardown cannot deliver",
+          "capsules: virtual_uart: hand back the caller's buffer, not the mux's",
+          "chips: finish an abort before calling the client",
+          "boards: raspberry_pi_pico_2_w: bring up the CYW43439",
+          "chips: rp2350: hold the DMA and PIO0 in the default peripherals",
+          "boards: add Raspberry Pi Pico 2 W",
+          "boards: pico 2: split into library and binary",
+          "boards: pico 2: resolve openocd config path",
+          "chips: rp2040: move the PIO gSPI driver into the shared rp2xxx crate",
+          "chips: rp2350: add DMA",
+          "chips: rp2350: add PIO",
+          "chips: rp2040: move the PIO driver into the shared rp2xxx crate",
+          "chips: rp2350: gpio: add the pad controls the RP2040 has",
+          "chips: rp2040: pio: retire the examples module"
+        ],
+        "stat": "45 files changed, 4513 insertions(+), 2569 deletions(-)",
+        "base": "upstream/master",
+        "base_sha": "0cc36ca6c",
+        "behind": 2,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -678,20 +705,7 @@
         "stat": "2 files changed, 35 insertions(+), 9 deletions(-)",
         "base": "upstream/master",
         "base_sha": "b3234a172",
-        "behind": 3651,
-        "pushed": true,
-        "on_remote": true,
-        "unpushed": 0
-      },
-      "capability-compile-fail": {
-        "ahead": 1,
-        "commits": [
-          "kernel: pin the capability macros' forbid claim"
-        ],
-        "stat": "1 file changed, 36 insertions(+)",
-        "base": "upstream/master",
-        "base_sha": "0cc36ca6c",
-        "behind": 0,
+        "behind": 3653,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -705,20 +719,7 @@
         "stat": "2 files changed, 8 insertions(+), 28 deletions(-)",
         "base": "upstream/master",
         "base_sha": "0cc36ca6c",
-        "behind": 0,
-        "pushed": true,
-        "on_remote": true,
-        "unpushed": 0
-      },
-      "elf-loadable-check": {
-        "ahead": 1,
-        "commits": [
-          "ci: check no ELF claims content it does not have"
-        ],
-        "stat": "2 files changed, 210 insertions(+)",
-        "base": "upstream/master",
-        "base_sha": "0cc36ca6c",
-        "behind": 0,
+        "behind": 2,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -918,204 +919,39 @@
         "stat": "48 files changed, 4913 insertions(+), 3812 deletions(-)",
         "base": "upstream/master",
         "base_sha": "8e7431d08",
-        "behind": 118,
+        "behind": 120,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
       },
-      "library-floor-forbid": {
-        "ahead": 1,
+      "main": {
+        "ahead": 76,
         "commits": [
-          "libraries: give the no-unsafe rule to the compiler"
-        ],
-        "stat": "2 files changed, 10 insertions(+)",
-        "base": "upstream/master",
-        "base_sha": "0cc36ca6c",
-        "behind": 0,
-        "pushed": true,
-        "on_remote": true,
-        "unpushed": 0
-      },
-      "master": {
-        "ahead": 0,
-        "commits": [],
-        "stat": "",
-        "base": "upstream/master",
-        "base_sha": "0cc36ca6c",
-        "behind": 0,
-        "pushed": true,
-        "on_remote": true,
-        "unpushed": 0
-      },
-      "mmio-macro": {
-        "ahead": 2,
-        "commits": [
-          "kernel: declare MMIO blocks with their provenance",
-          "kernel: check StaticRef alignment at compile time"
-        ],
-        "stat": "9 files changed, 229 insertions(+), 29 deletions(-)",
-        "base": "upstream/master",
-        "base_sha": "0cc36ca6c",
-        "behind": 0,
-        "pushed": true,
-        "on_remote": true,
-        "unpushed": 0
-      },
-      "pico2w-radio-bench": {
-        "ahead": 16,
-        "commits": [
-          "NOT FOR UPSTREAM: defer each command by one kernel loop iteration",
-          "NOT FOR UPSTREAM: extend the bring-up to station mode and a scan",
-          "NOT FOR UPSTREAM: drive the CYW43439 at boot",
-          "boards: raspberry_pi_pico_2_w: bring up the CYW43439 radio",
-          "boards: add Raspberry Pi Pico 2 W",
-          "boards: pico 2: split into library and binary",
-          "boards: pico 2: resolve openocd config path",
-          "chips: rp2040: move the PIO gSPI driver into the shared rp2xxx crate",
-          "chips: rp2350: add PIO and DMA",
-          "chips: rp2040: move the DMA driver into the shared rp2xxx crate",
-          "chips: rp2040: move the PIO driver into the shared rp2xxx crate",
-          "chips: rp2350: gpio: add the pad controls the RP2040 has",
-          "chips: rp2040: pio: move gpio_init out of the driver",
-          "chips: rp2040: pio: take pin numbers, derive FIFO addresses",
-          "chips: rp2040: dma: compute the PIO transfer request number",
-          "chips: rp2040: pio: retire the examples module"
-        ],
-        "stat": "39 files changed, 4252 insertions(+), 3175 deletions(-)",
-        "base": "upstream/master",
-        "base_sha": "0cc36ca6c",
-        "behind": 0,
-        "pushed": true,
-        "on_remote": true,
-        "unpushed": 0
-      },
-      "pico2w-typed": {
-        "ahead": 11,
-        "commits": [
-          "boards: raspberry_pi_pico_2_w: bring up the CYW43439",
-          "chips: rp2350: hold the DMA and PIO0 in the default peripherals",
-          "boards: add Raspberry Pi Pico 2 W",
-          "boards: pico 2: split into library and binary",
-          "boards: pico 2: resolve openocd config path",
-          "chips: rp2040: move the PIO gSPI driver into the shared rp2xxx crate",
-          "chips: rp2350: add DMA",
-          "chips: rp2350: add PIO",
-          "chips: rp2040: move the PIO driver into the shared rp2xxx crate",
-          "chips: rp2350: gpio: add the pad controls the RP2040 has",
-          "chips: rp2040: pio: retire the examples module"
-        ],
-        "stat": "38 files changed, 4423 insertions(+), 2550 deletions(-)",
-        "base": "upstream/master",
-        "base_sha": "0cc36ca6c",
-        "behind": 0,
-        "pushed": true,
-        "on_remote": true,
-        "unpushed": 0
-      },
-      "rp2-adc": {
-        "ahead": 3,
-        "commits": [
-          "boards: raspberry_pi_pico_2: expose the ADC to userspace",
-          "chips: rp2350: add the SAR ADC",
-          "chips: rp2040: move the SAR ADC driver into the shared rp2xxx crate"
-        ],
-        "stat": "8 files changed, 431 insertions(+), 238 deletions(-)",
-        "base": "upstream/master",
-        "base_sha": "0cc36ca6c",
-        "behind": 0,
-        "pushed": true,
-        "on_remote": true,
-        "unpushed": 0
-      },
-      "rp2-local-board": {
-        "ahead": 2,
-        "commits": [
-          "rp2040: the same image route, and one UF2 converter instead of two",
-          "rp2350: build the flashed image with tockloader, not by splicing an ELF"
-        ],
-        "stat": "9 files changed, 159 insertions(+), 126 deletions(-)",
-        "base": "upstream/master",
-        "base_sha": "0cc36ca6c",
-        "behind": 0,
-        "pushed": true,
-        "on_remote": true,
-        "unpushed": 0
-      },
-      "rp2-make-program-fix": {
-        "ahead": 1,
-        "commits": [
-          "rp2: strip .stack from the ELF that make program flashes"
-        ],
-        "stat": "4 files changed, 13 insertions(+)",
-        "base": "upstream/master",
-        "base_sha": "0cc36ca6c",
-        "behind": 0,
-        "pushed": true,
-        "on_remote": true,
-        "unpushed": 0
-      },
-      "rp2-pad-controls": {
-        "ahead": 2,
-        "commits": [
-          "chips: rp2350: gpio: add the pad controls the RP2040 has",
-          "chips: rp2xxx: share the GPIO pad control enums"
-        ],
-        "stat": "4 files changed, 51 insertions(+), 19 deletions(-)",
-        "base": "upstream/master",
-        "base_sha": "0cc36ca6c",
-        "behind": 0,
-        "pushed": true,
-        "on_remote": true,
-        "unpushed": 0
-      },
-      "rp2-pio-prep": {
-        "ahead": 1,
-        "commits": [
-          "chips: rp2040: pio: retire the examples module"
-        ],
-        "stat": "4 files changed, 136 insertions(+), 280 deletions(-)",
-        "base": "upstream/master",
-        "base_sha": "0cc36ca6c",
-        "behind": 0,
-        "pushed": true,
-        "on_remote": true,
-        "unpushed": 0
-      },
-      "rp2-pio-tests": {
-        "ahead": 5,
-        "commits": [
-          "chips: rp2040: an irq flag belongs to the block, not a state machine",
-          "chips: rp2040: service every PIO interrupt line, not one of four",
-          "chips: rp2040: test the PIO arithmetic that has no other check",
-          "chips: rp2040: stop add_program panicking on half of its own range",
-          "chips: rp2040: fix the PIO RX FIFO join, which never happened"
-        ],
-        "stat": "4 files changed, 502 insertions(+), 263 deletions(-)",
-        "base": "upstream/master",
-        "base_sha": "0cc36ca6c",
-        "behind": 0,
-        "pushed": true,
-        "on_remote": true,
-        "unpushed": 0
-      },
-      "rp2-uart-abort-fix": {
-        "ahead": 3,
-        "commits": [
+          "Merge branch 'uart-receive-busy' into rp2350-distro",
+          "Merge branch 'lpc55s6x-abort-callback' into rp2350-distro",
+          "Merge branch 'uart-size-contract' into rp2350-distro",
+          "Merge branch 'rp2-uart-abort-fix' into rp2350-distro",
+          "Merge branch 'agents-safety-comment-form' into rp2350-distro",
+          "Merge branch 'library-floor-forbid' into rp2350-distro",
+          "Merge branch 'elf-loadable-check' into rp2350-distro",
+          "Merge branch 'capability-compile-fail' into rp2350-distro",
+          "Merge branch 'mmio-macro' into rp2350-distro",
+          "Merge branch 'staticref-checked-addr' into rp2350-distro",
+          "AGENTS.md: name the safety comment forms Tock uses",
+          "chips: sam4l: answer SIZE from receive_automatic",
+          "chips: sam4l: refuse a second receive",
+          "chips: refuse a receive while one is outstanding",
+          "chips: lpc55s6x: return the buffer on an abort",
+          "chips: segger: refuse a length past the buffer",
+          "capsules: virtual_uart: bound tx_len by the slice",
           "capsules: virtual_uart: do not drop a buffer the teardown cannot deliver",
           "capsules: virtual_uart: hand back the caller's buffer, not the mux's",
-          "chips: rp2040, rp2350, sifive: finish an abort before calling the client"
-        ],
-        "stat": "4 files changed, 57 insertions(+), 13 deletions(-)",
-        "base": "upstream/master",
-        "base_sha": "0cc36ca6c",
-        "behind": 0,
-        "pushed": true,
-        "on_remote": true,
-        "unpushed": 0
-      },
-      "rp2350-distro": {
-        "ahead": 51,
-        "commits": [
+          "chips: finish an abort before calling the client",
+          "libraries: give the unsafe rules to the compiler",
+          "ci: check no ELF claims content it does not have",
+          "kernel: declare MMIO blocks with their provenance",
+          "kernel: pin the capability macros' forbid claim",
+          "kernel: check StaticRef alignment at compile time",
           "boards: pico 2 w: refresh Cargo.lock after the 2.4-dev bump",
           "Merge remote-tracking branch 'upstream/master' into rp2350-distro",
           "boards: pico 2 w: point GP13 at the PWM slice that is driving it",
@@ -1168,10 +1004,158 @@
           "chips: rp2350: gpio: add the pad controls the RP2040 has",
           "chips: rp2040: pio: retire the examples module"
         ],
-        "stat": "60 files changed, 7213 insertions(+), 2917 deletions(-)",
+        "stat": "83 files changed, 7864 insertions(+), 2975 deletions(-)",
+        "base": "upstream/master",
+        "base_sha": "a7b14ffaf",
+        "behind": 0,
+        "pushed": true,
+        "on_remote": true,
+        "unpushed": 0
+      },
+      "master": {
+        "ahead": 0,
+        "commits": [],
+        "stat": "",
         "base": "upstream/master",
         "base_sha": "0cc36ca6c",
-        "behind": 0,
+        "behind": 2,
+        "pushed": true,
+        "on_remote": true,
+        "unpushed": 0
+      },
+      "pico2w-radio-bench": {
+        "ahead": 16,
+        "commits": [
+          "NOT FOR UPSTREAM: defer each command by one kernel loop iteration",
+          "NOT FOR UPSTREAM: extend the bring-up to station mode and a scan",
+          "NOT FOR UPSTREAM: drive the CYW43439 at boot",
+          "boards: raspberry_pi_pico_2_w: bring up the CYW43439 radio",
+          "boards: add Raspberry Pi Pico 2 W",
+          "boards: pico 2: split into library and binary",
+          "boards: pico 2: resolve openocd config path",
+          "chips: rp2040: move the PIO gSPI driver into the shared rp2xxx crate",
+          "chips: rp2350: add PIO and DMA",
+          "chips: rp2040: move the DMA driver into the shared rp2xxx crate",
+          "chips: rp2040: move the PIO driver into the shared rp2xxx crate",
+          "chips: rp2350: gpio: add the pad controls the RP2040 has",
+          "chips: rp2040: pio: move gpio_init out of the driver",
+          "chips: rp2040: pio: take pin numbers, derive FIFO addresses",
+          "chips: rp2040: dma: compute the PIO transfer request number",
+          "chips: rp2040: pio: retire the examples module"
+        ],
+        "stat": "39 files changed, 4252 insertions(+), 3175 deletions(-)",
+        "base": "upstream/master",
+        "base_sha": "0cc36ca6c",
+        "behind": 2,
+        "pushed": true,
+        "on_remote": true,
+        "unpushed": 0
+      },
+      "pico2w-typed": {
+        "ahead": 11,
+        "commits": [
+          "boards: raspberry_pi_pico_2_w: bring up the CYW43439",
+          "chips: rp2350: hold the DMA and PIO0 in the default peripherals",
+          "boards: add Raspberry Pi Pico 2 W",
+          "boards: pico 2: split into library and binary",
+          "boards: pico 2: resolve openocd config path",
+          "chips: rp2040: move the PIO gSPI driver into the shared rp2xxx crate",
+          "chips: rp2350: add DMA",
+          "chips: rp2350: add PIO",
+          "chips: rp2040: move the PIO driver into the shared rp2xxx crate",
+          "chips: rp2350: gpio: add the pad controls the RP2040 has",
+          "chips: rp2040: pio: retire the examples module"
+        ],
+        "stat": "38 files changed, 4423 insertions(+), 2550 deletions(-)",
+        "base": "upstream/master",
+        "base_sha": "0cc36ca6c",
+        "behind": 2,
+        "pushed": true,
+        "on_remote": true,
+        "unpushed": 0
+      },
+      "rp2-adc": {
+        "ahead": 3,
+        "commits": [
+          "boards: raspberry_pi_pico_2: expose the ADC to userspace",
+          "chips: rp2350: add the SAR ADC",
+          "chips: rp2040: move the SAR ADC driver into the shared rp2xxx crate"
+        ],
+        "stat": "8 files changed, 431 insertions(+), 238 deletions(-)",
+        "base": "upstream/master",
+        "base_sha": "0cc36ca6c",
+        "behind": 2,
+        "pushed": true,
+        "on_remote": true,
+        "unpushed": 0
+      },
+      "rp2-local-board": {
+        "ahead": 2,
+        "commits": [
+          "rp2040: the same image route, and one UF2 converter instead of two",
+          "rp2350: build the flashed image with tockloader, not by splicing an ELF"
+        ],
+        "stat": "9 files changed, 159 insertions(+), 126 deletions(-)",
+        "base": "upstream/master",
+        "base_sha": "0cc36ca6c",
+        "behind": 2,
+        "pushed": true,
+        "on_remote": true,
+        "unpushed": 0
+      },
+      "rp2-make-program-fix": {
+        "ahead": 1,
+        "commits": [
+          "rp2: strip .stack from the ELF that make program flashes"
+        ],
+        "stat": "4 files changed, 13 insertions(+)",
+        "base": "upstream/master",
+        "base_sha": "0cc36ca6c",
+        "behind": 2,
+        "pushed": true,
+        "on_remote": true,
+        "unpushed": 0
+      },
+      "rp2-pad-controls": {
+        "ahead": 2,
+        "commits": [
+          "chips: rp2350: gpio: add the pad controls the RP2040 has",
+          "chips: rp2xxx: share the GPIO pad control enums"
+        ],
+        "stat": "4 files changed, 51 insertions(+), 19 deletions(-)",
+        "base": "upstream/master",
+        "base_sha": "0cc36ca6c",
+        "behind": 2,
+        "pushed": true,
+        "on_remote": true,
+        "unpushed": 0
+      },
+      "rp2-pio-prep": {
+        "ahead": 1,
+        "commits": [
+          "chips: rp2040: pio: retire the examples module"
+        ],
+        "stat": "4 files changed, 136 insertions(+), 280 deletions(-)",
+        "base": "upstream/master",
+        "base_sha": "0cc36ca6c",
+        "behind": 2,
+        "pushed": true,
+        "on_remote": true,
+        "unpushed": 0
+      },
+      "rp2-pio-tests": {
+        "ahead": 5,
+        "commits": [
+          "chips: rp2040: an irq flag belongs to the block, not a state machine",
+          "chips: rp2040: service every PIO interrupt line, not one of four",
+          "chips: rp2040: test the PIO arithmetic that has no other check",
+          "chips: rp2040: stop add_program panicking on half of its own range",
+          "chips: rp2040: fix the PIO RX FIFO join, which never happened"
+        ],
+        "stat": "4 files changed, 502 insertions(+), 263 deletions(-)",
+        "base": "upstream/master",
+        "base_sha": "0cc36ca6c",
+        "behind": 2,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1184,7 +1168,7 @@
         "stat": "1 file changed, 4 insertions(+)",
         "base": "upstream/master",
         "base_sha": "0cc36ca6c",
-        "behind": 0,
+        "behind": 2,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1197,7 +1181,7 @@
         "stat": "1 file changed, 38 insertions(+), 4 deletions(-)",
         "base": "upstream/master",
         "base_sha": "0cc36ca6c",
-        "behind": 0,
+        "behind": 2,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1210,20 +1194,7 @@
         "stat": "1 file changed, 7 insertions(+)",
         "base": "upstream/master",
         "base_sha": "0cc36ca6c",
-        "behind": 0,
-        "pushed": true,
-        "on_remote": true,
-        "unpushed": 0
-      },
-      "staticref-checked-addr": {
-        "ahead": 1,
-        "commits": [
-          "kernel: check StaticRef alignment at compile time"
-        ],
-        "stat": "9 files changed, 96 insertions(+), 28 deletions(-)",
-        "base": "upstream/master",
-        "base_sha": "0cc36ca6c",
-        "behind": 0,
+        "behind": 2,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1238,7 +1209,7 @@
         "stat": "5 files changed, 487 insertions(+)",
         "base": "upstream/master",
         "base_sha": "0cc36ca6c",
-        "behind": 0,
+        "behind": 2,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1251,7 +1222,7 @@
         "stat": "1 file changed, 11 insertions(+), 5 deletions(-)",
         "base": "upstream/master",
         "base_sha": "0cc36ca6c",
-        "behind": 0,
+        "behind": 2,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1497,7 +1468,7 @@
     "ok": true,
     "upstream_ref": "upstream/master",
     "fork_ref": "bench/stepper-pico2w",
-    "head": "0cc36ca6c",
+    "head": "a7b14ffaf",
     "resets": {
       "rp2040": {
         "USBCTRL": 24,
@@ -1658,51 +1629,6 @@
           "spi": 638
         }
       },
-      "capability-compile-fail": {
-        "rp2040": {
-          "adc": 240,
-          "chip": 246,
-          "clocks": 1419,
-          "deferred_calls": 33,
-          "dma": 606,
-          "gpio": 727,
-          "i2c": 729,
-          "interrupts": 30,
-          "lib": 109,
-          "mod": 5,
-          "pio": 1947,
-          "pio_gspi": 270,
-          "pio_pwm": 95,
-          "pio_spi": 572,
-          "pwm": 76,
-          "resets": 371,
-          "rtc": 448,
-          "spi": 36,
-          "sysinfo": 98,
-          "timer": 277,
-          "uart": 761,
-          "usb": 2484,
-          "watchdog": 129,
-          "xosc": 117
-        },
-        "rp2350": {
-          "chip": 175,
-          "clocks": 1530,
-          "gpio": 1555,
-          "interrupts": 56,
-          "lib": 118,
-          "resets": 400,
-          "spi": 36,
-          "ticks": 174,
-          "timer": 274,
-          "uart": 811,
-          "xosc": 125
-        },
-        "rp2xxx": {
-          "lib": 29,
-          "spi": 638
-        }
-      },
       "crc-stale-sam4l-docs": {
         "rp2040": {
           "adc": 240,
@@ -1742,141 +1668,6 @@
           "timer": 274,
           "uart": 811,
           "xosc": 125
-        },
-        "rp2xxx": {
-          "lib": 29,
-          "spi": 638
-        }
-      },
-      "elf-loadable-check": {
-        "rp2040": {
-          "adc": 240,
-          "chip": 246,
-          "clocks": 1419,
-          "deferred_calls": 33,
-          "dma": 606,
-          "gpio": 727,
-          "i2c": 729,
-          "interrupts": 30,
-          "lib": 109,
-          "mod": 5,
-          "pio": 1947,
-          "pio_gspi": 270,
-          "pio_pwm": 95,
-          "pio_spi": 572,
-          "pwm": 76,
-          "resets": 371,
-          "rtc": 448,
-          "spi": 36,
-          "sysinfo": 98,
-          "timer": 277,
-          "uart": 761,
-          "usb": 2484,
-          "watchdog": 129,
-          "xosc": 117
-        },
-        "rp2350": {
-          "chip": 175,
-          "clocks": 1530,
-          "gpio": 1555,
-          "interrupts": 56,
-          "lib": 118,
-          "resets": 400,
-          "spi": 36,
-          "ticks": 174,
-          "timer": 274,
-          "uart": 811,
-          "xosc": 125
-        },
-        "rp2xxx": {
-          "lib": 29,
-          "spi": 638
-        }
-      },
-      "library-floor-forbid": {
-        "rp2040": {
-          "adc": 240,
-          "chip": 246,
-          "clocks": 1419,
-          "deferred_calls": 33,
-          "dma": 606,
-          "gpio": 727,
-          "i2c": 729,
-          "interrupts": 30,
-          "lib": 109,
-          "mod": 5,
-          "pio": 1947,
-          "pio_gspi": 270,
-          "pio_pwm": 95,
-          "pio_spi": 572,
-          "pwm": 76,
-          "resets": 371,
-          "rtc": 448,
-          "spi": 36,
-          "sysinfo": 98,
-          "timer": 277,
-          "uart": 761,
-          "usb": 2484,
-          "watchdog": 129,
-          "xosc": 117
-        },
-        "rp2350": {
-          "chip": 175,
-          "clocks": 1530,
-          "gpio": 1555,
-          "interrupts": 56,
-          "lib": 118,
-          "resets": 400,
-          "spi": 36,
-          "ticks": 174,
-          "timer": 274,
-          "uart": 811,
-          "xosc": 125
-        },
-        "rp2xxx": {
-          "lib": 29,
-          "spi": 638
-        }
-      },
-      "mmio-macro": {
-        "rp2040": {
-          "adc": 240,
-          "chip": 246,
-          "clocks": 1419,
-          "deferred_calls": 33,
-          "dma": 606,
-          "gpio": 727,
-          "i2c": 729,
-          "interrupts": 30,
-          "lib": 109,
-          "mod": 5,
-          "pio": 1947,
-          "pio_gspi": 270,
-          "pio_pwm": 95,
-          "pio_spi": 572,
-          "pwm": 76,
-          "resets": 371,
-          "rtc": 448,
-          "spi": 36,
-          "sysinfo": 98,
-          "timer": 277,
-          "uart": 761,
-          "usb": 2484,
-          "watchdog": 129,
-          "xosc": 117
-        },
-        "rp2350": {
-          "chip": 175,
-          "clocks": 1532,
-          "gpio": 1557,
-          "interrupts": 56,
-          "lib": 118,
-          "resets": 403,
-          "spi": 37,
-          "ticks": 177,
-          "timer": 277,
-          "uart": 813,
-          "xosc": 128
         },
         "rp2xxx": {
           "lib": 29,
@@ -2208,51 +1999,6 @@
           "spi": 638
         }
       },
-      "rp2-uart-abort-fix": {
-        "rp2040": {
-          "adc": 240,
-          "chip": 246,
-          "clocks": 1419,
-          "deferred_calls": 33,
-          "dma": 606,
-          "gpio": 727,
-          "i2c": 729,
-          "interrupts": 30,
-          "lib": 109,
-          "mod": 5,
-          "pio": 1947,
-          "pio_gspi": 270,
-          "pio_pwm": 95,
-          "pio_spi": 572,
-          "pwm": 76,
-          "resets": 371,
-          "rtc": 448,
-          "spi": 36,
-          "sysinfo": 98,
-          "timer": 277,
-          "uart": 770,
-          "usb": 2484,
-          "watchdog": 129,
-          "xosc": 117
-        },
-        "rp2350": {
-          "chip": 175,
-          "clocks": 1530,
-          "gpio": 1555,
-          "interrupts": 56,
-          "lib": 118,
-          "resets": 400,
-          "spi": 36,
-          "ticks": 174,
-          "timer": 274,
-          "uart": 820,
-          "xosc": 125
-        },
-        "rp2xxx": {
-          "lib": 29,
-          "spi": 638
-        }
-      },
       "rp2350-gpio-irq": {
         "rp2040": {
           "adc": 240,
@@ -2337,51 +2083,6 @@
           "timer": 274,
           "uart": 811,
           "xosc": 125
-        },
-        "rp2xxx": {
-          "lib": 29,
-          "spi": 638
-        }
-      },
-      "staticref-checked-addr": {
-        "rp2040": {
-          "adc": 240,
-          "chip": 246,
-          "clocks": 1419,
-          "deferred_calls": 33,
-          "dma": 606,
-          "gpio": 727,
-          "i2c": 729,
-          "interrupts": 30,
-          "lib": 109,
-          "mod": 5,
-          "pio": 1947,
-          "pio_gspi": 270,
-          "pio_pwm": 95,
-          "pio_spi": 572,
-          "pwm": 76,
-          "resets": 371,
-          "rtc": 448,
-          "spi": 36,
-          "sysinfo": 98,
-          "timer": 277,
-          "uart": 761,
-          "usb": 2484,
-          "watchdog": 129,
-          "xosc": 117
-        },
-        "rp2350": {
-          "chip": 175,
-          "clocks": 1527,
-          "gpio": 1552,
-          "interrupts": 56,
-          "lib": 118,
-          "resets": 399,
-          "spi": 34,
-          "ticks": 173,
-          "timer": 273,
-          "uart": 809,
-          "xosc": 124
         },
         "rp2xxx": {
           "lib": 29,
@@ -14429,31 +14130,9 @@
         "doc/syscalls/00011_stepper.md",
         "doc/syscalls/README.md"
       ],
-      "capability-compile-fail": [
-        "kernel/src/utilities/helpers.rs"
-      ],
       "crc-stale-sam4l-docs": [
         "capsules/extra/src/crc.rs",
         "kernel/src/hil/crc.rs"
-      ],
-      "elf-loadable-check": [
-        "Makefile",
-        "tools/ci/check-elf-loadable.py"
-      ],
-      "library-floor-forbid": [
-        "libraries/enum_primitive/src/lib.rs",
-        "libraries/tock-cells/src/lib.rs"
-      ],
-      "mmio-macro": [
-        "chips/rp2350/src/clocks.rs",
-        "chips/rp2350/src/gpio.rs",
-        "chips/rp2350/src/resets.rs",
-        "chips/rp2350/src/spi.rs",
-        "chips/rp2350/src/ticks.rs",
-        "chips/rp2350/src/timer.rs",
-        "chips/rp2350/src/uart.rs",
-        "chips/rp2350/src/xosc.rs",
-        "kernel/src/utilities/static_ref.rs"
       ],
       "pico2w-typed": [
         "Cargo.lock",
@@ -14540,28 +14219,11 @@
         "chips/rp2040/src/pio.rs",
         "chips/rp2040/src/pio_gspi.rs"
       ],
-      "rp2-uart-abort-fix": [
-        "capsules/core/src/virtualizers/virtual_uart.rs",
-        "chips/rp2040/src/uart.rs",
-        "chips/rp2350/src/uart.rs",
-        "chips/sifive/src/uart.rs"
-      ],
       "rp2350-gpio-irq": [
         "chips/rp2350/src/chip.rs"
       ],
       "rp2350-stale-nvic-pending": [
         "boards/raspberry_pi_pico_2/src/main.rs"
-      ],
-      "staticref-checked-addr": [
-        "chips/rp2350/src/clocks.rs",
-        "chips/rp2350/src/gpio.rs",
-        "chips/rp2350/src/resets.rs",
-        "chips/rp2350/src/spi.rs",
-        "chips/rp2350/src/ticks.rs",
-        "chips/rp2350/src/timer.rs",
-        "chips/rp2350/src/uart.rs",
-        "chips/rp2350/src/xosc.rs",
-        "kernel/src/utilities/static_ref.rs"
       ],
       "stepper-capsule": [
         "capsules/core/src/driver.rs",
