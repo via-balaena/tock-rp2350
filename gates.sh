@@ -20,6 +20,7 @@
 #   ./gates.sh claims       just the unreferenced-claim report (advisory)
 #   ./gates.sh drift        just how far main has drifted from upstream
 #   ./gates.sh uart         just the hil::uart conformance test, under qemu
+#   ./gates.sh bench        the conformance tests that need real hardware
 #
 # Exit status is the number of suites that failed, so `&&` chains work.
 
@@ -203,6 +204,19 @@ uart_gate() {
 }
 if [ "$WHICH" = all ] || [ "$WHICH" = uart ]; then
     run "hil::uart conformance — qemu_rv32_virt" uart_gate
+fi
+
+# The conformance tests that need hardware: nothing emulated exposes SPI or
+# GPIO, and the pad-level uart clauses need a wire. NOT part of `all` -- it
+# flashes two boards and takes about a minute, and a bench that is powered off
+# should not fail a routine gate run. Ask for it: ./gates.sh bench
+bench_gate() {
+    runner="$TOCK_MAIN/tools/ci/bench-contracts.sh"
+    [ -x "$runner" ] || { echo "  skip  no runner at $runner"; return 0; }
+    "$runner"
+}
+if [ "$WHICH" = bench ]; then
+    run "hil conformance — Pico 2 W and STM32F3 Discovery" bench_gate
 fi
 
 printf "\n"
