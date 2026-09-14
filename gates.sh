@@ -23,6 +23,7 @@
 #   ./gates.sh parity       just the rp2040/rp2350 paired-block check
 #   ./gates.sh errnames     just the documented-ErrorCode-name check
 #   ./gates.sh abortidle    just the idle-abort contract check
+#   ./gates.sh i2clen       just the i2c transfer-length check
 #   ./gates.sh bench        the conformance tests that need real hardware
 #
 # Exit status is the number of suites that failed, so `&&` chains work.
@@ -266,6 +267,20 @@ abortidle_gate() {
 }
 if [ "$WHICH" = all ] || [ "$WHICH" = abortidle ]; then
     run "uart abort — an idle abort can answer Ok(())" abortidle_gate
+fi
+
+# `hil::i2c` documented no errors at all -- not one method of `I2CMaster`,
+# `I2CSlave` or `I2CDevice` carried a doc comment -- so a length argument and
+# the buffer it indexes were related by nothing. One driver of eleven checked.
+# In most the excess indexes a slice and panics; in nrf52 and sam4l it is
+# programmed into a DMA engine and runs off the end of the buffer.
+i2clen_gate() {
+    runner="$TOCK_MAIN/tools/ci/check-i2c-length-guard.py"
+    [ -x "$runner" ] || { echo "  skip  no runner at $runner"; return 0; }
+    "$runner"
+}
+if [ "$WHICH" = all ] || [ "$WHICH" = i2clen ]; then
+    run "i2c length — every transfer bounds-checks its length" i2clen_gate
 fi
 
 # The conformance tests that need hardware: nothing emulated exposes SPI or
