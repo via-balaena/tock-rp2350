@@ -22,6 +22,7 @@
 #   ./gates.sh uart         the hil::uart conformance test on both qemu boards
 #   ./gates.sh parity       just the rp2040/rp2350 paired-block check
 #   ./gates.sh errnames     just the documented-ErrorCode-name check
+#   ./gates.sh abortidle    just the idle-abort contract check
 #   ./gates.sh bench        the conformance tests that need real hardware
 #
 # Exit status is the number of suites that failed, so `&&` chains work.
@@ -250,6 +251,21 @@ errnames_gate() {
 }
 if [ "$WHICH" = all ] || [ "$WHICH" = errnames ]; then
     run "documented error names — every Err(NAME) resolves" errnames_gate
+fi
+
+# `hil::uart` says an abort with nothing outstanding answers `Ok(())`, and
+# that any `Err` promises a callback. A body that answers `Err` unconditionally
+# breaks both at once: it refuses an idle abort, and the refusal promises a
+# callback nothing will send, so the caller waits for its buffer for the life
+# of the board. Twelve drivers did this, one of them in the same file whose
+# transmit half was already guarded.
+abortidle_gate() {
+    runner="$TOCK_MAIN/tools/ci/check-uart-abort-idle.py"
+    [ -x "$runner" ] || { echo "  skip  no runner at $runner"; return 0; }
+    "$runner"
+}
+if [ "$WHICH" = all ] || [ "$WHICH" = abortidle ]; then
+    run "uart abort — an idle abort can answer Ok(())" abortidle_gate
 fi
 
 # The conformance tests that need hardware: nothing emulated exposes SPI or
