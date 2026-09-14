@@ -24,6 +24,7 @@
 #   ./gates.sh errnames     just the documented-ErrorCode-name check
 #   ./gates.sh abortidle    just the idle-abort contract check
 #   ./gates.sh i2c          just the i2c transfer-contract check
+#   ./gates.sh safety       just the SAFETY:-comment attachment check
 #   ./gates.sh bench        the conformance tests that need real hardware
 #
 # Exit status is the number of suites that failed, so `&&` chains work.
@@ -284,6 +285,20 @@ i2c_gate() {
 }
 if [ "$WHICH" = all ] || [ "$WHICH" = i2c ]; then
     run "i2c transfers — Size, Busy, and no ArbitrationLost" i2c_gate
+fi
+
+# AGENTS.md requires every `unsafe` to carry a comment saying why it is sound.
+# The converse is not written anywhere and turns out to matter: psc3 and
+# psoc62xa used the same form to excuse five `unwrap()`s each, which makes a
+# panic look reviewed -- and because those two drivers are near-identical, it
+# had already been copied once.
+safety_gate() {
+    runner="$TOCK_MAIN/tools/ci/check-safety-comments.py"
+    [ -x "$runner" ] || { echo "  skip  no runner at $runner"; return 0; }
+    "$runner"
+}
+if [ "$WHICH" = all ] || [ "$WHICH" = safety ]; then
+    run "SAFETY: comments — every one sits on unsafe code" safety_gate
 fi
 
 # The conformance tests that need hardware: nothing emulated exposes SPI or
