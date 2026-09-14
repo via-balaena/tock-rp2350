@@ -20,6 +20,7 @@
 #   ./gates.sh claims       just the unreferenced-claim report (advisory)
 #   ./gates.sh drift        just how far main has drifted from upstream
 #   ./gates.sh uart         the hil::uart conformance test on both qemu boards
+#   ./gates.sh flash        the hil::flash conformance test on qemu pflash
 #   ./gates.sh parity       just the rp2040/rp2350 paired-block check
 #   ./gates.sh errnames     just the documented-ErrorCode-name check
 #   ./gates.sh abortidle    just the idle-abort contract check
@@ -204,18 +205,18 @@ TOCK_MAIN="${TOCK_MAIN_TREE:-$HOME/forge/tock-wt/distro}"
 # while q35 hits x86_q35::serial::SerialPort directly -- the driver the audit
 # found panicking on both word methods, guarded by nothing until now.
 uart_gate() {
-    runner="$TOCK_MAIN/tools/ci/uart-contract-qemu.sh"
+    runner="$TOCK_MAIN/tools/ci/contract-qemu.sh"
     [ -x "$runner" ] || { echo "  skip  no runner at $runner"; return 0; }
     rc=0
     # One missing emulator must not hide the other platform, and must not
     # pass as though its clauses had run.
     if command -v qemu-system-riscv32 > /dev/null 2>&1; then
-        "$runner" rv32 || rc=1
+        "$runner" rv32 uart || rc=1
     else
         echo "  skip  qemu-system-riscv32 is not installed, so rv32 went unrun"
     fi
     if command -v qemu-system-i386 > /dev/null 2>&1; then
-        "$runner" q35 || rc=1
+        "$runner" q35 uart || rc=1
     else
         echo "  skip  qemu-system-i386 is not installed, so q35 went unrun"
     fi
@@ -223,6 +224,25 @@ uart_gate() {
 }
 if [ "$WHICH" = all ] || [ "$WHICH" = uart ]; then
     run "hil::uart conformance — qemu, two architectures" uart_gate
+fi
+
+# `hil::flash` has nine implementations and eight of them need silicon. The
+# ninth is QEMU's pflash, and no board had ever instantiated it -- here or
+# upstream -- because the kernel's MMIO PMP window on qemu_rv32_virt ends at
+# 0x20000000, which is the first byte of the pflash bank. So the one
+# implementation an emulator could run was the one nothing ran, and the audit
+# of that HIL had to go to the bench. Wiring it is what makes this gateable.
+flash_gate() {
+    runner="$TOCK_MAIN/tools/ci/contract-qemu.sh"
+    [ -x "$runner" ] || { echo "  skip  no runner at $runner"; return 0; }
+    if command -v qemu-system-riscv32 > /dev/null 2>&1; then
+        "$runner" rv32 flash
+    else
+        echo "  skip  qemu-system-riscv32 is not installed, so flash went unrun"
+    fi
+}
+if [ "$WHICH" = all ] || [ "$WHICH" = flash ]; then
+    run "hil::flash conformance — qemu pflash" flash_gate
 fi
 
 # chips/rp2040 and chips/rp2350 are separate files driving the same PL011. The
