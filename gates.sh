@@ -23,7 +23,7 @@
 #   ./gates.sh parity       just the rp2040/rp2350 paired-block check
 #   ./gates.sh errnames     just the documented-ErrorCode-name check
 #   ./gates.sh abortidle    just the idle-abort contract check
-#   ./gates.sh i2clen       just the i2c transfer-length check
+#   ./gates.sh i2c          just the i2c transfer-contract check
 #   ./gates.sh bench        the conformance tests that need real hardware
 #
 # Exit status is the number of suites that failed, so `&&` chains work.
@@ -270,17 +270,20 @@ if [ "$WHICH" = all ] || [ "$WHICH" = abortidle ]; then
 fi
 
 # `hil::i2c` documented no errors at all -- not one method of `I2CMaster`,
-# `I2CSlave` or `I2CDevice` carried a doc comment -- so a length argument and
-# the buffer it indexes were related by nothing. One driver of eleven checked.
-# In most the excess indexes a slice and panics; in nrf52 and sam4l it is
-# programmed into a DMA engine and runs off the end of the buffer.
-i2clen_gate() {
-    runner="$TOCK_MAIN/tools/ci/check-i2c-length-guard.py"
+# `I2CSlave` or `I2CDevice` carried a doc comment -- so eleven drivers had
+# nothing to diverge from. Three rules of the contract are visible in the
+# source: a length past its buffer is Size (one driver of eleven checked, and
+# on nrf52 and sam4l the excess goes to a DMA engine), a transfer while one is
+# outstanding is Busy (three drivers had no such check anywhere), and
+# ArbitrationLost is a bus event an interrupt reports, not something a call can
+# answer (eleven sites used it to mean busy).
+i2c_gate() {
+    runner="$TOCK_MAIN/tools/ci/check-i2c-transfer-contract.py"
     [ -x "$runner" ] || { echo "  skip  no runner at $runner"; return 0; }
     "$runner"
 }
-if [ "$WHICH" = all ] || [ "$WHICH" = i2clen ]; then
-    run "i2c length — every transfer bounds-checks its length" i2clen_gate
+if [ "$WHICH" = all ] || [ "$WHICH" = i2c ]; then
+    run "i2c transfers — Size, Busy, and no ArbitrationLost" i2c_gate
 fi
 
 # The conformance tests that need hardware: nothing emulated exposes SPI or
