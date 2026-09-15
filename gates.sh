@@ -26,6 +26,7 @@
 #   ./gates.sh abortidle    just the idle-abort contract check
 #   ./gates.sh i2c          just the i2c transfer-contract check
 #   ./gates.sh safety       just the SAFETY:-comment attachment check
+#   ./gates.sh irqroute     just the held-peripheral interrupt-routing check
 #   ./gates.sh bench        the conformance tests that need real hardware
 #
 # Exit status is the number of suites that failed, so `&&` chains work.
@@ -322,6 +323,20 @@ safety_gate() {
 }
 if [ "$WHICH" = all ] || [ "$WHICH" = safety ]; then
     run "SAFETY: comments — every one sits on unsafe code" safety_gate
+fi
+
+# `service_pending_interrupts` panics when `service_interrupt` returns false,
+# and the poll path that feeds it reads ISPR rather than ISER -- so a line the
+# NVIC has disabled still gets there the moment its peripheral asserts it.
+# chips/rp2040 held a `uart1` whose driver sets UARTIMSC::TXIM while UART1_IRQ
+# was routed nowhere; no board uses UART1, so nothing had ever hit it.
+irqroute_gate() {
+    runner="$TOCK_MAIN/tools/ci/check-rp2-interrupt-routing.py"
+    [ -x "$runner" ] || { echo "  skip  no runner at $runner"; return 0; }
+    "$runner"
+}
+if [ "$WHICH" = all ] || [ "$WHICH" = irqroute ]; then
+    run "held peripherals — every interrupt line reaches a handler" irqroute_gate
 fi
 
 # The conformance tests that need hardware: nothing emulated exposes SPI or
