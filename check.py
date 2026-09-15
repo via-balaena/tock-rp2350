@@ -385,14 +385,24 @@ def _check_states(text, where, prs, problems):
 
 
 def check_facts(build, data, problems):
+    # Same rule as check_intent: a branch in a repository this session does
+    # not write is not mine to write an evidence dropdown for. Writing one
+    # would mean authoring a case for work I did not do, which is further
+    # over the line than a one-line intent note.
+    #
+    # FOUR OTHER CHECKS key off these same rows -- check_refs, check_claims,
+    # check_basis and check_queue -- and none of them has been exercised with
+    # a branch in NOT_MINE. They tolerate one today. If one goes red later on
+    # somebody else's branch, this is the reason and the fix is the same.
     _, ready, _ = build.queue_groups(build.queue_rows(data))
     for r in ready:
         key = f"{r['repo']}:{r['branch']}"
-        if key not in build.FACTS:
-            problems.append(
-                f"facts: {key} is finished and unsent with no entry in FACTS, "
-                f"so its evidence dropdown would be empty"
-            )
+        if r["repo"] in NOT_MINE or key in build.FACTS:
+            continue
+        problems.append(
+            f"facts: {key} is finished and unsent with no entry in FACTS, "
+            f"so its evidence dropdown would be empty"
+        )
 
 
 

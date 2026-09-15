@@ -911,8 +911,25 @@
         "unpushed": 0
       },
       "main": {
-        "ahead": 190,
+        "ahead": 207,
         "commits": [
+          "screen: BUSY means wait on the way out too",
+          "screen: queue a BUSY command, do not drop it",
+          "virtual_pwm: serve every user, not just one",
+          "ci: a held peripheral must reach a handler",
+          "rp2040: route UART1_IRQ",
+          "make: fail loudly on FEATURES=",
+          "pulse_counter: count edges, and mux the pads",
+          "throttle: a capsule that owns a vehicle output",
+          "pwm: reclaim a pin from a process that died",
+          "pico 2: turn the watchdog on, and prove it",
+          "rp2350: a watchdog, and the tick it counts on",
+          "rp2350: a driver for the chip's hardware TRNG",
+          "rp2: repair four run-together doc comments",
+          "kernel: say so when a process fails to load",
+          "rp2: warn on the peripherals nothing routes",
+          "ci: let the i2c scan see a wrapped impl header",
+          "rp2xxx: eleven other pio sources, not seven",
           "rp2xxx: hand each driver its interrupt line",
           "rp2350: name the register the uart note means",
           "ci: find the bench consoles by USB id",
@@ -1104,7 +1121,7 @@
           "chips: rp2350: gpio: add the pad controls the RP2040 has",
           "chips: rp2040: pio: retire the examples module"
         ],
-        "stat": "189 files changed, 16533 insertions(+), 4096 deletions(-)",
+        "stat": "199 files changed, 18288 insertions(+), 4180 deletions(-)",
         "base": "upstream/master",
         "base_sha": "a7b14ffaf",
         "behind": 0,
@@ -1289,8 +1306,11 @@
         "unpushed": 0
       },
       "doom/frame-probe": {
-        "ahead": 80,
+        "ahead": 83,
         "commits": [
+          "doom: derive -kb from ZONE_KIB, and size the zone from what is free",
+          "doom: spend the spare RAM on the zone",
+          "make: install elf2tab from main, not master",
           "Format doom.rs, which had never been run through rustfmt",
           "Say what the doom feature does to the binary's license",
           "Doom: fill the panel, and find where the frame time goes",
@@ -1372,7 +1392,7 @@
           "alarm: add a Future-returning sleep and a block_on executor",
           "Add the Raspberry Pi Pico 2 as a build platform"
         ],
-        "stat": "69 files changed, 10569 insertions(+), 59 deletions(-)",
+        "stat": "69 files changed, 10630 insertions(+), 59 deletions(-)",
         "base": "upstream/master",
         "base_sha": "469d9a037",
         "behind": 2,
@@ -1456,8 +1476,29 @@
         "unpushed": 0
       },
       "main": {
-        "ahead": 89,
+        "ahead": 110,
         "commits": [
+          "screen_jostle: make the dangerous bound a build error",
+          "screen_jostle: make the wait explicit, and bound it at both ends",
+          "examples: the two-app screen test, and what it nearly hid",
+          "platforms: a co-resident pair for the Pico 2 W",
+          "gitignore: demo lockfiles are two deep as well as one",
+          "embedded_graphics: a refused pixel format is not a detail to discard",
+          "screen: report what the operation did, and wait when it is asynchronous",
+          "examples: call the screen once, and stop loudly on BUSY",
+          "examples: the screen readiness gap is the kernel's now",
+          "examples: a centring throttle, and name the wire",
+          "examples: a PWM contention test, and the band",
+          "examples: report both stick axes, not one",
+          "examples: log the throttle-to-wheel transfer",
+          "examples: wait for the screen before clearing",
+          "examples: run the dash, and make it say so",
+          "examples: rustfmt the four that missed it",
+          "examples: an ECU dash that closes the loop",
+          "examples: wheel_probe and throttle_wire",
+          "examples: the ECU throttle app and its probe",
+          "examples: two apps that test pwm pin reclaim",
+          "make: install elf2tab from main, not master",
           "Make the merged tree pass its own gate",
           "Merge remote-tracking branch 'origin/bench/reclaim-leak'",
           "Merge remote-tracking branch 'origin/async/alarm'",
@@ -1548,7 +1589,7 @@
           "examples: add SPI loopback and an output-walk probe",
           "examples: add Pico Breadboard Kit blink and pin probe"
         ],
-        "stat": "74 files changed, 10910 insertions(+), 59 deletions(-)",
+        "stat": "91 files changed, 12531 insertions(+), 120 deletions(-)",
         "base": "upstream/master",
         "base_sha": "b7f17591e",
         "behind": 0,
@@ -1592,6 +1633,19 @@
         "base": "upstream/master",
         "base_sha": "469d9a037",
         "behind": 2,
+        "pushed": true,
+        "on_remote": true,
+        "unpushed": 0
+      },
+      "screen-completion": {
+        "ahead": 1,
+        "commits": [
+          "screen: report what the operation did, and wait when it is asynchronous"
+        ],
+        "stat": "3 files changed, 121 insertions(+), 57 deletions(-)",
+        "base": "upstream/master",
+        "base_sha": "b7f17591e",
+        "behind": 0,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
