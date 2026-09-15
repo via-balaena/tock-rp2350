@@ -640,9 +640,13 @@ MODULE_BLOCK = {
 # Where a block is covered but not well. Each names the defect or the branch
 # that answers it, and `refs` checks any "#1234" inside one resolves.
 BLOCK_CAVEAT = {
-    "IO_BANK0": ("Pins work; pin interrupts panic the kernel. IO_IRQ_BANK0 is "
-                 "defined on the RP2350 and routed nowhere, so a legal syscall "
-                 "brings the board down. Four lines on rp2350-gpio-irq.", "rp2350-gpio-irq"),
+    "IO_BANK0": ("Fixed in this fork, still broken upstream, where "
+                 "IO_IRQ_BANK0 is defined and routed nowhere and a legal "
+                 "syscall brings the board down. Here it reaches "
+                 "RPPins::handle_interrupt (3ef4818dd) and arms its own NVIC "
+                 "line (b9039819b), so a pin interrupt wakes the kernel out of "
+                 "wfi instead of waiting for an unrelated one \u2014 proven "
+                 "both ways on a Pico 2 W by driving the edge over SWD.", "main"),
     "PIO": ("Five defects, all with fixes proposed in #5157. Four were found "
             "by the driver's first host tests; the fifth came out of a security "
             "pass and is the one demonstrated on silicon \u2014 a block interrupt "
