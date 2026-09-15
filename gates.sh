@@ -198,7 +198,10 @@ fi
 # The runner's own exit codes matter: 1 is a broken clause, 2 is a test that
 # said nothing at all. The second is the one worth having, because a stalled
 # conformance test and a passing one look identical from a distance.
-TOCK_MAIN="${TOCK_MAIN_TREE:-$HOME/forge/tock-wt/distro}"
+# `main` lives in the primary checkout since 2026-09-14, not in a worktree --
+# tock-wt/ is gone. Left overridable because the tree it names must be ON main,
+# and a checkout parked on a feature branch would run the wrong kernel here.
+TOCK_MAIN="${TOCK_MAIN_TREE:-$HOME/forge/tock}"
 #
 # TWO platforms since 2026-09-13, and they are not redundant: rv32 runs the
 # test on a UartDevice from the console's mux, so it covers the VIRTUALIZER,
