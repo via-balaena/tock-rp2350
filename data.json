@@ -911,8 +911,10 @@
         "unpushed": 0
       },
       "main": {
-        "ahead": 188,
+        "ahead": 190,
         "commits": [
+          "rp2xxx: hand each driver its interrupt line",
+          "rp2350: name the register the uart note means",
           "ci: find the bench consoles by USB id",
           "pico 2: probe whether a GPIO edge wakes us",
           "rp2350: arm the NVIC line with the source",
@@ -1102,13 +1104,13 @@
           "chips: rp2350: gpio: add the pad controls the RP2040 has",
           "chips: rp2040: pio: retire the examples module"
         ],
-        "stat": "184 files changed, 16269 insertions(+), 4084 deletions(-)",
+        "stat": "189 files changed, 16533 insertions(+), 4096 deletions(-)",
         "base": "upstream/master",
         "base_sha": "a7b14ffaf",
         "behind": 0,
-        "pushed": false,
+        "pushed": true,
         "on_remote": true,
-        "unpushed": 4
+        "unpushed": 0
       },
       "master": {
         "ahead": 0,
