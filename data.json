@@ -916,8 +916,9 @@
         "unpushed": 0
       },
       "main": {
-        "ahead": 223,
+        "ahead": 224,
         "commits": [
+          "adc: the contract test ran against a dead ADC",
           "rp2xxx: mask the ADC interrupt before returning",
           "rp2xxx: give the ADC a working stop_sampling",
           "screen_on_led: fit the geometry at build time",
@@ -1142,7 +1143,7 @@
           "chips: rp2350: gpio: add the pad controls the RP2040 has",
           "chips: rp2040: pio: retire the examples module"
         ],
-        "stat": "213 files changed, 20460 insertions(+), 4303 deletions(-)",
+        "stat": "213 files changed, 20529 insertions(+), 4303 deletions(-)",
         "base": "upstream/master",
         "base_sha": "a7b14ffaf",
         "behind": 8,
