@@ -630,7 +630,7 @@
         "stat": "3 files changed, 190 insertions(+), 1 deletion(-)",
         "base": "upstream/master",
         "base_sha": "0cc36ca6c",
-        "behind": 6,
+        "behind": 8,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -665,7 +665,7 @@
         "stat": "46 files changed, 5446 insertions(+), 2771 deletions(-)",
         "base": "upstream/master",
         "base_sha": "0cc36ca6c",
-        "behind": 6,
+        "behind": 8,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -692,7 +692,7 @@
         "stat": "45 files changed, 4513 insertions(+), 2569 deletions(-)",
         "base": "upstream/master",
         "base_sha": "0cc36ca6c",
-        "behind": 6,
+        "behind": 8,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -705,7 +705,7 @@
         "stat": "2 files changed, 35 insertions(+), 9 deletions(-)",
         "base": "upstream/master",
         "base_sha": "b3234a172",
-        "behind": 3657,
+        "behind": 3659,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -905,14 +905,21 @@
         "stat": "48 files changed, 4913 insertions(+), 3812 deletions(-)",
         "base": "upstream/master",
         "base_sha": "8e7431d08",
-        "behind": 124,
+        "behind": 126,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
       },
       "main": {
-        "ahead": 214,
+        "ahead": 221,
         "commits": [
+          "screen_on_led: fit the geometry at build time",
+          "st77xx: check the frame before subtracting",
+          "screen: a paged panel needs a page-aligned frame",
+          "screen: pin the mono_vlsb adapter's refusal paths",
+          "screen: a refused write returns the buffer",
+          "screen: paged OLED drivers must check the frame",
+          "tools: emit a padding TBF for a fixed app slot",
           "screen: BUSY obliges a later callback",
           "screen: fill by doubling, not byte by byte",
           "pico2: 12800 is a chunk size, not a limit",
@@ -1128,10 +1135,10 @@
           "chips: rp2350: gpio: add the pad controls the RP2040 has",
           "chips: rp2040: pio: retire the examples module"
         ],
-        "stat": "200 files changed, 18693 insertions(+), 4201 deletions(-)",
+        "stat": "212 files changed, 20183 insertions(+), 4303 deletions(-)",
         "base": "upstream/master",
         "base_sha": "a7b14ffaf",
-        "behind": 4,
+        "behind": 6,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1142,7 +1149,7 @@
         "stat": "",
         "base": "upstream/master",
         "base_sha": "a7b14ffaf",
-        "behind": 4,
+        "behind": 6,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1170,7 +1177,7 @@
         "stat": "39 files changed, 4252 insertions(+), 3175 deletions(-)",
         "base": "upstream/master",
         "base_sha": "0cc36ca6c",
-        "behind": 6,
+        "behind": 8,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1193,7 +1200,7 @@
         "stat": "38 files changed, 4423 insertions(+), 2550 deletions(-)",
         "base": "upstream/master",
         "base_sha": "0cc36ca6c",
-        "behind": 6,
+        "behind": 8,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1208,7 +1215,7 @@
         "stat": "8 files changed, 431 insertions(+), 238 deletions(-)",
         "base": "upstream/master",
         "base_sha": "0cc36ca6c",
-        "behind": 6,
+        "behind": 8,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1221,7 +1228,7 @@
         "stat": "4 files changed, 13 insertions(+)",
         "base": "upstream/master",
         "base_sha": "0cc36ca6c",
-        "behind": 6,
+        "behind": 8,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1235,7 +1242,7 @@
         "stat": "4 files changed, 51 insertions(+), 19 deletions(-)",
         "base": "upstream/master",
         "base_sha": "0cc36ca6c",
-        "behind": 6,
+        "behind": 8,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1248,7 +1255,7 @@
         "stat": "4 files changed, 136 insertions(+), 280 deletions(-)",
         "base": "upstream/master",
         "base_sha": "0cc36ca6c",
-        "behind": 6,
+        "behind": 8,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1265,7 +1272,7 @@
         "stat": "4 files changed, 502 insertions(+), 263 deletions(-)",
         "base": "upstream/master",
         "base_sha": "0cc36ca6c",
-        "behind": 6,
+        "behind": 8,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1278,7 +1285,7 @@
         "stat": "1 file changed, 38 insertions(+), 4 deletions(-)",
         "base": "upstream/master",
         "base_sha": "0cc36ca6c",
-        "behind": 6,
+        "behind": 8,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1509,8 +1516,14 @@
         "unpushed": 0
       },
       "main": {
-        "ahead": 124,
+        "ahead": 130,
         "commits": [
+          "screen: page-align the demo squares, for ssd1306 and sh1106",
+          "screen_busy, screen_bench: a full-screen fill is 54 ms, not 40",
+          "screen_busy: can a userspace write ever meet a busy driver?",
+          "screen_first_draw: clock the two calls apart, before printing",
+          "screen_first_draw: does a refused write kill the driver for good?",
+          "platforms: double the jitter slot pitch to 0x4000",
           "manual_dash: a refused shift no longer ejects you from gear",
           "manual_dash: the clutch takes time to bite",
           "manual_dash: lifting off is the clutch, so it cannot also be a stall",
@@ -1636,7 +1649,7 @@
           "examples: add SPI loopback and an output-walk probe",
           "examples: add Pico Breadboard Kit blink and pin probe"
         ],
-        "stat": "95 files changed, 13864 insertions(+), 122 deletions(-)",
+        "stat": "99 files changed, 14947 insertions(+), 127 deletions(-)",
         "base": "upstream/master",
         "base_sha": "b7f17591e",
         "behind": 0,
@@ -1767,7 +1780,7 @@
     "ok": true,
     "upstream_ref": "upstream/master",
     "fork_ref": "bench/stepper-pico2w",
-    "head": "e4c754d3f",
+    "head": "ded69cbb4",
     "resets": {
       "rp2040": {
         "USBCTRL": 24,
