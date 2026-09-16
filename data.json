@@ -916,8 +916,10 @@
         "unpushed": 0
       },
       "main": {
-        "ahead": 224,
+        "ahead": 226,
         "commits": [
+          "stm32f303xc: stopping an idle ADC is not BUSY",
+          "adc: enumerate the errors the HIL never named",
           "adc: the contract test ran against a dead ADC",
           "rp2xxx: mask the ADC interrupt before returning",
           "rp2xxx: give the ADC a working stop_sampling",
@@ -1143,7 +1145,7 @@
           "chips: rp2350: gpio: add the pad controls the RP2040 has",
           "chips: rp2040: pio: retire the examples module"
         ],
-        "stat": "213 files changed, 20529 insertions(+), 4303 deletions(-)",
+        "stat": "215 files changed, 20682 insertions(+), 4310 deletions(-)",
         "base": "upstream/master",
         "base_sha": "a7b14ffaf",
         "behind": 8,
