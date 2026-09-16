@@ -391,9 +391,17 @@ def check_facts(build, data, problems):
     # over the line than a one-line intent note.
     #
     # FOUR OTHER CHECKS key off these same rows -- check_refs, check_claims,
-    # check_basis and check_queue -- and none of them has been exercised with
-    # a branch in NOT_MINE. They tolerate one today. If one goes red later on
-    # somebody else's branch, this is the reason and the fix is the same.
+    # check_basis and check_queue -- and the worry recorded here was that one
+    # would go red the next time the other session cut a branch, for a reason
+    # that was nobody's defect. ANSWERED, and without waiting for a branch:
+    # test-not-mine.py injects one of theirs and breaks each of the four on it.
+    # The exemption does not leak, and the four divide three ways. check_refs
+    # and check_claims read prose that lives only in an INTENT entry, so a
+    # branch without one hands them nothing to be wrong about. check_queue does
+    # see it -- drawn as a card and listed below the queue -- and agrees, as
+    # long as the page has been rebuilt since. check_basis never consulted
+    # INTENT at all and already judges all ten of their branches today. So a
+    # red on one of theirs is a real finding, not this.
     _, ready, _ = build.queue_groups(build.queue_rows(data))
     for r in ready:
         key = f"{r['repo']}:{r['branch']}"

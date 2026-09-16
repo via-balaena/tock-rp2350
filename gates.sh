@@ -50,6 +50,12 @@ run() {  # run <name> <command...>
 
 if [ "$WHICH" = all ] || [ "$WHICH" = site ]; then
     run "oracle page and findings — check.py" ./check.py $OFFLINE
+    # NOT_MINE lets check_intent and check_facts tolerate a branch in a
+    # repository this session does not write. Four other checks read the same
+    # rows, and whether the exemption leaks into them is a property of check.py
+    # that no run of check.py can show -- it is green either way. This breaks
+    # each of the four on purpose, on a branch of theirs.
+    run "the NOT_MINE exemption — test-not-mine.py" ./test-not-mine.py
 fi
 
 if [ "$WHICH" = all ] || [ "$WHICH" = learning ]; then
