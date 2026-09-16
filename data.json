@@ -1,5 +1,5 @@
 {
-  "fetched": "2026-09-15",
+  "fetched": "2026-09-16",
   "prs": [
     {
       "additions": 1,
@@ -630,7 +630,7 @@
         "stat": "3 files changed, 190 insertions(+), 1 deletion(-)",
         "base": "upstream/master",
         "base_sha": "0cc36ca6c",
-        "behind": 2,
+        "behind": 6,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -665,7 +665,7 @@
         "stat": "46 files changed, 5446 insertions(+), 2771 deletions(-)",
         "base": "upstream/master",
         "base_sha": "0cc36ca6c",
-        "behind": 2,
+        "behind": 6,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -692,7 +692,7 @@
         "stat": "45 files changed, 4513 insertions(+), 2569 deletions(-)",
         "base": "upstream/master",
         "base_sha": "0cc36ca6c",
-        "behind": 2,
+        "behind": 6,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -705,7 +705,7 @@
         "stat": "2 files changed, 35 insertions(+), 9 deletions(-)",
         "base": "upstream/master",
         "base_sha": "b3234a172",
-        "behind": 3653,
+        "behind": 3657,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -905,14 +905,21 @@
         "stat": "48 files changed, 4913 insertions(+), 3812 deletions(-)",
         "base": "upstream/master",
         "base_sha": "8e7431d08",
-        "behind": 120,
+        "behind": 124,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
       },
       "main": {
-        "ahead": 207,
+        "ahead": 214,
         "commits": [
+          "screen: BUSY obliges a later callback",
+          "screen: fill by doubling, not byte by byte",
+          "pico2: 12800 is a chunk size, not a limit",
+          "pico2: name which round_robin.rs",
+          "pico2: measure how late a periodic alarm fires",
+          "screen: decide NOSUPPORT before BUSY",
+          "screen: say where a queued error comes back",
           "screen: BUSY means wait on the way out too",
           "screen: queue a BUSY command, do not drop it",
           "virtual_pwm: serve every user, not just one",
@@ -1121,10 +1128,10 @@
           "chips: rp2350: gpio: add the pad controls the RP2040 has",
           "chips: rp2040: pio: retire the examples module"
         ],
-        "stat": "199 files changed, 18288 insertions(+), 4180 deletions(-)",
+        "stat": "200 files changed, 18693 insertions(+), 4201 deletions(-)",
         "base": "upstream/master",
         "base_sha": "a7b14ffaf",
-        "behind": 0,
+        "behind": 4,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1135,7 +1142,7 @@
         "stat": "",
         "base": "upstream/master",
         "base_sha": "a7b14ffaf",
-        "behind": 0,
+        "behind": 4,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1163,7 +1170,7 @@
         "stat": "39 files changed, 4252 insertions(+), 3175 deletions(-)",
         "base": "upstream/master",
         "base_sha": "0cc36ca6c",
-        "behind": 2,
+        "behind": 6,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1186,7 +1193,7 @@
         "stat": "38 files changed, 4423 insertions(+), 2550 deletions(-)",
         "base": "upstream/master",
         "base_sha": "0cc36ca6c",
-        "behind": 2,
+        "behind": 6,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1201,7 +1208,7 @@
         "stat": "8 files changed, 431 insertions(+), 238 deletions(-)",
         "base": "upstream/master",
         "base_sha": "0cc36ca6c",
-        "behind": 2,
+        "behind": 6,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1214,7 +1221,7 @@
         "stat": "4 files changed, 13 insertions(+)",
         "base": "upstream/master",
         "base_sha": "0cc36ca6c",
-        "behind": 2,
+        "behind": 6,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1228,7 +1235,7 @@
         "stat": "4 files changed, 51 insertions(+), 19 deletions(-)",
         "base": "upstream/master",
         "base_sha": "0cc36ca6c",
-        "behind": 2,
+        "behind": 6,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1241,7 +1248,7 @@
         "stat": "4 files changed, 136 insertions(+), 280 deletions(-)",
         "base": "upstream/master",
         "base_sha": "0cc36ca6c",
-        "behind": 2,
+        "behind": 6,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1258,7 +1265,7 @@
         "stat": "4 files changed, 502 insertions(+), 263 deletions(-)",
         "base": "upstream/master",
         "base_sha": "0cc36ca6c",
-        "behind": 2,
+        "behind": 6,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1271,13 +1278,26 @@
         "stat": "1 file changed, 38 insertions(+), 4 deletions(-)",
         "base": "upstream/master",
         "base_sha": "0cc36ca6c",
-        "behind": 2,
+        "behind": 6,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
       }
     },
     "libtock-rs": {
+      "adapter-pixel-format": {
+        "ahead": 1,
+        "commits": [
+          "embedded_graphics: judge the screen by the format it reports"
+        ],
+        "stat": "1 file changed, 58 insertions(+), 6 deletions(-)",
+        "base": "upstream/master",
+        "base_sha": "b7f17591e",
+        "behind": 0,
+        "pushed": true,
+        "on_remote": true,
+        "unpushed": 0
+      },
       "async/alarm": {
         "ahead": 15,
         "commits": [
@@ -1400,6 +1420,19 @@
         "on_remote": true,
         "unpushed": 0
       },
+      "gitignore-demo-locks": {
+        "ahead": 1,
+        "commits": [
+          "gitignore: demo lockfiles are two deep as well as one"
+        ],
+        "stat": "1 file changed, 1 insertion(+)",
+        "base": "upstream/master",
+        "base_sha": "b7f17591e",
+        "behind": 0,
+        "pushed": true,
+        "on_remote": true,
+        "unpushed": 0
+      },
       "hw/pico2w-async": {
         "ahead": 63,
         "commits": [
@@ -1476,8 +1509,22 @@
         "unpushed": 0
       },
       "main": {
-        "ahead": 110,
+        "ahead": 124,
         "commits": [
+          "manual_dash: a refused shift no longer ejects you from gear",
+          "manual_dash: the clutch takes time to bite",
+          "manual_dash: lifting off is the clutch, so it cannot also be a stall",
+          "manual_dash: a clutch, and the stall that fired on every gear selection",
+          "manual_dash: the sentinels were lying about what was on the glass",
+          "manual_dash: engine inertia, and account for every draw call",
+          "manual_dash: measure the timestep instead of assuming it",
+          "manual_dash: a continuous tach, because the benchmark said so",
+          "examples: a panel benchmark, and a gearbox you drive by lifting off",
+          "platforms: a co-resident pair for the jitter measurement",
+          "examples: measure scheduler jitter from userspace, and contend for it",
+          "embedded_graphics: MONO_FORMATS spans a pin, not a fork",
+          "embedded_graphics: judge the screen by the format it reports",
+          "embedded_graphics: a stored BUSY is not a refusal",
           "screen_jostle: make the dangerous bound a build error",
           "screen_jostle: make the wait explicit, and bound it at both ends",
           "examples: the two-app screen test, and what it nearly hid",
@@ -1589,7 +1636,7 @@
           "examples: add SPI loopback and an output-walk probe",
           "examples: add Pico Breadboard Kit blink and pin probe"
         ],
-        "stat": "91 files changed, 12531 insertions(+), 120 deletions(-)",
+        "stat": "95 files changed, 13864 insertions(+), 122 deletions(-)",
         "base": "upstream/master",
         "base_sha": "b7f17591e",
         "behind": 0,
@@ -1720,7 +1767,7 @@
     "ok": true,
     "upstream_ref": "upstream/master",
     "fork_ref": "bench/stepper-pico2w",
-    "head": "a7b14ffaf",
+    "head": "e4c754d3f",
     "resets": {
       "rp2040": {
         "USBCTRL": 24,
