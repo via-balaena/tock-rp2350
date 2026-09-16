@@ -401,7 +401,7 @@
         "chips/rp2040/src/pio.rs",
         "chips/rp2040/src/pio_gspi.rs"
       ],
-      "thread": "### Pull Request Overview\r\n\r\nFive PIO driver defects, none affecting in-tree callers today: `set_fifo_join` could never join RX FIFO and couldn't undo a join; `add_program` panicked above 16 instructions and on odd byte counts; three of four PIO interrupt lines were never dispatched; block IRQ flags went to the wrong client and could hang the kernel. Fixes all five; defect 5 (block IRQ flags) is the one to review.\r\n\r\n<details>\r\n<summary>AI-generated measurement data</summary>\r\n\r\nhttps://via-balaena.github.io/tock-rp2350/findings/5157/\r\n\r\n</details>\r\n\r\n### Testing Strategy\r\n\r\nSilicon A/B on defect 5 (Pico 2 W): SM1 raises irq 0, client registered on both SM0 and SM1.\r\n- unfixed: client on SM0 was called\r\n- fixed: block client called, flags=0b0001; board kept running and answered status (unfixed variant hung after two characters)\r\n\r\n19 host tests, all passing, 0.00s, in ci-job-chips. Miri clean under strict-provenance and tree-borrows.\r\n\r\nText unchanged, bss -48 bytes on all four RP2040 boards (pico 16528\u219216480, pico_w 20724\u219220676, explorer 72668\u219272620, nano 14368\u219214320).\r\n\r\n### TODO or Help Wanted\r\n\r\nThis PR is tier 1 of #5152.\r\n\r\nNo RP2040 hardware here. Nothing ran on the chip the driver is named for. The gSPI path is the only in-tree PIO user and its client registration moved from per-state-machine to per-block. Could someone with a Pico W exercise it?\r\n\r\nAlso worth flagging to reviewers: #5126 deletes `mod examples` (273 lines) from the end of pio.rs while this adds `mod tests` (262 lines). Taking the deletion drops all 19 tests while build, clippy and all four boards still pass. Only `cargo test` reporting 0 passed reveals it.\r\n\r\n### Checklist\r\n\r\n- [x] Ran `make prepush`.\r\n\r\n### PR Contents\r\n\r\n#### Documentation\r\n\r\n- [ ] Updated the relevant files in `/docs` and the [Book](https://github.com/tock/book).\r\n- [x] No documentation updates are required.\r\n\r\n#### AI Use\r\n\r\n- [ ] No AI was used in this PR.\r\n- [x] AI was used in this PR. I have read [Tock's AI policy](https://github.com/tock/tock/blob/master/.github/CONTRIBUTING.md#ai-policy) and have properly disclosed my AI use below. This PR comment, and any subsequent PR interactions must not be generated using AI, except for under a `<details>` drawer.\r\n\r\nCode written with Claude Opus 5\r\n"
+      "thread": "### Pull Request Overview\r\n\r\nFive PIO driver defects, none affecting in-tree callers today: `set_fifo_join` could never join RX FIFO and couldn't undo a join; `add_program` panicked above 16 instructions and on odd byte counts; three of four PIO interrupt lines were never dispatched; block IRQ flags went to the wrong client and could hang the kernel. Fixes all five; defect 5 (block IRQ flags) is the one to review.\r\n\r\n<details>\r\n<summary>AI-generated measurement data</summary>\r\n\r\nhttps://via-balaena.github.io/tock-rp2350/findings/5157/\r\n\r\n</details>\r\n\r\n### Testing Strategy\r\n\r\nSilicon A/B on defect 5 (Pico 2 W): SM1 raises irq 0, client registered on both SM0 and SM1.\r\n- unfixed: client on SM0 was called\r\n- fixed: block client called, flags=0b0001; board kept running and answered status (unfixed variant hung after two characters)\r\n\r\n19 host tests, all passing, 0.00s, in ci-job-chips. Miri clean under strict-provenance and tree-borrows.\r\n\r\nText unchanged, bss -48 bytes on all four RP2040 boards (pico 16528\u219216480, pico_w 20724\u219220676, explorer 72668\u219272620, nano 14368\u219214320).\r\n\r\n### TODO or Help Wanted\r\n\r\nThis PR is tier 1 of #5152.\r\n\r\nNo RP2040 hardware here. Nothing ran on the chip the driver is named for. The gSPI path is the only in-tree PIO user and its client registration moved from per-state-machine to per-block. Could someone with a Pico W exercise it?\r\n\r\nAlso worth flagging to reviewers: #5126 deletes `mod examples` (273 lines) from the end of pio.rs while this adds `mod tests` (262 lines). Taking the deletion drops all 19 tests while build, clippy and all four boards still pass. Only `cargo test` reporting 0 passed reveals it.\r\n\r\n### Checklist\r\n\r\n- [x] Ran `make prepush`.\r\n\r\n### PR Contents\r\n\r\n#### Documentation\r\n\r\n- [ ] Updated the relevant files in `/docs` and the [Book](https://github.com/tock/book).\r\n- [x] No documentation updates are required.\r\n\r\n#### AI Use\r\n\r\n- [ ] No AI was used in this PR.\r\n- [x] AI was used in this PR. I have read [Tock's AI policy](https://github.com/tock/tock/blob/master/.github/CONTRIBUTING.md#ai-policy) and have properly disclosed my AI use below. This PR comment, and any subsequent PR interactions must not be generated using AI, except for under a `<details>` drawer.\r\n\r\nCode written with Claude Opus 5\r\n \u241f > Silicon A/B on defect 5 (Pico 2 W): SM1 raises irq 0, client registered on both SM0 and SM1.\r\n\r\nIs this a typo? The PR only touches the RP2040 and Pico W, but the Pico 2 W is based on the RP2350."
     },
     {
       "additions": 7,
@@ -564,7 +564,12 @@
         "name": "Jon H"
       },
       "body": "### Pull Request Overview\r\n\r\nFive PIO driver defects, none affecting in-tree callers today: `set_fifo_join` could never join RX FIFO and couldn't undo a join; `add_program` panicked above 16 instructions and on odd byte counts; three of four PIO interrupt lines were never dispatched; block IRQ flags went to the wrong client and could hang the kernel. Fixes all five; defect 5 (block IRQ flags) is the one to review.\r\n\r\n<details>\r\n<summary>AI-generated measurement data</summary>\r\n\r\nhttps://via-balaena.github.io/tock-rp2350/findings/5157/\r\n\r\n</details>\r\n\r\n### Testing Strategy\r\n\r\nSilicon A/B on defect 5 (Pico 2 W): SM1 raises irq 0, client registered on both SM0 and SM1.\r\n- unfixed: client on SM0 was called\r\n- fixed: block client called, flags=0b0001; board kept running and answered status (unfixed variant hung after two characters)\r\n\r\n19 host tests, all passing, 0.00s, in ci-job-chips. Miri clean under strict-provenance and tree-borrows.\r\n\r\nText unchanged, bss -48 bytes on all four RP2040 boards (pico 16528\u219216480, pico_w 20724\u219220676, explorer 72668\u219272620, nano 14368\u219214320).\r\n\r\n### TODO or Help Wanted\r\n\r\nThis PR is tier 1 of #5152.\r\n\r\nNo RP2040 hardware here. Nothing ran on the chip the driver is named for. The gSPI path is the only in-tree PIO user and its client registration moved from per-state-machine to per-block. Could someone with a Pico W exercise it?\r\n\r\nAlso worth flagging to reviewers: #5126 deletes `mod examples` (273 lines) from the end of pio.rs while this adds `mod tests` (262 lines). Taking the deletion drops all 19 tests while build, clippy and all four boards still pass. Only `cargo test` reporting 0 passed reveals it.\r\n\r\n### Checklist\r\n\r\n- [x] Ran `make prepush`.\r\n\r\n### PR Contents\r\n\r\n#### Documentation\r\n\r\n- [ ] Updated the relevant files in `/docs` and the [Book](https://github.com/tock/book).\r\n- [x] No documentation updates are required.\r\n\r\n#### AI Use\r\n\r\n- [ ] No AI was used in this PR.\r\n- [x] AI was used in this PR. I have read [Tock's AI policy](https://github.com/tock/tock/blob/master/.github/CONTRIBUTING.md#ai-policy) and have properly disclosed my AI use below. This PR comment, and any subsequent PR interactions must not be generated using AI, except for under a `<details>` drawer.\r\n\r\nCode written with Claude Opus 5\r\n",
-      "comments": [],
+      "comments": [
+        {
+          "author": "jrvanwhy",
+          "body": "> Silicon A/B on defect 5 (Pico 2 W): SM1 raises irq 0, client registered on both SM0 and SM1.\r\n\r\nIs this a typo? The PR only touches the RP2040 and Pico W, but the Pico 2 W is based on the RP2350."
+        }
+      ],
       "createdAt": "2026-09-08T18:44:11Z",
       "number": 5157,
       "state": "OPEN",
@@ -630,7 +635,7 @@
         "stat": "3 files changed, 190 insertions(+), 1 deletion(-)",
         "base": "upstream/master",
         "base_sha": "0cc36ca6c",
-        "behind": 8,
+        "behind": 10,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -665,7 +670,7 @@
         "stat": "46 files changed, 5446 insertions(+), 2771 deletions(-)",
         "base": "upstream/master",
         "base_sha": "0cc36ca6c",
-        "behind": 8,
+        "behind": 10,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -692,7 +697,7 @@
         "stat": "45 files changed, 4513 insertions(+), 2569 deletions(-)",
         "base": "upstream/master",
         "base_sha": "0cc36ca6c",
-        "behind": 8,
+        "behind": 10,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -705,7 +710,7 @@
         "stat": "2 files changed, 35 insertions(+), 9 deletions(-)",
         "base": "upstream/master",
         "base_sha": "b3234a172",
-        "behind": 3659,
+        "behind": 3661,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -905,14 +910,15 @@
         "stat": "48 files changed, 4913 insertions(+), 3812 deletions(-)",
         "base": "upstream/master",
         "base_sha": "8e7431d08",
-        "behind": 126,
+        "behind": 128,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
       },
       "main": {
-        "ahead": 221,
+        "ahead": 222,
         "commits": [
+          "rp2xxx: give the ADC a working stop_sampling",
           "screen_on_led: fit the geometry at build time",
           "st77xx: check the frame before subtracting",
           "screen: a paged panel needs a page-aligned frame",
@@ -1135,10 +1141,10 @@
           "chips: rp2350: gpio: add the pad controls the RP2040 has",
           "chips: rp2040: pio: retire the examples module"
         ],
-        "stat": "212 files changed, 20183 insertions(+), 4303 deletions(-)",
+        "stat": "213 files changed, 20435 insertions(+), 4303 deletions(-)",
         "base": "upstream/master",
         "base_sha": "a7b14ffaf",
-        "behind": 6,
+        "behind": 8,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1149,7 +1155,7 @@
         "stat": "",
         "base": "upstream/master",
         "base_sha": "a7b14ffaf",
-        "behind": 6,
+        "behind": 8,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1177,7 +1183,7 @@
         "stat": "39 files changed, 4252 insertions(+), 3175 deletions(-)",
         "base": "upstream/master",
         "base_sha": "0cc36ca6c",
-        "behind": 8,
+        "behind": 10,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1200,7 +1206,7 @@
         "stat": "38 files changed, 4423 insertions(+), 2550 deletions(-)",
         "base": "upstream/master",
         "base_sha": "0cc36ca6c",
-        "behind": 8,
+        "behind": 10,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1215,7 +1221,7 @@
         "stat": "8 files changed, 431 insertions(+), 238 deletions(-)",
         "base": "upstream/master",
         "base_sha": "0cc36ca6c",
-        "behind": 8,
+        "behind": 10,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1228,7 +1234,7 @@
         "stat": "4 files changed, 13 insertions(+)",
         "base": "upstream/master",
         "base_sha": "0cc36ca6c",
-        "behind": 8,
+        "behind": 10,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1242,7 +1248,7 @@
         "stat": "4 files changed, 51 insertions(+), 19 deletions(-)",
         "base": "upstream/master",
         "base_sha": "0cc36ca6c",
-        "behind": 8,
+        "behind": 10,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1255,7 +1261,7 @@
         "stat": "4 files changed, 136 insertions(+), 280 deletions(-)",
         "base": "upstream/master",
         "base_sha": "0cc36ca6c",
-        "behind": 8,
+        "behind": 10,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1272,7 +1278,7 @@
         "stat": "4 files changed, 502 insertions(+), 263 deletions(-)",
         "base": "upstream/master",
         "base_sha": "0cc36ca6c",
-        "behind": 8,
+        "behind": 10,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1285,7 +1291,7 @@
         "stat": "1 file changed, 38 insertions(+), 4 deletions(-)",
         "base": "upstream/master",
         "base_sha": "0cc36ca6c",
-        "behind": 8,
+        "behind": 10,
         "pushed": true,
         "on_remote": true,
         "unpushed": 0
@@ -1780,7 +1786,7 @@
     "ok": true,
     "upstream_ref": "upstream/master",
     "fork_ref": "bench/stepper-pico2w",
-    "head": "ded69cbb4",
+    "head": "7a285402b",
     "resets": {
       "rp2040": {
         "USBCTRL": 24,
