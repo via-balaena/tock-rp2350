@@ -24,6 +24,7 @@
 #   ./gates.sh parity       just the rp2040/rp2350 paired-block check
 #   ./gates.sh errnames     just the documented-ErrorCode-name check
 #   ./gates.sh hilerrdocs   just the HIL error-documentation ratchet
+#   ./gates.sh clippy       just the clippy subset (durable half of the hook)
 #   ./gates.sh abortidle    just the idle-abort contract check
 #   ./gates.sh i2c          just the i2c transfer-contract check
 #   ./gates.sh safety       just the SAFETY:-comment attachment check
@@ -305,6 +306,27 @@ hilerrdocs_gate() {
 }
 if [ "$WHICH" = all ] || [ "$WHICH" = hilerrdocs ]; then
     run "HIL error docs — no file names fewer than it did" hilerrdocs_gate
+fi
+
+# The durable half of the pre-push hook. A commit reached the fork on
+# 2026-09-16 with three clippy errors in it: the commit-msg hook checks the
+# message, nothing here ran clippy, and the person pushing had run it, printed
+# the exit code beside two others and read past it. The hook refuses such a
+# push; this catches it even where the hook is not installed, which is every
+# fresh clone, since `.git/hooks` is never cloned.
+#
+# Cheap: `make clippy` with nothing changed is under a second.
+clippy_gate() {
+    [ -f "$TOCK_MAIN/Makefile" ] || { echo "  skip  no tock tree at $TOCK_MAIN"; return 0; }
+    if make -C "$TOCK_MAIN" clippy >/dev/null 2>&1; then
+        echo "  ok      make clippy is clean"
+        return 0
+    fi
+    make -C "$TOCK_MAIN" clippy 2>&1 | grep -E "^error" -A 4 | head -20
+    return 1
+}
+if [ "$WHICH" = all ] || [ "$WHICH" = clippy ]; then
+    run "clippy — the enforced subset is clean" clippy_gate
 fi
 
 # `hil::uart` says an abort with nothing outstanding answers `Ok(())`, and
