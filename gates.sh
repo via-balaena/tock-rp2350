@@ -23,6 +23,7 @@
 #   ./gates.sh flash        the hil::flash conformance test on qemu pflash
 #   ./gates.sh parity       just the rp2040/rp2350 paired-block check
 #   ./gates.sh errnames     just the documented-ErrorCode-name check
+#   ./gates.sh hilerrdocs   just the HIL error-documentation ratchet
 #   ./gates.sh abortidle    just the idle-abort contract check
 #   ./gates.sh i2c          just the i2c transfer-contract check
 #   ./gates.sh safety       just the SAFETY:-comment attachment check
@@ -283,6 +284,27 @@ errnames_gate() {
 }
 if [ "$WHICH" = all ] || [ "$WHICH" = errnames ]; then
     run "documented error names — every Err(NAME) resolves" errnames_gate
+fi
+
+# The complement of the check above: that one asks whether a documented error
+# name is real, this one asks whether a fallible method documents any at all.
+# AGENTS.md requires it and nothing enforced it, which is how `hil::i2c`
+# reached twenty-one methods and eleven disagreeing drivers with no contract
+# written down, and `hil::adc` eighteen methods whose drivers could not agree
+# what `sample` returns when it is busy.
+#
+# A RATCHET rather than a standard: half the tree names no error today, so a
+# gate demanding them all would be red on every run and off by Friday. It
+# fails when a file documents FEWER than it used to, or gains a fallible
+# method and documents none of them. `--worklist` prints what is left, largest
+# gap first, which is where the next audit comes from.
+hilerrdocs_gate() {
+    runner="$TOCK_MAIN/tools/ci/check-hil-error-docs.py"
+    [ -x "$runner" ] || { echo "  skip  no runner at $runner"; return 0; }
+    "$runner"
+}
+if [ "$WHICH" = all ] || [ "$WHICH" = hilerrdocs ]; then
+    run "HIL error docs — no file names fewer than it did" hilerrdocs_gate
 fi
 
 # `hil::uart` says an abort with nothing outstanding answers `Ok(())`, and
